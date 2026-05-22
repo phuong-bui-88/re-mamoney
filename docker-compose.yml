@@ -11,7 +11,7 @@ services:
     working_dir: /workspace
     stdin_open: true
     tty: true
-    user: flutteruser
+    user: rn_dev
     networks:
       - mamoney-network
     extra_hosts:

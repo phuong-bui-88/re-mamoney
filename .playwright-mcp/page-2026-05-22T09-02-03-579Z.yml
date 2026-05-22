@@ -1,0 +1,24 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - heading "Task Manager" [level=1] [ref=e7]
+  - main [ref=e8]:
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - heading "Login" [level=3] [ref=e12]
+        - paragraph [ref=e13]: Enter your credentials to access your account
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]:
+            - text: Email
+            - textbox "Email" [ref=e17]:
+              - /placeholder: Enter your email
+          - generic [ref=e18]:
+            - text: Password
+            - textbox "Password" [ref=e19]:
+              - /placeholder: Enter your password
+          - button "Login" [ref=e20] [cursor=pointer]
+        - generic [ref=e21]:
+          - text: Don't have an account?
+          - link "Register here" [ref=e22] [cursor=pointer]:
+            - /url: /register
+  - region "Notifications Alt+T"

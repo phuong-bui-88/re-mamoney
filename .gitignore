@@ -17,6 +17,7 @@ build/
 .pub/
 /pubspec.lock
 *.iml
+node_modules/
 
 # IDE specific files
 .idea/

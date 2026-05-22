@@ -1,6 +1,6 @@
 # MaMoney - Money Management App
 
-A Flutter-based money management application that helps you track your income and expenses using Firebase as the backend database.
+A React Native + TypeScript money management application that helps you track your income and expenses using Firebase as the backend database. Works on Web, iOS, and Android.
 
 ## Features
 
@@ -10,315 +10,324 @@ A Flutter-based money management application that helps you track your income an
 - 📊 **Balance Dashboard**: View your total balance, income, and expenses at a glance
 - 📱 **Beautiful UI**: Clean and intuitive Material Design interface
 - ☁️ **Cloud Sync**: All data is synced with Firebase in real-time
-- 📱 **Cross-Platform**: Works on Android, iOS, Web, and Desktop
+- 📱 **Cross-Platform**: Works on Android, iOS, and Web platforms
+- 🤖 **AI Chat**: Ask AI questions about your finances
 
 ## Project Structure
 
 ```
 mamoney/
-├── lib/
-│   ├── main.dart                 # App entry point
-│   ├── models/
-│   │   ├── transaction.dart     # Transaction model
-│   │   └── user.dart            # User model
+├── src/
+│   ├── App.tsx                      # App entry point and navigation
+│   ├── index.tsx                    # Expo entry point
 │   ├── screens/
-│   │   ├── login_screen.dart    # Authentication screen
-│   │   ├── home_screen.dart     # Main dashboard
-│   │   ├── add_transaction_screen.dart   # Add transaction form
-│   │   └── transaction_list_screen.dart  # View all transactions
-│   └── services/
-│       ├── firebase_service.dart    # Firebase integration
-│       ├── auth_provider.dart       # Authentication state management
-│       ├── transaction_provider.dart # Transaction state management
-│       └── firebase_config.dart     # Firebase configuration
-├── pubspec.yaml                 # Flutter dependencies
-├── Dockerfile                   # Docker configuration
-├── docker-compose.yml           # Docker Compose setup
-├── .devcontainer/
-│   └── devcontainer.json       # VS Code DevContainer config
-├── FIREBASE_SETUP.md           # Firebase setup instructions
-└── README.md                   # This file
+│   │   ├── LoginScreen.tsx          # Authentication
+│   │   ├── HomeScreen.tsx           # Dashboard
+│   │   ├── AddTransactionScreen.tsx # Add/edit transactions
+│   │   ├── TransactionListScreen.tsx # View all transactions
+│   │   ├── AskScreen.tsx            # AI chat interface
+│   │   └── SettingsScreen.tsx       # User settings
+│   ├── components/                  # Reusable UI components
+│   ├── services/
+│   │   └── firebase.ts              # Firebase integration
+│   ├── store/
+│   │   └── index.ts                 # Zustand state stores
+│   ├── types/
+│   │   └── index.ts                 # TypeScript interfaces
+│   ├── utils/
+│   │   ├── currency.ts              # Currency formatting
+│   │   └── categories.ts            # Transaction categories
+│   └── test/
+│       └── setup.ts                 # Jest test configuration
+├── package.json                     # Dependencies and scripts
+├── tsconfig.json                    # TypeScript configuration
+├── jest.config.js                   # Jest test configuration
+├── babel.config.js                  # Babel configuration
+├── .eslintrc.json                   # ESLint rules
+├── .prettierrc.json                 # Prettier formatting
+├── app.json                         # Expo configuration
+├── FIREBASE_SETUP.md               # Firebase setup instructions
+├── AGENTS.md                        # Development guide for agents
+├── MIGRATION_GUIDE.md              # Flutter to React Native migration
+└── README.md                       # This file
 ```
 
 ## Prerequisites
 
-- **Docker & Docker Compose** - For containerized development
-- **VS Code** - With DevContainer extension
+- **Node.js:** >=18.0.0
+- **npm** or **yarn** - Package manager
 - **Firebase Account** - For backend services
-- **Git** - For version control
+- **Expo Go App** - For testing on physical devices (optional)
 
-## Quick Start with DevContainer
+## Quick Start
 
-### 1. Clone or Setup the Project
-
-```bash
-cd /path/to/mamoney
-```
-
-### 2. Open in VS Code with DevContainer
-
-1. Install the "Dev Containers" extension in VS Code
-2. Open the project in VS Code
-3. Press `F1` and select "Dev Containers: Reopen in Container"
-4. Wait for the container to build and start
-
-### 3. Set Up Firebase
-
-1. Follow the detailed instructions in [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
-2. Update `lib/services/firebase_config.dart` with your Firebase credentials
-
-### 4. Initialize the App
-
-In the DevContainer terminal:
+### 1. Install Dependencies
 
 ```bash
-# Get dependencies
-flutter pub get
-
-# Run on web (easiest for testing)
-flutter run -d web
+npm install
 ```
 
-## Manual Setup (Without DevContainer)
+### 2. Set Up Firebase
 
-### Prerequisites
-- Flutter SDK (3.1.0 or later)
-- Dart SDK (3.1.0 or later)
-- Android Studio or Xcode (for mobile development)
-
-### Installation
-
-```bash
-# Get dependencies
-flutter pub get
-
-# Run on your device/emulator
-flutter run
-
-# Or run on web
-flutter run -d web
-```
-
-## Using Docker Compose Directly
-
-### Build the Development Container
-
-```bash
-docker-compose build
-```
-
-### Start the Development Container
-
-```bash
-docker-compose up -d
-```
-
-### Access the Container
-
-```bash
-docker-compose exec flutter-dev bash
-```
-
-### Inside the Container
-
-```bash
-# Get dependencies
-flutter pub get
-
-# Run flutter doctor to verify setup
-flutter doctor
-
-# Run the app
-flutter run -d web
-```
-
-## Available Platforms
-
-The app can run on multiple platforms:
-
-### Web
-```bash
-flutter run -d web
-```
-Access at `http://localhost:8080`
-
-### Android
-```bash
-flutter run -d android
-```
-
-### iOS
-```bash
-flutter run -d ios
-```
-
-### Desktop (Linux/macOS/Windows)
-```bash
-flutter run -d linux
-# or
-flutter run -d macos
-# or
-flutter run -d windows
-```
-
-## How to Use the App
-
-### 1. Sign Up / Login
-- Enter your email and password
-- Click "Sign Up" to create a new account or "Sign In" if you already have one
-
-### 2. View Dashboard
-- See your total balance at the top
-- View income and expense summaries
-- Check recent transactions
-
-### 3. Add a Transaction
-- Click the "+" button (FAB)
-- Select transaction type (Income/Expense)
-- Fill in description, amount, category, and date
-- Click "Add Transaction"
-
-### 4. View All Transactions
-- Click "View All" on the dashboard
-- Filter by transaction type (All/Income/Expense)
-- Swipe left to delete a transaction
-
-## Architecture
-
-### State Management
-The app uses **Provider** for state management:
-- `AuthProvider`: Manages authentication state
-- `TransactionProvider`: Manages transaction state
-
-### Services
-- `FirebaseService`: Core Firebase operations (auth, Firestore)
-- `FirebaseConfig`: Firebase configuration (credentials)
-
-### Models
-- `Transaction`: Represents a single transaction
-- `User`: Represents a user profile
-
-## Configuration
-
-### Firebase Configuration
-
-Update `lib/services/firebase_config.dart` with your Firebase project credentials:
-
-```dart
-class FirebaseConfig {
-  static const FirebaseOptions firebaseOptions = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: 'YOUR_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    authDomain: 'YOUR_AUTH_DOMAIN',
-    databaseURL: 'YOUR_DATABASE_URL',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
-  );
-}
-```
+1. Create Firebase project at https://console.firebase.google.com
+2. Enable Email/Password Authentication
+3. Create Firestore Database
+4. Create `.env.local` file with your Firebase credentials:
+   ```
+   EXPO_PUBLIC_FIREBASE_API_KEY=your_api_key
+   EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+   EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+   EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+   EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_id
+   EXPO_PUBLIC_FIREBASE_APP_ID=your_app_id
+   ```
 
 See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for detailed instructions.
 
-## Development
-
-### Adding Dependencies
+### 3. Start Development Server
 
 ```bash
-flutter pub add package_name
+npm start
 ```
 
-### Code Formatting
+Then choose your platform:
+- Press `w` for Web (http://localhost:8081)
+- Press `i` for iOS
+- Press `a` for Android
 
-```bash
-dart format lib/
-```
-
-### Running Tests
-
-```bash
-flutter test
-```
-
-### Building for Production
+### 4. Run on Specific Platform
 
 ```bash
 # Web
-flutter build web
-
-# APK (Android)
-flutter build apk
-
-# App Bundle (Android Play Store)
-flutter build appbundle
+npm run web:start
 
 # iOS
-flutter build ios
+npm run ios
 
-# Desktop
-flutter build linux
-flutter build macos
-flutter build windows
+# Android
+npm run android
 ```
 
-## Common Issues and Solutions
+## Development Commands
 
-### Issue: "Permission denied" when accessing Firestore
-**Solution**: Check that Firestore rules are properly configured. See FIREBASE_SETUP.md
-
-### Issue: App won't connect to Firebase
-**Solution**: Verify your Firebase config in `firebase_config.dart` is correct
-
-### Issue: Hot reload not working
-**Solution**: Use `flutter run` with the `-v` flag for verbose output
-
-### Issue: Docker build fails
-**Solution**: Ensure you have enough disk space and internet connection, then rebuild:
 ```bash
-docker-compose down
-docker-compose build --no-cache
+# Format code
+npm run format
+
+# Lint code
+npm run lint
+
+# Fix linting issues
+npm run lint:fix
+
+# Type checking
+npm run type-check
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Build for web
+npm run build:web
 ```
+
+## State Management
+
+The app uses **Zustand** for state management:
+
+- **AuthStore**: Manages user authentication state and operations
+- **TransactionStore**: Manages transactions with computed properties (income, expense, balance)
+
+Example usage:
+
+```typescript
+import { useAuthStore, useTransactionStore } from '@store/index';
+
+function MyComponent() {
+  const { user, signOut } = useAuthStore();
+  const { transactions, addTransaction } = useTransactionStore();
+  
+  // ...
+}
+```
+
+## Firebase Integration
+
+The app uses Firebase for:
+
+- **Authentication**: User sign up, sign in, sign out
+- **Firestore**: Real-time transaction storage and syncing
+- **Storage**: Profile pictures and document storage
+
+See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for detailed configuration.
+
+## Testing
+
+All tests use Jest + React Testing Library:
+
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test src/utils/currency.test.ts
+```
+
+Tests are located alongside their implementations with `.test.ts` suffix.
+
+## Code Quality
+
+The project uses:
+
+- **TypeScript** - Strict type checking
+- **ESLint** - Code style enforcement
+- **Prettier** - Automatic code formatting
+
+Pre-commit checks:
+
+```bash
+npm run type-check  # Type checking
+npm test           # Unit tests
+npm run lint       # Linting
+npm run format     # Formatting
+```
+
+## Architecture
+
+### Navigation
+
+- **Stack Navigator** for auth/main flow
+- **Bottom Tab Navigator** for main app screens
+- Uses React Navigation
+
+### State Flow
+
+1. Components use store hooks (`useAuthStore`, `useTransactionStore`)
+2. Stores call Firebase service methods
+3. Firebase service handles all backend operations
+4. Real-time listeners update stores automatically
+
+### Type Safety
+
+All components, services, and stores are fully typed with TypeScript. Core types are defined in `src/types/index.ts`.
+
+## Important Constraints
+
+- **Node:** >=18.0.0
+- **React Native:** 0.74+
+- **TypeScript:** 5.3+
+- **Firebase SDK:** 10.5+
+- **Zustand:** 4.5+
+
+## Platform-Specific Code
+
+For platform-specific implementations:
+
+```typescript
+import { Platform } from 'react-native';
+
+const fontSize = Platform.select({
+  ios: 18,
+  android: 16,
+  web: 16,
+});
+```
+
+## Environment
+
+The app is built with:
+
+- **Expo**: Managed React Native service
+- **React Navigation**: Navigation library
+- **Zustand**: State management
+- **Firebase Web SDK**: Backend services
+- **Jest**: Testing framework
+
+## Debugging
+
+### Chrome DevTools (Web)
+
+```bash
+npm run web:start
+# Press F12 in browser to open DevTools
+```
+
+### Expo Go (Mobile)
+
+1. Install Expo Go app on your device
+2. Run `npm start`
+3. Scan QR code with Expo Go
+4. View logs in Expo Go or terminal
+
+### Firebase Console
+
+- Monitor authentication, database, and storage
+- Check security rules and indexes
+- View real-time activity
+
+## Troubleshooting
+
+### Firebase Connection Issues
+
+- Verify `.env.local` has correct credentials
+- Check Firestore rules in Firebase Console
+- Ensure email/password auth is enabled
+
+### Type Errors
+
+```bash
+npm run type-check
+```
+
+### Lint Issues
+
+```bash
+npm run lint:fix
+```
+
+### Test Failures
+
+```bash
+npm test -- --verbose
+npm test -- --no-coverage
+```
+
+## Migration from Flutter
+
+This project was migrated from Flutter to React Native. See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for details on:
+
+- What changed in the architecture
+- File mappings between Flutter and React Native
+- Breaking changes and how to handle them
+- Dependency equivalents
 
 ## Contributing
 
-1. Create a new branch for your feature
-2. Make your changes
-3. Test thoroughly
-4. Submit a pull request
-
-## Dependencies
-
-- **firebase_core**: Firebase initialization
-- **firebase_auth**: User authentication
-- **cloud_firestore**: Cloud database
-- **provider**: State management
-- **intl**: Date/time formatting
-- **uuid**: Unique ID generation
+1. Create a feature branch: `git checkout -b feature/your-feature`
+2. Make your changes and run tests: `npm test`
+3. Ensure code quality: `npm run lint` and `npm run format`
+4. Commit with clear message: `git commit -am 'Add feature'`
+5. Push and create a pull request
 
 ## License
 
-This project is open source and available under the MIT License.
+ISC
 
 ## Support
 
-For issues or questions:
-1. Check the [FIREBASE_SETUP.md](FIREBASE_SETUP.md) file
-2. Review the code comments
-3. Check Flutter documentation at https://flutter.dev
+For issues or questions, please check:
 
-## Future Enhancements
-
-- [ ] Budget tracking and alerts
-- [ ] Data visualization and charts
-- [ ] Export transactions (CSV/PDF)
-- [ ] Recurring transactions
-- [ ] Multiple currencies support
-- [ ] Dark mode
-- [ ] Monthly/yearly reports
-- [ ] Transaction search and filtering
-- [ ] Receipt photo attachments
-
----
-
-**Happy tracking! 💰**
-# re-mamoney
+- [AGENTS.md](AGENTS.md) - Development guide for agents
+- [FIREBASE_SETUP.md](FIREBASE_SETUP.md) - Firebase configuration
+- [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Flutter to React Native migration
+- [React Native Docs](https://reactnative.dev)
+- [Expo Docs](https://docs.expo.dev)
+- [Firebase Docs](https://firebase.google.com/docs)
