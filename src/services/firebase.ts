@@ -1,30 +1,51 @@
-import { initializeApp } from 'firebase/app';
-import {
-  getAuth,
-  Auth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  User as FirebaseUser,
-} from 'firebase/auth';
-import {
-  getFirestore,
-  Firestore,
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  getDocs,
-  onSnapshot,
-  doc,
-  getDoc,
-  Timestamp,
-} from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getBytes } from 'firebase/storage';
+import { Platform } from 'react-native';
+
 import { Transaction, User, ChatMessage, TransactionFilter } from '@/types';
+
+// Lazy-loaded Firebase modules (only on web)
+let firebaseModules: any = null;
+
+function getFirebaseModules() {
+  if (firebaseModules) {
+    return firebaseModules;
+  }
+
+  if (Platform.OS !== 'web') {
+    return null;
+  }
+
+  try {
+    firebaseModules = {
+      initializeApp: require('firebase/app').initializeApp,
+      getAuth: require('firebase/auth').getAuth,
+      createUserWithEmailAndPassword: require('firebase/auth').createUserWithEmailAndPassword,
+      signInWithEmailAndPassword: require('firebase/auth').signInWithEmailAndPassword,
+      signOut: require('firebase/auth').signOut,
+      onAuthStateChanged: require('firebase/auth').onAuthStateChanged,
+      getFirestore: require('firebase/firestore').getFirestore,
+      collection: require('firebase/firestore').collection,
+      addDoc: require('firebase/firestore').addDoc,
+      updateDoc: require('firebase/firestore').updateDoc,
+      deleteDoc: require('firebase/firestore').deleteDoc,
+      query: require('firebase/firestore').query,
+      where: require('firebase/firestore').where,
+      getDocs: require('firebase/firestore').getDocs,
+      onSnapshot: require('firebase/firestore').onSnapshot,
+      doc: require('firebase/firestore').doc,
+      getDoc: require('firebase/firestore').getDoc,
+      Timestamp: require('firebase/firestore').Timestamp,
+      getStorage: require('firebase/storage').getStorage,
+      ref: require('firebase/storage').ref,
+      uploadBytes: require('firebase/storage').uploadBytes,
+      getBytes: require('firebase/storage').getBytes,
+    };
+    return firebaseModules;
+  } catch (error) {
+    console.error('Failed to load Firebase modules:', error);
+    return null;
+  }
+}
+
 
 // Firebase configuration - should be loaded from environment variables
 const firebaseConfig = {
@@ -36,8 +57,8 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Debug log to verify config is loaded
-if (typeof window !== 'undefined') {
+// Debug log to verify config is loaded (web only)
+if (Platform.OS === 'web') {
   console.log('Firebase Config Loaded:', {
     projectId: firebaseConfig.projectId,
     authDomain: firebaseConfig.authDomain,
@@ -47,8 +68,8 @@ if (typeof window !== 'undefined') {
 
 class FirebaseService {
   private static instance: FirebaseService;
-  private auth: Auth | null = null;
-  private firestore: Firestore | null = null;
+  private auth: any = null;
+  private firestore: any = null;
   private initialized: boolean = false;
 
   private constructor() {}
@@ -60,15 +81,31 @@ class FirebaseService {
     return FirebaseService.instance;
   }
 
+  private isAvailable(): boolean {
+    return Platform.OS === 'web' && this.initialized;
+  }
+
   async initialize(): Promise<void> {
     if (this.initialized) {
       return;
     }
 
+    // Skip initialization on non-web platforms
+    if (Platform.OS !== 'web') {
+      console.warn('Firebase Web SDK not available on this platform. Using stub/mock implementation.');
+      this.initialized = true;
+      return;
+    }
+
     try {
-      const app = initializeApp(firebaseConfig);
-      this.auth = getAuth(app);
-      this.firestore = getFirestore(app);
+      const fb = getFirebaseModules();
+      if (!fb) {
+        throw new Error('Failed to load Firebase modules');
+      }
+
+      const app = fb.initializeApp(firebaseConfig);
+      this.auth = fb.getAuth(app);
+      this.firestore = fb.getFirestore(app);
       this.initialized = true;
       console.log('Firebase initialized successfully');
     } catch (error) {
@@ -79,10 +116,13 @@ class FirebaseService {
 
   // Auth methods
   async signUp(email: string, password: string): Promise<User> {
-    if (!this.auth) throw new Error('Firebase not initialized');
+    if (!this.isAvailable() || !this.auth) throw new Error('Firebase not available on this platform');
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
+      const fb = getFirebaseModules();
+      if (!fb) throw new Error('Firebase modules not loaded');
+
+      const userCredential = await fb.createUserWithEmailAndPassword(this.auth, email, password);
       const user: User = {
         id: userCredential.user.uid,
         email: userCredential.user.email || '',
@@ -96,10 +136,13 @@ class FirebaseService {
   }
 
   async signIn(email: string, password: string): Promise<User> {
-    if (!this.auth) throw new Error('Firebase not initialized');
+    if (!this.isAvailable() || !this.auth) throw new Error('Firebase not available on this platform');
 
     try {
-      const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
+      const fb = getFirebaseModules();
+      if (!fb) throw new Error('Firebase modules not loaded');
+
+      const userCredential = await fb.signInWithEmailAndPassword(this.auth, email, password);
       const user: User = {
         id: userCredential.user.uid,
         email: userCredential.user.email || '',
@@ -113,14 +156,27 @@ class FirebaseService {
   }
 
   async signOut(): Promise<void> {
-    if (!this.auth) throw new Error('Firebase not initialized');
-    await firebaseSignOut(this.auth);
+    if (!this.isAvailable() || !this.auth) throw new Error('Firebase not available on this platform');
+
+    const fb = getFirebaseModules();
+    if (!fb) throw new Error('Firebase modules not loaded');
+
+    await fb.signOut(this.auth);
   }
 
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
-    if (!this.auth) throw new Error('Firebase not initialized');
+    if (!this.isAvailable() || !this.auth) {
+      console.warn('Firebase not available, returning no-op unsubscribe function');
+      return () => {};
+    }
 
-    return onAuthStateChanged(this.auth, (firebaseUser: FirebaseUser | null) => {
+    const fb = getFirebaseModules();
+    if (!fb) {
+      console.warn('Firebase modules not loaded');
+      return () => {};
+    }
+
+    return fb.onAuthStateChanged(this.auth, (firebaseUser: any) => {
       if (firebaseUser) {
         const user: User = {
           id: firebaseUser.uid,
@@ -139,14 +195,17 @@ class FirebaseService {
 
   // Transaction methods
   async addTransaction(transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>): Promise<Transaction> {
-    if (!this.firestore) throw new Error('Firebase not initialized');
+    if (!this.isAvailable() || !this.firestore) throw new Error('Firebase not available on this platform');
+
+    const fb = getFirebaseModules();
+    if (!fb) throw new Error('Firebase modules not loaded');
 
     try {
-      const docRef = await addDoc(collection(this.firestore, 'transactions'), {
+      const docRef = await fb.addDoc(fb.collection(this.firestore, 'transactions'), {
         ...transaction,
-        date: Timestamp.fromDate(transaction.date),
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        date: fb.Timestamp.fromDate(transaction.date),
+        createdAt: fb.Timestamp.now(),
+        updatedAt: fb.Timestamp.now(),
       });
 
       return {
@@ -161,14 +220,17 @@ class FirebaseService {
   }
 
   async updateTransaction(id: string, updates: Partial<Transaction>): Promise<void> {
-    if (!this.firestore) throw new Error('Firebase not initialized');
+    if (!this.isAvailable() || !this.firestore) throw new Error('Firebase not available on this platform');
+
+    const fb = getFirebaseModules();
+    if (!fb) throw new Error('Firebase modules not loaded');
 
     try {
-      const docRef = doc(this.firestore, 'transactions', id);
-      await updateDoc(docRef, {
+      const docRef = fb.doc(this.firestore, 'transactions', id);
+      await fb.updateDoc(docRef, {
         ...updates,
-        date: updates.date ? Timestamp.fromDate(updates.date) : undefined,
-        updatedAt: Timestamp.now(),
+        date: updates.date ? fb.Timestamp.fromDate(updates.date) : undefined,
+        updatedAt: fb.Timestamp.now(),
       });
     } catch (error) {
       throw error;
@@ -176,34 +238,40 @@ class FirebaseService {
   }
 
   async deleteTransaction(id: string): Promise<void> {
-    if (!this.firestore) throw new Error('Firebase not initialized');
+    if (!this.isAvailable() || !this.firestore) throw new Error('Firebase not available on this platform');
+
+    const fb = getFirebaseModules();
+    if (!fb) throw new Error('Firebase modules not loaded');
 
     try {
-      const docRef = doc(this.firestore, 'transactions', id);
-      await deleteDoc(docRef);
+      const docRef = fb.doc(this.firestore, 'transactions', id);
+      await fb.deleteDoc(docRef);
     } catch (error) {
       throw error;
     }
   }
 
   async getTransactions(filter: TransactionFilter): Promise<Transaction[]> {
-    if (!this.firestore) throw new Error('Firebase not initialized');
+    if (!this.isAvailable() || !this.firestore) throw new Error('Firebase not available on this platform');
+
+    const fb = getFirebaseModules();
+    if (!fb) throw new Error('Firebase modules not loaded');
 
     try {
       const constraints = [];
 
       if (filter.userId) {
-        constraints.push(where('userId', '==', filter.userId));
+        constraints.push(fb.where('userId', '==', filter.userId));
       }
 
       if (filter.type) {
-        constraints.push(where('type', '==', filter.type));
+        constraints.push(fb.where('type', '==', filter.type));
       }
 
-      const q = query(collection(this.firestore, 'transactions'), ...constraints);
-      const querySnapshot = await getDocs(q);
+      const q = fb.query(fb.collection(this.firestore, 'transactions'), ...constraints);
+      const querySnapshot = await fb.getDocs(q);
 
-      return querySnapshot.docs.map((docSnapshot) => {
+      return querySnapshot.docs.map((docSnapshot: any) => {
         const data = docSnapshot.data();
         
         // Helper function to convert timestamp to Date
@@ -236,19 +304,28 @@ class FirebaseService {
     filter: TransactionFilter,
     callback: (transactions: Transaction[]) => void
   ): () => void {
-    if (!this.firestore) throw new Error('Firebase not initialized');
+    if (!this.isAvailable() || !this.firestore) {
+      console.warn('Firebase not available, returning no-op unsubscribe function');
+      return () => {};
+    }
+
+    const fb = getFirebaseModules();
+    if (!fb) {
+      console.warn('Firebase modules not loaded');
+      return () => {};
+    }
 
     const constraints = [];
 
     if (filter.userId) {
-      constraints.push(where('userId', '==', filter.userId));
+      constraints.push(fb.where('userId', '==', filter.userId));
     }
 
     if (filter.type) {
-      constraints.push(where('type', '==', filter.type));
+      constraints.push(fb.where('type', '==', filter.type));
     }
 
-    const q = query(collection(this.firestore, 'transactions'), ...constraints);
+    const q = fb.query(fb.collection(this.firestore, 'transactions'), ...constraints);
 
     // Helper function to convert timestamp to Date
     const toDate = (timestamp: any): Date => {
@@ -263,8 +340,8 @@ class FirebaseService {
       return new Date();
     };
 
-    return onSnapshot(q, (querySnapshot) => {
-      const transactions = querySnapshot.docs.map((docSnapshot) => {
+    return fb.onSnapshot(q, (querySnapshot: any) => {
+      const transactions = querySnapshot.docs.map((docSnapshot: any) => {
         const data = docSnapshot.data();
         return {
           id: docSnapshot.id,
@@ -280,12 +357,15 @@ class FirebaseService {
 
   // Chat messages
   async addChatMessage(message: Omit<ChatMessage, 'id' | 'timestamp'>): Promise<ChatMessage> {
-    if (!this.firestore) throw new Error('Firebase not initialized');
+    if (!this.isAvailable() || !this.firestore) throw new Error('Firebase not available on this platform');
+
+    const fb = getFirebaseModules();
+    if (!fb) throw new Error('Firebase modules not loaded');
 
     try {
-      const docRef = await addDoc(collection(this.firestore, 'chatMessages'), {
+      const docRef = await fb.addDoc(fb.collection(this.firestore, 'chatMessages'), {
         ...message,
-        timestamp: Timestamp.now(),
+        timestamp: fb.Timestamp.now(),
       });
 
       return {
@@ -299,9 +379,18 @@ class FirebaseService {
   }
 
   subscribeToChatMessages(userId: string, callback: (messages: ChatMessage[]) => void): () => void {
-    if (!this.firestore) throw new Error('Firebase not initialized');
+    if (!this.isAvailable() || !this.firestore) {
+      console.warn('Firebase not available, returning no-op unsubscribe function');
+      return () => {};
+    }
 
-    const q = query(collection(this.firestore, 'chatMessages'), where('userId', '==', userId));
+    const fb = getFirebaseModules();
+    if (!fb) {
+      console.warn('Firebase modules not loaded');
+      return () => {};
+    }
+
+    const q = fb.query(fb.collection(this.firestore, 'chatMessages'), fb.where('userId', '==', userId));
 
     // Helper function to convert timestamp to Date
     const toDate = (timestamp: any): Date => {
@@ -316,8 +405,8 @@ class FirebaseService {
       return new Date();
     };
 
-    return onSnapshot(q, (querySnapshot) => {
-      const messages = querySnapshot.docs.map((docSnapshot) => {
+    return fb.onSnapshot(q, (querySnapshot: any) => {
+      const messages = querySnapshot.docs.map((docSnapshot: any) => {
         const data = docSnapshot.data();
         return {
           id: docSnapshot.id,
