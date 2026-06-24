@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-import { Transaction, User, ChatMessage, TransactionFilter } from '@/types';
+import { ChatMessage, Transaction, TransactionFilter, User } from '@/types';
 
 // Lazy-loaded Firebase modules (only on web)
 let firebaseModules: any = null;
@@ -72,7 +72,7 @@ class FirebaseService {
   private firestore: any = null;
   private initialized: boolean = false;
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): FirebaseService {
     if (!FirebaseService.instance) {
@@ -86,9 +86,13 @@ class FirebaseService {
   }
 
   async initialize(): Promise<void> {
+    console.log('Initializing Firebase Service...');
     if (this.initialized) {
+
       return;
     }
+
+    console.log('Checking platform for Firebase initialization:', Platform.OS);
 
     // Skip initialization on non-web platforms
     if (Platform.OS !== 'web') {
@@ -167,13 +171,13 @@ class FirebaseService {
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
     if (!this.isAvailable() || !this.auth) {
       console.warn('Firebase not available, returning no-op unsubscribe function');
-      return () => {};
+      return () => { };
     }
 
     const fb = getFirebaseModules();
     if (!fb) {
       console.warn('Firebase modules not loaded');
-      return () => {};
+      return () => { };
     }
 
     return fb.onAuthStateChanged(this.auth, (firebaseUser: any) => {
@@ -273,7 +277,7 @@ class FirebaseService {
 
       return querySnapshot.docs.map((docSnapshot: any) => {
         const data = docSnapshot.data();
-        
+
         // Helper function to convert timestamp to Date
         const toDate = (timestamp: any): Date => {
           if (!timestamp) return new Date();
@@ -306,13 +310,13 @@ class FirebaseService {
   ): () => void {
     if (!this.isAvailable() || !this.firestore) {
       console.warn('Firebase not available, returning no-op unsubscribe function');
-      return () => {};
+      return () => { };
     }
 
     const fb = getFirebaseModules();
     if (!fb) {
       console.warn('Firebase modules not loaded');
-      return () => {};
+      return () => { };
     }
 
     const constraints = [];
@@ -381,13 +385,13 @@ class FirebaseService {
   subscribeToChatMessages(userId: string, callback: (messages: ChatMessage[]) => void): () => void {
     if (!this.isAvailable() || !this.firestore) {
       console.warn('Firebase not available, returning no-op unsubscribe function');
-      return () => {};
+      return () => { };
     }
 
     const fb = getFirebaseModules();
     if (!fb) {
       console.warn('Firebase modules not loaded');
-      return () => {};
+      return () => { };
     }
 
     const q = fb.query(fb.collection(this.firestore, 'chatMessages'), fb.where('userId', '==', userId));

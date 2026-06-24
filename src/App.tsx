@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import AddTransactionScreen from '@screens/AddTransactionScreen';
+import AskScreen from '@screens/AskScreen';
+import HomeScreen from '@screens/HomeScreen';
+import LoginScreen from '@screens/LoginScreen';
+import SettingsScreen from '@screens/SettingsScreen';
+import TransactionListScreen from '@screens/TransactionListScreen';
 import firebaseService from '@services/firebase';
 import { useAuthStore } from '@store/index';
-import LoginScreen from '@screens/LoginScreen';
-import HomeScreen from '@screens/HomeScreen';
-import AddTransactionScreen from '@screens/AddTransactionScreen';
-import TransactionListScreen from '@screens/TransactionListScreen';
-import SettingsScreen from '@screens/SettingsScreen';
-import AskScreen from '@screens/AskScreen';
+import { initializeApp } from 'firebase/app';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -79,22 +80,24 @@ export default function App(): React.ReactElement {
 
   useEffect(() => {
     const initializeApp = async () => {
-      try {
-        await firebaseService.initialize();
+      console.info('Initializing app123...');
+      // try {
+      await firebaseService.initialize();
+      console.info('Firebase initialized successfully');
 
-        // Listen to auth state changes
-        const unsubscribe = firebaseService.onAuthStateChanged((authUser) => {
-          setUser(authUser);
-          setIsInitializing(false);
-        });
-
-        return () => {
-          unsubscribe();
-        };
-      } catch (error) {
-        console.error('App initialization error:', error);
+      // Listen to auth state changes
+      const unsubscribe = firebaseService.onAuthStateChanged((authUser) => {
+        setUser(authUser);
         setIsInitializing(false);
-      }
+      });
+
+      return () => {
+        unsubscribe();
+      };
+      // } catch (error) {
+      //   console.error('App initialization error 1 2:', error);
+      //   setIsInitializing(false);
+      // }
     };
 
     initializeApp();
