@@ -1,11 +1,9 @@
 services:
-  flutter-dev:
+  reactive-dev:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: mamoney-dev
-    environment:
-      - FLUTTER_HOME=/usr/local/flutter
     volumes:
       - .:/workspace
     working_dir: /workspace

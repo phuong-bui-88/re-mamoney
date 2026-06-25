@@ -40,14 +40,6 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Debug log to verify config is loaded on native platforms
-// eslint-disable-next-line no-console
-console.warn('Firebase Config Loaded (Native with Web SDK + AsyncStorage):', {
-  projectId: firebaseConfig.projectId,
-  authDomain: firebaseConfig.authDomain,
-  apiKeyExists: !!firebaseConfig.apiKey,
-});
-
 // Helper function to convert Firestore Timestamp to Date
 function toDate(timestamp: unknown): Date {
   if (!timestamp) return new Date();
@@ -87,16 +79,9 @@ class FirebaseService {
       return;
     }
 
-    // eslint-disable-next-line no-console
-    console.warn(
-      'Initializing FirebaseService with Firebase Web SDK 1 + AsyncStorage (native platform)'
-    );
-
-    console.log(firebaseConfig);
-
     const app = initializeApp(firebaseConfig);
 
-    console.log('Firebase app initialized1:', app.name, app.options.projectId);
+    console.log('Firebase app initialized:', app.name, app.options.projectId);
 
     // Initialize auth with custom AsyncStorage persistence
     try {
@@ -105,7 +90,7 @@ class FirebaseService {
       });
       console.log('Auth initialized:', this.auth.app.name);
     } catch (error) {
-      console.error('Auth initialization failed3:', error);
+      console.error('Auth initialization failed:', error);
     }
 
     console.log('3')
@@ -127,6 +112,7 @@ class FirebaseService {
       email,
       password
     );
+
     const user: User = {
       id: userCredential.user.uid,
       email: userCredential.user.email || '',
@@ -146,12 +132,14 @@ class FirebaseService {
       email,
       password
     );
+
     const user: User = {
       id: userCredential.user.uid,
       email: userCredential.user.email || '',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
     return user;
   }
 
