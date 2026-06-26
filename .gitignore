@@ -7,17 +7,8 @@
 *.swo
 *~
 
-# Flutter/Dart build
-build/
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-.pub-cache/
-.pub/
-/pubspec.lock
-*.iml
 node_modules/
+.playwright-mcp
 
 # IDE specific files
 .idea/
@@ -31,24 +22,6 @@ node_modules/
 *.launch
 .settings/
 *.sublime-workspace
-
-# Android
-android/local.properties
-android/GeneratedPluginRegistrant.java
-android/gradlew
-android/gradlew.bat
-android/.gradle/
-android/app/debug
-android/app/profile
-android/app/release
-
-# iOS
-ios/Flutter/flutter_export_environment.sh
-ios/ServiceDefinitions.json
-ios/Runner.xcworkspace/xcshareddata/IDEWindowStateManagement.plist
-
-# Web
-web/canvaskit/
 
 # Testing
 coverage/
