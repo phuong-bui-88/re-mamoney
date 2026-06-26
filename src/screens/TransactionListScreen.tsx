@@ -5,56 +5,56 @@ import { useAuthStore } from '@store/index';
 import { formatCurrency, formatDate } from '@utils/currency';
 
 const styles = StyleSheet.create({
+  amount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  category: {
+    color: '#333',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   container: {
-    flex: 1,
     backgroundColor: '#f5f5f5',
+    flex: 1,
+  },
+  date: {
+    color: '#999',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  description: {
+    color: '#999',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  expense: {
+    color: '#f44336',
   },
   header: {
     backgroundColor: '#2196F3',
     padding: 20,
     paddingTop: 40,
   },
+  income: {
+    color: '#4CAF50',
+  },
   title: {
+    color: '#fff',
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
-  },
-  transactionItem: {
-    backgroundColor: '#fff',
-    padding: 15,
-    marginHorizontal: 15,
-    marginVertical: 8,
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   transactionInfo: {
     flex: 1,
   },
-  category: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  description: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 4,
-  },
-  date: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 4,
-  },
-  amount: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  income: {
-    color: '#4CAF50',
-  },
-  expense: {
-    color: '#f44336',
+  transactionItem: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 15,
+    marginVertical: 8,
+    padding: 15,
   },
 });
 

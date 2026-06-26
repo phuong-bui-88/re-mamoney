@@ -5,38 +5,38 @@ import { useAuthStore } from '@store/index';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@utils/categories';
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  form: {
-    padding: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 12,
-    marginBottom: 15,
-    borderRadius: 8,
-    backgroundColor: '#fff',
-  },
   button: {
-    backgroundColor: '#2196F3',
-    padding: 15,
-    borderRadius: 8,
     alignItems: 'center',
+    backgroundColor: '#2196F3',
+    borderRadius: 8,
     marginTop: 10,
+    padding: 15,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  container: {
+    backgroundColor: '#f5f5f5',
+    flex: 1,
+  },
+  form: {
+    padding: 20,
+  },
+  input: {
+    backgroundColor: '#fff',
+    borderColor: '#ddd',
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 15,
+    padding: 12,
+  },
+  label: {
+    color: '#333',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
   },
 });
 

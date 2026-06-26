@@ -2,36 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    backgroundColor: '#2196F3',
-    padding: 20,
-    paddingTop: 40,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  chatContainer: {
-    flex: 1,
-    padding: 15,
-  },
-  message: {
-    marginVertical: 8,
-    padding: 12,
-    borderRadius: 8,
-  },
-  userMessage: {
-    backgroundColor: '#2196F3',
-    marginLeft: 50,
-  },
-  userText: {
-    color: '#fff',
-  },
   assistantMessage: {
     backgroundColor: '#e0e0e0',
     marginRight: 50,
@@ -39,28 +9,58 @@ const styles = StyleSheet.create({
   assistantText: {
     color: '#333',
   },
-  inputContainer: {
-    flexDirection: 'row',
+  chatContainer: {
+    flex: 1,
     padding: 15,
-    backgroundColor: '#fff',
+  },
+  container: {
+    backgroundColor: '#f5f5f5',
+    flex: 1,
+  },
+  header: {
+    backgroundColor: '#2196F3',
+    padding: 20,
+    paddingTop: 40,
   },
   input: {
-    flex: 1,
-    borderWidth: 1,
     borderColor: '#ddd',
-    padding: 12,
     borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
     marginRight: 10,
+    padding: 12,
+  },
+  inputContainer: {
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    padding: 15,
+  },
+  message: {
+    borderRadius: 8,
+    marginVertical: 8,
+    padding: 12,
   },
   sendButton: {
     backgroundColor: '#2196F3',
-    padding: 12,
     borderRadius: 8,
     justifyContent: 'center',
+    padding: 12,
   },
   sendButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  title: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  userMessage: {
+    backgroundColor: '#2196F3',
+    marginLeft: 50,
+  },
+  userText: {
+    color: '#fff',
   },
 });
 

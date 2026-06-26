@@ -3,58 +3,58 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuthStore } from '@store/index';
 
 const styles = StyleSheet.create({
+  button: {
+    alignItems: 'center',
+    backgroundColor: '#f44336',
+    borderRadius: 8,
+    marginTop: 20,
+    padding: 15,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   container: {
-    flex: 1,
     backgroundColor: '#f5f5f5',
+    flex: 1,
   },
   header: {
     backgroundColor: '#2196F3',
     padding: 20,
     paddingTop: 40,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+  item: {
+    borderBottomColor: '#eee',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+  },
+  label: {
+    color: '#333',
+    fontSize: 14,
   },
   section: {
     backgroundColor: '#fff',
-    padding: 20,
+    borderRadius: 8,
     marginHorizontal: 15,
     marginVertical: 10,
-    borderRadius: 8,
+    padding: 20,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 15,
   },
-  item: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  label: {
-    fontSize: 14,
-    color: '#333',
+  title: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   value: {
-    fontSize: 14,
     color: '#999',
-  },
-  button: {
-    backgroundColor: '#f44336',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
 

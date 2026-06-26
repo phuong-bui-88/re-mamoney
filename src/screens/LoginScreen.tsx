@@ -3,11 +3,31 @@ import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert } from 'reac
 import { useAuthStore } from '@store/index';
 
 const styles = StyleSheet.create({
+  button: {
+    alignItems: 'center',
+    backgroundColor: '#2196F3',
+    borderRadius: 8,
+    marginBottom: 10,
+    padding: 15,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
     backgroundColor: '#fff',
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  input: {
+    borderColor: '#ddd',
+    borderRadius: 8,
+    borderWidth: 1,
+    fontSize: 16,
+    marginBottom: 15,
+    padding: 12,
   },
   title: {
     fontSize: 24,
@@ -15,30 +35,10 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     textAlign: 'center',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 12,
-    marginBottom: 15,
-    borderRadius: 8,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#2196F3',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   toggleText: {
     color: '#2196F3',
-    textAlign: 'center',
     marginTop: 15,
+    textAlign: 'center',
   },
 });
 

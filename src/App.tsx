@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -12,20 +13,17 @@ import { useAuthStore } from '@store/index';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+const C = { white: '#fff' };
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   loadingContainer: {
+    alignItems: 'center',
+    backgroundColor: C.white,
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
   },
 });
 
@@ -33,7 +31,7 @@ function HomeTabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#2196F3',
+        tabBarActiveTintColor: '#00BFA5',
         tabBarInactiveTintColor: '#999',
       }}
     >
@@ -42,7 +40,7 @@ function HomeTabNavigator() {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Dashboard',
-          tabBarIcon: ({ color }) => <View style={{ width: 24, height: 24, backgroundColor: color }} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
         }}
       />
       <Tab.Screen
@@ -50,7 +48,7 @@ function HomeTabNavigator() {
         component={TransactionListScreen}
         options={{
           tabBarLabel: 'Transactions',
-          tabBarIcon: ({ color }) => <View style={{ width: 24, height: 24, backgroundColor: color }} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="list-outline" size={size} color={color} />,
         }}
       />
       <Tab.Screen
@@ -58,7 +56,7 @@ function HomeTabNavigator() {
         component={AskScreen}
         options={{
           tabBarLabel: 'Ask AI',
-          tabBarIcon: ({ color }) => <View style={{ width: 24, height: 24, backgroundColor: color }} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-ellipses-outline" size={size} color={color} />,
         }}
       />
       <Tab.Screen
@@ -66,7 +64,7 @@ function HomeTabNavigator() {
         component={SettingsScreen}
         options={{
           tabBarLabel: 'Settings',
-          tabBarIcon: ({ color }) => <View style={{ width: 24, height: 24, backgroundColor: color }} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
         }}
       />
     </Tab.Navigator>
@@ -105,7 +103,7 @@ export default function App(): React.ReactElement {
   if (isInitializing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2196F3" />
+        <ActivityIndicator size="large" color="#00BFA5" />
       </View>
     );
   }
