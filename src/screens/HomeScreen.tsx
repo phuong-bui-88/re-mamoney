@@ -4,8 +4,6 @@ import { useNavigation } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
 import {
-  WalletCard,
-  NewWalletCard,
   PeriodFilter,
   StatisticsCard,
   SegmentedControl,
@@ -15,20 +13,18 @@ import { getMonthStart, getMonthEnd } from '@utils/currency';
 
 const C = {
   background: '#F5F5F5',
-  primaryLight: '#E0F2F1',
   textLight: '#999',
 };
 
 export default function HomeScreen(): React.ReactElement {
   const { user } = useAuthStore();
-  const { loadTransactions, totalIncome, totalExpense, balance } = useTransactionStore();
+  const { loadTransactions, totalIncome, totalExpense } = useTransactionStore();
   const navigation = useNavigation();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [reportTab, setReportTab] = useState(0);
 
-  const walletName = user?.displayName || 'Main Wallet';
   const netChange = totalIncome - totalExpense;
 
   useEffect(() => {
@@ -43,14 +39,6 @@ export default function HomeScreen(): React.ReactElement {
     navigation.getParent()?.navigate('AddTransaction' as never);
   }, [navigation]);
 
-  const handleWalletEdit = useCallback(() => {
-    Alert.alert('Edit Wallet', 'Wallet editing coming soon');
-  }, []);
-
-  const handleNewWallet = useCallback(() => {
-    Alert.alert('New Wallet', 'Wallet creation coming soon');
-  }, []);
-
   const handleInfo = useCallback(() => {
     Alert.alert(
       'Net Change',
@@ -61,17 +49,6 @@ export default function HomeScreen(): React.ReactElement {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.walletSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.walletRow}>
-            <WalletCard
-              name={walletName}
-              balance={balance}
-              onEdit={handleWalletEdit}
-            />
-            <NewWalletCard onPress={handleNewWallet} />
-          </ScrollView>
-        </View>
-
         <PeriodFilter
           month={selectedMonth}
           year={selectedYear}
@@ -118,13 +95,5 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
-  walletRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  walletSection: {
-    backgroundColor: C.primaryLight,
-    paddingBottom: 8,
-    paddingTop: 12,
-  },
+
 });

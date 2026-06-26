@@ -10,6 +10,7 @@ const C = {
   textLight: '#999',
   shadow: '#000',
   background: '#F5F5F5',
+  primaryLight: '#E0F2F1',
   expense: '#F44336',
   income: '#4CAF50',
   border: '#E0E0E0',
@@ -63,7 +64,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   card: {
-    backgroundColor: C.white,
+    backgroundColor: C.primaryLight,
     borderRadius: 12,
     elevation: 3,
     marginHorizontal: 16,
