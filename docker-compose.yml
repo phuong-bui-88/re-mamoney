@@ -7,8 +7,6 @@ services:
     volumes:
       - .:/workspace
     working_dir: /workspace
-    stdin_open: true
-    tty: true
     user: rn_dev
     networks:
       - mamoney-network
@@ -17,6 +15,9 @@ services:
     ports:
       - "5037:5037"
       - "8081:8080"
+    # ✅ Keep container running & allow interactive shell
+    stdin_open: true
+    tty: true
 
 networks:
   mamoney-network:

@@ -9,7 +9,6 @@ import SettingsScreen from '@screens/SettingsScreen';
 import TransactionListScreen from '@screens/TransactionListScreen';
 import firebaseService from '@services/firebase';
 import { useAuthStore } from '@store/index';
-import { initializeApp } from 'firebase/app';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
@@ -81,23 +80,23 @@ export default function App(): React.ReactElement {
   useEffect(() => {
     const initializeApp = async () => {
       console.info('Initializing app123...');
-      // try {
-      await firebaseService.initialize();
-      console.info('Firebase initialized successfully');
+      try {
+        await firebaseService.initialize();
+        console.info('Firebase initialized successfully');
 
-      // Listen to auth state changes
-      const unsubscribe = firebaseService.onAuthStateChanged((authUser) => {
-        setUser(authUser);
+        // Listen to auth state changes
+        const unsubscribe = firebaseService.onAuthStateChanged((authUser) => {
+          setUser(authUser);
+          setIsInitializing(false);
+        });
+
+        return () => {
+          unsubscribe();
+        };
+      } catch (error) {
+        console.error('App initialization error 1 2:', error);
         setIsInitializing(false);
-      });
-
-      return () => {
-        unsubscribe();
-      };
-      // } catch (error) {
-      //   console.error('App initialization error 1 2:', error);
-      //   setIsInitializing(false);
-      // }
+      }
     };
 
     initializeApp();

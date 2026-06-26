@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     build-essential openjdk-17-jdk \
     libssl-dev libffi-dev python3-dev \
     netcat-openbsd socat sed coreutils \
-    libc6 libc6-dev locales zsh
+    libc6 libc6-dev locales zsh ripgrep
 
 # Install Node.js 20 (LTS, >=18.0.0 required)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
@@ -27,12 +27,16 @@ RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 
+
+
 # Create non-root user
 RUN useradd -m -u 1000 rn_dev && \
     chsh -s /bin/zsh rn_dev
 
-# Install Oh-My-Zsh for rn_dev with proper PATH setup
 USER rn_dev
+
+# Install Oh-My-Zsh for rn_dev with proper PATH setup
+
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && \
     sed -i 's/^ZSH_THEME=.*/ZSH_THEME="robbyrussell"/' /home/rn_dev/.zshrc && \
     sed -i 's/^plugins=.*/plugins=(git npm docker)/' /home/rn_dev/.zshrc && \
