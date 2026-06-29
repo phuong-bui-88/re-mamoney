@@ -9,6 +9,7 @@ export interface Transaction {
   date: Date;
   createdAt: Date;
   updatedAt: Date;
+  userText?: string;
 }
 
 export interface User {
@@ -59,3 +60,22 @@ export interface InvoicePreviewState {
 
 export type TransactionType = 'income' | 'expense';
 export type FilterType = 'month' | 'year' | 'custom';
+
+export interface AITransaction {
+  description: string;
+  amount: number;
+  category: string;
+  type: 'income' | 'expense';
+  date: string;
+}
+
+export interface AIParseResult {
+  transactions: AITransaction[];
+  followUpQuestion?: string;
+  rawResponse: string;
+}
+
+export interface PendingConfirmation {
+  id: string;
+  transactions: AITransaction[];
+}

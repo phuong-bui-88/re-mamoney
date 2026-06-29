@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
 import { formatCurrency, formatDate } from '@utils/currency';
@@ -61,12 +62,14 @@ const styles = StyleSheet.create({
 export default function TransactionListScreen(): React.ReactElement {
   const { user } = useAuthStore();
   const { transactions, loadTransactions } = useTransactionStore();
+  const route = useRoute<RouteProp<Record<string, { type?: 'income' | 'expense' }>, string>>();
+  const filterType = route.params?.type;
 
   useEffect(() => {
     if (user) {
-      loadTransactions({ userId: user.id });
+      loadTransactions({ userId: user.id, ...(filterType && { type: filterType }) });
     }
-  }, [user, loadTransactions]);
+  }, [user, loadTransactions, filterType]);
 
   return (
     <ScrollView style={styles.container}>
@@ -86,8 +89,8 @@ export default function TransactionListScreen(): React.ReactElement {
               <Text style={styles.description}>{transaction.description}</Text>
               <Text style={styles.date}>{formatDate(transaction.date)}</Text>
             </View>
-            <Text style={[styles.amount, transaction.type === 'income' ? styles.income : styles.expense]}>
-              {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+            <Text style={[styles.amount, transaction.type === 'expense' ? styles.expense : styles.income]}>
+              {transaction.type === 'expense' ? '-' : '+'}{formatCurrency(transaction.amount)}
             </Text>
           </View>
         ))

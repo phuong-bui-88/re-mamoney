@@ -1,132 +1,377 @@
-import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, ScrollView, Alert } from 'react-native';
-import { useTransactionStore } from '@store/index';
-import { useAuthStore } from '@store/index';
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@utils/categories';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import { useTransactionStore, useAuthStore } from '@store/index';
+import { parseTransactionMessage } from '@services/aiTransactionParser';
+import { parseDate } from '@utils/dateParser';
+import { formatCurrency, formatDate } from '@utils/currency';
+import { CATEGORY_ICONS, CATEGORY_LABELS } from '@utils/categories';
 
-const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    backgroundColor: '#2196F3',
-    borderRadius: 8,
-    marginTop: 10,
-    padding: 15,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  container: {
-    backgroundColor: '#f5f5f5',
-    flex: 1,
-  },
-  form: {
-    padding: 20,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderColor: '#ddd',
-    borderRadius: 8,
-    borderWidth: 1,
-    marginBottom: 15,
-    padding: 12,
-  },
-  label: {
-    color: '#333',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-});
+interface FeedItem {
+  id: string;
+  kind: 'stored' | 'error';
+  description?: string;
+  amount?: number;
+  type?: 'income' | 'expense';
+  category?: string;
+  date?: Date;
+  userText?: string;
+  errorMessage?: string;
+}
+
+const C = {
+  white: '#fff',
+  textDark: '#333',
+  textLight: '#999',
+  textMuted: '#bbb',
+  blue: '#2196F3',
+  border: '#e0e0e0',
+  bg: '#f5f5f5',
+  green: '#4CAF50',
+  greenLight: '#E8F5E9',
+  red: '#f44336',
+  redLight: '#FFEBEE',
+  cardBg: '#fff',
+  grayLight: '#f0f0f0',
+  grayBorder: '#e0e0e0',
+  divider: '#ddd',
+};
 
 export default function AddTransactionScreen(): React.ReactElement {
-  const [type, setType] = useState<'income' | 'expense'>('expense');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
-  const [description, setDescription] = useState('');
-  const { user } = useAuthStore();
-  const { addTransaction, isLoading } = useTransactionStore();
+  const [inputText, setInputText] = useState('');
+  const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const feedIdCounter = useRef(0);
 
-  const handleAdd = async () => {
-    if (!amount || !category) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
-    }
+  const { user } = useAuthStore();
+  const { transactions, addTransaction } = useTransactionStore();
+
+  useEffect(() => {
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    threeDaysAgo.setHours(0, 0, 0, 0);
+
+    const items: FeedItem[] = [...transactions]
+      .filter((tx) => tx.date >= threeDaysAgo)
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .map((tx) => ({
+        id: tx.id,
+        kind: 'stored' as const,
+        description: tx.description,
+        amount: tx.amount,
+        type: tx.type,
+        category: tx.category,
+        date: tx.date,
+        userText: tx.userText,
+      }));
+    setFeed(items);
+  }, [transactions]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, [feed, isLoading]);
+
+  const handleSend = async () => {
+    const text = inputText.trim();
+    if (!text || !user?.id || isLoading) return;
+
+    setInputText('');
+    setIsLoading(true);
 
     try {
-      await addTransaction({
-        userId: user?.id || '',
-        type,
-        amount: parseFloat(amount),
-        category,
-        description,
-        date: new Date(),
-      });
-      Alert.alert('Success', 'Transaction added successfully');
-      setAmount('');
-      setCategory('');
-      setDescription('');
+      const result = await parseTransactionMessage(text, []);
+
+      if (result.transactions.length > 0) {
+        const aiTx = result.transactions[0];
+        const txDate = parseDate(aiTx.date) || new Date();
+
+        try {
+          await addTransaction({
+            userId: user.id,
+            type: aiTx.type,
+            amount: aiTx.amount,
+            category: aiTx.category,
+            description: aiTx.description,
+            date: txDate,
+            userText: text,
+          });
+        } catch {
+          const errItem: FeedItem = {
+            id: (++feedIdCounter.current).toString(),
+            kind: 'error',
+            errorMessage: 'Failed to save transaction',
+            userText: text,
+          };
+          setFeed((prev) => [...prev, errItem]);
+        }
+      } else {
+        const errItem: FeedItem = {
+          id: (++feedIdCounter.current).toString(),
+          kind: 'error',
+          errorMessage:
+            result.followUpQuestion ||
+            "Could not parse. Try 'Coffee 30k' or 'Grab 120k yesterday'",
+          userText: text,
+        };
+        setFeed((prev) => [...prev, errItem]);
+      }
     } catch (error) {
-      Alert.alert('Error', (error as Error).message);
+      const errItem: FeedItem = {
+        id: (++feedIdCounter.current).toString(),
+        kind: 'error',
+        errorMessage: `Error: ${(error as Error).message}`,
+        userText: text,
+      };
+      setFeed((prev) => [...prev, errItem]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const renderItem = (item: FeedItem) => {
+    if (item.kind === 'error') {
+      return (
+        <View key={item.id} style={styles.errorBubble}>
+          <Text style={styles.errorBubbleText}>
+            {'⚠️ '}
+            {item.errorMessage}
+          </Text>
+        </View>
+      );
+    }
+
+    const icon = CATEGORY_ICONS[item.category || ''] || '📌';
+    const label = CATEGORY_LABELS[item.category || ''] || item.category;
+    const sign = item.type === 'income' ? '+' : '-';
+    const amountColor =
+      item.type === 'income' ? styles.incomeColor : styles.expenseColor;
+
+    return (
+      <View key={item.id} style={styles.itemBubble}>
+        <View style={styles.itemRow}>
+          <View style={styles.itemLeft}>
+            <View style={styles.itemHeader}>
+              <Text style={styles.itemIcon}>{icon}</Text>
+              <View style={styles.itemInfo}>
+                <Text style={styles.itemDescription}>
+                  {item.description}
+                </Text>
+                <Text style={styles.itemMeta}>
+                  {label}
+                  {' | '}
+                  {item.date ? formatDate(item.date) : ''}
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.itemAmount, amountColor]}>
+              {sign}
+              {formatCurrency(item.amount || 0)}
+            </Text>
+          </View>
+
+          {item.userText && (
+            <>
+              <View style={styles.itemDivider} />
+              <View style={styles.itemRight}>
+                <Text style={styles.userText}>{item.userText}</Text>
+              </View>
+            </>
+          )}
+        </View>
+      </View>
+    );
+  };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.form}>
-        <Text style={styles.label}>Type</Text>
-        <View style={{ flexDirection: 'row', marginBottom: 15 }}>
+    <View style={styles.container}>
+      <ScrollView ref={scrollRef} style={styles.scrollArea}>
+        {feed.map(renderItem)}
+
+        {isLoading && (
+          <View style={styles.loadingRow}>
+            <ActivityIndicator size="small" color={C.blue} />
+            <Text style={styles.loadingText}>Saving...</Text>
+          </View>
+        )}
+      </ScrollView>
+
+      <View style={styles.inputContainer}>
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.input}
+            placeholder="What did you spend?"
+            placeholderTextColor={C.textLight}
+            value={inputText}
+            onChangeText={setInputText}
+            editable={!isLoading}
+            multiline
+          />
           <TouchableOpacity
-            style={[styles.button, { flex: 1, marginRight: 10, backgroundColor: type === 'income' ? '#4CAF50' : '#ddd' }]}
-            onPress={() => setType('income')}
+            style={[
+              styles.sendButton,
+              (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
+            ]}
+            onPress={handleSend}
+            disabled={!inputText.trim() || isLoading}
           >
-            <Text style={styles.buttonText}>Income</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, { flex: 1, backgroundColor: type === 'expense' ? '#f44336' : '#ddd' }]}
-            onPress={() => setType('expense')}
-          >
-            <Text style={styles.buttonText}>Expense</Text>
+            <Text style={styles.sendButtonText}>Send</Text>
           </TouchableOpacity>
         </View>
-
-        <Text style={styles.label}>Amount</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="0"
-          value={amount}
-          onChangeText={setAmount}
-          keyboardType="decimal-pad"
-        />
-
-        <Text style={styles.label}>Category</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Select category"
-          value={category}
-          onChangeText={setCategory}
-        />
-
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, { minHeight: 100 }]}
-          placeholder="Add a note..."
-          value={description}
-          onChangeText={setDescription}
-          multiline
-        />
-
-        <TouchableOpacity
-          style={[styles.button, isLoading && { opacity: 0.6 }]}
-          onPress={handleAdd}
-          disabled={isLoading}
-        >
-          <Text style={styles.buttonText}>Add Transaction</Text>
-        </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: C.bg,
+    flex: 1,
+  },
+  errorBubble: {
+    alignSelf: 'flex-start',
+    backgroundColor: C.redLight,
+    borderRadius: 10,
+    marginBottom: 8,
+    marginRight: 50,
+    padding: 12,
+  },
+  errorBubbleText: {
+    color: C.red,
+    fontSize: 13,
+  },
+  expenseColor: {
+    color: C.red,
+  },
+  incomeColor: {
+    color: C.green,
+  },
+  input: {
+    borderColor: C.border,
+    borderRadius: 10,
+    borderWidth: 1,
+    flex: 1,
+    marginRight: 10,
+    maxHeight: 100,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  inputContainer: {
+    backgroundColor: C.white,
+    borderTopColor: C.border,
+    borderTopWidth: 1,
+    paddingBottom: 20,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+  },
+  inputRow: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+  },
+  itemAmount: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  itemBubble: {
+    backgroundColor: C.cardBg,
+    borderRadius: 12,
+    marginBottom: 8,
+    padding: 12,
+  },
+  itemDescription: {
+    color: C.textDark,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  itemDivider: {
+    borderLeftColor: C.divider,
+    borderLeftWidth: 1,
+    marginHorizontal: 12,
+  },
+  itemHeader: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+  },
+  itemIcon: {
+    fontSize: 18,
+    marginRight: 8,
+    marginTop: 1,
+  },
+  itemInfo: {
+    flex: 1,
+  },
+  itemLeft: {
+    flex: 1,
+  },
+  itemMeta: {
+    color: C.textMuted,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  itemRight: {
+    justifyContent: 'center',
+    maxWidth: 120,
+    paddingLeft: 4,
+  },
+  itemRow: {
+    borderColor: C.border,
+    borderRadius: 10,
+    borderWidth: 1,
+    flex: 1,
+    marginRight: 10,
+    maxHeight: 100,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  loadingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginVertical: 8,
+  },
+  loadingText: {
+    color: C.textLight,
+    fontSize: 13,
+    marginLeft: 8,
+  },
+  scrollArea: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+  },
+  sendButton: {
+    backgroundColor: C.blue,
+    borderRadius: 10,
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  sendButtonText: {
+    color: C.white,
+    fontWeight: 'bold',
+  },
+  userLabel: {
+    color: C.textMuted,
+    fontSize: 10,
+    fontWeight: '600',
+    marginBottom: 2,
+    textTransform: 'uppercase',
+  },
+  userText: {
+    color: C.textDark,
+    fontSize: 13,
+    fontStyle: 'italic',
+  },
+});

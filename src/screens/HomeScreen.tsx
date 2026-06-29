@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
@@ -8,6 +8,7 @@ import {
   StatisticsCard,
   SegmentedControl,
   FloatingActionButton,
+  FilteredTransactionList,
 } from '@components/index';
 import { getMonthStart, getMonthEnd } from '@utils/currency';
 
@@ -69,9 +70,7 @@ export default function HomeScreen(): React.ReactElement {
           onSelect={setReportTab}
         />
 
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>{reportTab === 0 ? 'Expense' : 'Income'} report will appear here</Text>
-        </View>
+        <FilteredTransactionList type={reportTab === 0 ? 'expense' : 'income'} />
       </ScrollView>
 
       <FloatingActionButton onPress={handleAddTransaction} />
@@ -83,14 +82,6 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: C.background,
     flex: 1,
-  },
-  placeholder: {
-    alignItems: 'center',
-    padding: 32,
-  },
-  placeholderText: {
-    color: C.textLight,
-    fontSize: 14,
   },
   scroll: {
     flex: 1,

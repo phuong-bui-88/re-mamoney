@@ -20,11 +20,25 @@ jest.mock('@services/firebase', () => ({
   },
 }));
 
-// Mock React Native modules
-jest.mock('react-native', () => ({
-  ...jest.requireActual('react-native'),
-  Alert: {
-    alert: jest.fn(),
+// Mock AI services
+jest.mock('@services/aiTransactionParser', () => ({
+  parseTransactionMessage: jest.fn(),
+}));
+
+// Mock missing native modules
+jest.mock('react-native/Libraries/Alert/Alert', () => ({
+  alert: jest.fn(),
+}));
+
+// Ensure DeviceInfo native module returns valid dimensions
+jest.mock('react-native/Libraries/Utilities/NativeDeviceInfo', () => ({
+  __esModule: true,
+  default: {
+    getConstants: () => ({
+      Dimensions: {
+        window: { width: 375, height: 812, scale: 2, fontScale: 1 },
+      },
+    }),
   },
 }));
 
