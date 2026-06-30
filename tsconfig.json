@@ -39,6 +39,12 @@
       ],
       "@store/*": [
         "src/store/*"
+      ],
+      "@theme/*": [
+        "src/theme/*"
+      ],
+      "@styles/*": [
+        "src/styles/*"
       ]
     },
     "resolveJsonModule": true,

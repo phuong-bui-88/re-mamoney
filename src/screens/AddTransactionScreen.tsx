@@ -5,14 +5,18 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useTransactionStore, useAuthStore } from '@store/index';
 import { parseTransactionMessage } from '@services/aiTransactionParser';
 import { parseDate } from '@utils/dateParser';
 import { formatCurrency, formatDate } from '@utils/currency';
 import { CATEGORY_ICONS, CATEGORY_LABELS } from '@utils/categories';
+import { C } from '@theme/colors';
+import { transItemStyles } from '@styles/index';
 
 interface FeedItem {
   id: string;
@@ -25,24 +29,6 @@ interface FeedItem {
   userText?: string;
   errorMessage?: string;
 }
-
-const C = {
-  white: '#fff',
-  textDark: '#333',
-  textLight: '#999',
-  textMuted: '#bbb',
-  blue: '#2196F3',
-  border: '#e0e0e0',
-  bg: '#f5f5f5',
-  green: '#4CAF50',
-  greenLight: '#E8F5E9',
-  red: '#f44336',
-  redLight: '#FFEBEE',
-  cardBg: '#fff',
-  grayLight: '#f0f0f0',
-  grayBorder: '#e0e0e0',
-  divider: '#ddd',
-};
 
 export default function AddTransactionScreen(): React.ReactElement {
   const [inputText, setInputText] = useState('');
@@ -141,8 +127,8 @@ export default function AddTransactionScreen(): React.ReactElement {
   const renderItem = (item: FeedItem) => {
     if (item.kind === 'error') {
       return (
-        <View key={item.id} style={styles.errorBubble}>
-          <Text style={styles.errorBubbleText}>
+        <View key={item.id} style={transItemStyles.errorBubble}>
+          <Text style={transItemStyles.errorBubbleText}>
             {'⚠️ '}
             {item.errorMessage}
           </Text>
@@ -154,26 +140,26 @@ export default function AddTransactionScreen(): React.ReactElement {
     const label = CATEGORY_LABELS[item.category || ''] || item.category;
     const sign = item.type === 'income' ? '+' : '-';
     const amountColor =
-      item.type === 'income' ? styles.incomeColor : styles.expenseColor;
+      item.type === 'income' ? transItemStyles.incomeColor : transItemStyles.expenseColor;
 
     return (
-      <View key={item.id} style={styles.itemBubble}>
-        <View style={styles.itemRow}>
-          <View style={styles.itemLeft}>
-            <View style={styles.itemHeader}>
-              <Text style={styles.itemIcon}>{icon}</Text>
-              <View style={styles.itemInfo}>
-                <Text style={styles.itemDescription}>
+      <View key={item.id} style={transItemStyles.itemBubble}>
+        <View style={transItemStyles.itemRow}>
+          <View style={transItemStyles.itemLeft}>
+            <View style={transItemStyles.itemHeader}>
+              <Text style={transItemStyles.itemIcon}>{icon}</Text>
+              <View style={transItemStyles.itemInfo}>
+                <Text style={transItemStyles.itemDescription}>
                   {item.description}
                 </Text>
-                <Text style={styles.itemMeta}>
+                <Text style={transItemStyles.itemMeta}>
                   {label}
                   {' | '}
                   {item.date ? formatDate(item.date) : ''}
                 </Text>
               </View>
             </View>
-            <Text style={[styles.itemAmount, amountColor]}>
+            <Text style={[transItemStyles.itemAmount, amountColor]}>
               {sign}
               {formatCurrency(item.amount || 0)}
             </Text>
@@ -181,9 +167,9 @@ export default function AddTransactionScreen(): React.ReactElement {
 
           {item.userText && (
             <>
-              <View style={styles.itemDivider} />
-              <View style={styles.itemRight}>
-                <Text style={styles.userText}>{item.userText}</Text>
+              <View style={transItemStyles.itemDivider} />
+              <View style={transItemStyles.itemRight}>
+                <Text style={transItemStyles.userText}>{item.userText}</Text>
               </View>
             </>
           )}
@@ -193,8 +179,16 @@ export default function AddTransactionScreen(): React.ReactElement {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView ref={scrollRef} style={styles.scrollArea}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scrollArea}
+        keyboardShouldPersistTaps="handled"
+      >
         {feed.map(renderItem)}
 
         {isLoading && (
@@ -228,7 +222,7 @@ export default function AddTransactionScreen(): React.ReactElement {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -236,24 +230,6 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: C.bg,
     flex: 1,
-  },
-  errorBubble: {
-    alignSelf: 'flex-start',
-    backgroundColor: C.redLight,
-    borderRadius: 10,
-    marginBottom: 8,
-    marginRight: 50,
-    padding: 12,
-  },
-  errorBubbleText: {
-    color: C.red,
-    fontSize: 13,
-  },
-  expenseColor: {
-    color: C.red,
-  },
-  incomeColor: {
-    color: C.green,
   },
   input: {
     borderColor: C.border,
@@ -276,63 +252,6 @@ const styles = StyleSheet.create({
   inputRow: {
     alignItems: 'flex-end',
     flexDirection: 'row',
-  },
-  itemAmount: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  itemBubble: {
-    backgroundColor: C.cardBg,
-    borderRadius: 12,
-    marginBottom: 8,
-    padding: 12,
-  },
-  itemDescription: {
-    color: C.textDark,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  itemDivider: {
-    borderLeftColor: C.divider,
-    borderLeftWidth: 1,
-    marginHorizontal: 12,
-  },
-  itemHeader: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-  },
-  itemIcon: {
-    fontSize: 18,
-    marginRight: 8,
-    marginTop: 1,
-  },
-  itemInfo: {
-    flex: 1,
-  },
-  itemLeft: {
-    flex: 1,
-  },
-  itemMeta: {
-    color: C.textMuted,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  itemRight: {
-    justifyContent: 'center',
-    maxWidth: 120,
-    paddingLeft: 4,
-  },
-  itemRow: {
-    borderColor: C.border,
-    borderRadius: 10,
-    borderWidth: 1,
-    flex: 1,
-    flexDirection: 'row',
-    marginRight: 10,
-    maxHeight: 100,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
   },
   loadingRow: {
     alignItems: 'center',
@@ -362,17 +281,5 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: C.white,
     fontWeight: 'bold',
-  },
-  userLabel: {
-    color: C.textMuted,
-    fontSize: 10,
-    fontWeight: '600',
-    marginBottom: 2,
-    textTransform: 'uppercase',
-  },
-  userText: {
-    color: C.textDark,
-    fontSize: 13,
-    fontStyle: 'italic',
   },
 });
