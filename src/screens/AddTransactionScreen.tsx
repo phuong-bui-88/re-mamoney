@@ -328,6 +328,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     flex: 1,
+    flexDirection: 'row',
     marginRight: 10,
     maxHeight: 100,
     paddingHorizontal: 14,
