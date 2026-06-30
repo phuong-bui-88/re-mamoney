@@ -152,7 +152,15 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
   loadTransactions: async (filter: TransactionFilter) => {
     set({ isLoading: true, error: null });
     try {
-      const transactions = await firebaseService.getTransactions(filter);
+      let transactions = await firebaseService.getTransactions(filter);
+      if (filter.startDate) {
+        transactions = transactions.filter((t) => t.date >= filter.startDate!);
+      }
+      if (filter.endDate) {
+        const endOfDay = new Date(filter.endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        transactions = transactions.filter((t) => t.date <= endOfDay);
+      }
       get().setTransactions(transactions);
       set({ isLoading: false });
     } catch (error) {
