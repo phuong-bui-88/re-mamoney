@@ -15,6 +15,10 @@ export default function FilteredTransactionList({ type }: FilteredTransactionLis
   const { transactions } = useTransactionStore();
   const filtered = transactions.filter((t) => t.type === type);
 
+  const handleDelete = (id: string) => {
+    useTransactionStore.getState().deleteTransaction(id);
+  };
+
   if (filtered.length === 0) {
     return (
       <View style={styles.empty}>
@@ -26,7 +30,7 @@ export default function FilteredTransactionList({ type }: FilteredTransactionLis
   return (
     <View style={styles.container}>
       {filtered.map((transaction) => (
-        <TransactionRow key={transaction.id} transaction={transaction} />
+        <TransactionRow key={transaction.id} transaction={transaction} onDelete={handleDelete} />
       ))}
     </View>
   );

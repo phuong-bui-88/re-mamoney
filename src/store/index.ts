@@ -1,6 +1,35 @@
 import { create } from 'zustand';
 import { Transaction, User, TransactionFilter } from '@/types';
+import { getMonthStart, getMonthEnd } from '@utils/currency';
 import firebaseService from '@services/firebase';
+
+function filterByPeriod(
+  transactions: Transaction[],
+  start?: Date | null,
+  end?: Date | null,
+): Transaction[] {
+  if (!start && !end) return [];
+  let filtered = [...transactions];
+  if (start) {
+    filtered = filtered.filter((t) => t.date >= start);
+  }
+  if (end) {
+    const endOfDay = new Date(end);
+    endOfDay.setHours(23, 59, 59, 999);
+    filtered = filtered.filter((t) => t.date <= endOfDay);
+  }
+  return filtered;
+}
+
+function computeTotals(transactions: Transaction[]) {
+  const totalIncome = transactions
+    .filter((t) => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
+  const totalExpense = transactions
+    .filter((t) => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+  return { totalIncome, totalExpense, balance: totalIncome - totalExpense };
+}
 
 interface AuthStore {
   user: User | null;
@@ -61,14 +90,19 @@ export const useAuthStore = create<AuthStore>((set) => ({
 }));
 
 interface TransactionStore {
+  allTransactions: Transaction[];
   transactions: Transaction[];
   filter: TransactionFilter;
+  periodStart: Date | null;
+  periodEnd: Date | null;
   isLoading: boolean;
   error: string | null;
   totalIncome: number;
   totalExpense: number;
   balance: number;
 
+  setAllTransactions: (transactions: Transaction[]) => void;
+  setPeriod: (start: Date, end: Date) => void;
   setTransactions: (transactions: Transaction[]) => void;
   setFilter: (filter: TransactionFilter) => void;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
@@ -79,29 +113,34 @@ interface TransactionStore {
 }
 
 export const useTransactionStore = create<TransactionStore>((set, get) => ({
+  allTransactions: [],
   transactions: [],
   filter: {},
+  periodStart: getMonthStart(new Date()),
+  periodEnd: getMonthEnd(new Date()),
   isLoading: false,
   error: null,
   totalIncome: 0,
   totalExpense: 0,
   balance: 0,
 
-  setTransactions: (transactions: Transaction[]) => {
-    const totalIncome = transactions
-      .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-    const totalExpense = transactions
-      .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-    const balance = totalIncome - totalExpense;
+  setAllTransactions: (allTransactions: Transaction[]) => {
+    const { periodStart, periodEnd } = get();
+    const filtered = filterByPeriod(allTransactions, periodStart, periodEnd);
+    const totals = computeTotals(filtered);
+    set({ allTransactions, transactions: filtered, ...totals });
+  },
 
-    set({
-      transactions,
-      totalIncome,
-      totalExpense,
-      balance,
-    });
+  setPeriod: (start: Date, end: Date) => {
+    const { allTransactions } = get();
+    const filtered = filterByPeriod(allTransactions, start, end);
+    const totals = computeTotals(filtered);
+    set({ periodStart: start, periodEnd: end, transactions: filtered, ...totals });
+  },
+
+  setTransactions: (transactions: Transaction[]) => {
+    const totals = computeTotals(transactions);
+    set({ transactions, ...totals });
   },
 
   setFilter: (filter: TransactionFilter) => {
@@ -112,8 +151,9 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const newTransaction = await firebaseService.addTransaction(transaction);
-      const { transactions } = get();
-      get().setTransactions([...transactions, newTransaction]);
+      const { allTransactions } = get();
+      const merged = allTransactions.filter(t => t.id !== newTransaction.id);
+      get().setAllTransactions([...merged, newTransaction]);
       set({ isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
@@ -125,9 +165,9 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await firebaseService.updateTransaction(id, updates);
-      const { transactions } = get();
-      const updated = transactions.map((t) => (t.id === id ? { ...t, ...updates } : t));
-      get().setTransactions(updated);
+      const { allTransactions } = get();
+      const updated = allTransactions.map((t) => (t.id === id ? { ...t, ...updates } : t));
+      get().setAllTransactions(updated);
       set({ isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
@@ -139,9 +179,9 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await firebaseService.deleteTransaction(id);
-      const { transactions } = get();
-      const filtered = transactions.filter((t) => t.id !== id);
-      get().setTransactions(filtered);
+      const { allTransactions } = get();
+      const filtered = allTransactions.filter((t) => t.id !== id);
+      get().setAllTransactions(filtered);
       set({ isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
@@ -152,17 +192,16 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
   loadTransactions: async (filter: TransactionFilter) => {
     set({ isLoading: true, error: null });
     try {
-      let transactions = await firebaseService.getTransactions(filter);
-      if (filter.startDate) {
-        transactions = transactions.filter((t) => t.date >= filter.startDate!);
+      const transactions = await firebaseService.getTransactions(filter);
+      const { periodStart, periodEnd } = get();
+      const existingMap = new Map(get().allTransactions.map((t) => [t.id, t]));
+      for (const tx of transactions) {
+        existingMap.set(tx.id, tx);
       }
-      if (filter.endDate) {
-        const endOfDay = new Date(filter.endDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        transactions = transactions.filter((t) => t.date <= endOfDay);
-      }
-      get().setTransactions(transactions);
-      set({ isLoading: false });
+      const merged = Array.from(existingMap.values());
+      const filtered = filterByPeriod(merged, periodStart, periodEnd);
+      const totals = computeTotals(filtered);
+      set({ allTransactions: merged, transactions: filtered, ...totals, isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
       throw error;

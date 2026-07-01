@@ -1,14 +1,13 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
+import firebaseService from '@services/firebase';
 import {
   PeriodFilter,
   StatisticsCard,
-  SegmentedControl,
   FloatingActionButton,
-  FilteredTransactionList,
 } from '@components/index';
 import { getMonthStart, getMonthEnd } from '@utils/currency';
 
@@ -19,22 +18,36 @@ const C = {
 
 export default function HomeScreen(): React.ReactElement {
   const { user } = useAuthStore();
-  const { loadTransactions, totalIncome, totalExpense } = useTransactionStore();
+  const { totalIncome, totalExpense } = useTransactionStore();
   const navigation = useNavigation();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [reportTab, setReportTab] = useState(0);
 
   const netChange = totalIncome - totalExpense;
 
   useEffect(() => {
-    if (user) {
-      const startDate = getMonthStart(new Date(selectedYear, selectedMonth));
-      const endDate = getMonthEnd(new Date(selectedYear, selectedMonth));
-      loadTransactions({ userId: user.id, startDate, endDate });
-    }
-  }, [user, selectedMonth, selectedYear, loadTransactions]);
+    if (!user) return;
+
+    const startDate = getMonthStart(new Date(selectedYear, selectedMonth));
+    const endDate = getMonthEnd(new Date(selectedYear, selectedMonth));
+    useTransactionStore.getState().setPeriod(startDate, endDate);
+
+    const unsubscribe = firebaseService.subscribeToTransactions(
+      { userId: user.id },
+      (transactions) => {
+        useTransactionStore.getState().setAllTransactions(transactions);
+      },
+    );
+    return unsubscribe;
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const startDate = getMonthStart(new Date(selectedYear, selectedMonth));
+    const endDate = getMonthEnd(new Date(selectedYear, selectedMonth));
+    useTransactionStore.getState().setPeriod(startDate, endDate);
+  }, [user, selectedMonth, selectedYear]);
 
   const handleAddTransaction = useCallback(() => {
     navigation.getParent()?.navigate('AddTransaction' as never);
@@ -64,13 +77,6 @@ export default function HomeScreen(): React.ReactElement {
           onInfoPress={handleInfo}
         />
 
-        <SegmentedControl
-          segments={['Expense', 'Income']}
-          selected={reportTab}
-          onSelect={setReportTab}
-        />
-
-        <FilteredTransactionList type={reportTab === 0 ? 'expense' : 'income'} />
       </ScrollView>
 
       <FloatingActionButton onPress={handleAddTransaction} />

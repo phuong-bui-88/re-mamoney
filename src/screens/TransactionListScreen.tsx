@@ -1,100 +1,86 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
-import { formatCurrency, formatDate } from '@utils/currency';
+import firebaseService from '@services/firebase';
+import {
+  PeriodFilter,
+  SegmentedControl,
+  FilteredTransactionList,
+  FloatingActionButton,
+} from '@components/index';
+import { getMonthStart, getMonthEnd } from '@utils/currency';
 
-const styles = StyleSheet.create({
-  amount: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  category: {
-    color: '#333',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  container: {
-    backgroundColor: '#f5f5f5',
-    flex: 1,
-  },
-  date: {
-    color: '#999',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  description: {
-    color: '#999',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  expense: {
-    color: '#f44336',
-  },
-  header: {
-    backgroundColor: '#2196F3',
-    padding: 20,
-    paddingTop: 40,
-  },
-  income: {
-    color: '#4CAF50',
-  },
-  title: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  transactionInfo: {
-    flex: 1,
-  },
-  transactionItem: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 15,
-    marginVertical: 8,
-    padding: 15,
-  },
-});
+const C = {
+  background: '#F5F5F5',
+};
 
 export default function TransactionListScreen(): React.ReactElement {
   const { user } = useAuthStore();
-  const { transactions, loadTransactions } = useTransactionStore();
-  const route = useRoute<RouteProp<Record<string, { type?: 'income' | 'expense' }>, string>>();
-  const filterType = route.params?.type;
+  const navigation = useNavigation();
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [reportTab, setReportTab] = useState(0);
 
   useEffect(() => {
-    if (user) {
-      loadTransactions({ userId: user.id, ...(filterType && { type: filterType }) });
-    }
-  }, [user, loadTransactions, filterType]);
+    if (!user) return;
+
+    const startDate = getMonthStart(new Date(selectedYear, selectedMonth));
+    const endDate = getMonthEnd(new Date(selectedYear, selectedMonth));
+    useTransactionStore.getState().setPeriod(startDate, endDate);
+
+    const unsubscribe = firebaseService.subscribeToTransactions(
+      { userId: user.id },
+      (transactions) => {
+        useTransactionStore.getState().setAllTransactions(transactions);
+      },
+    );
+    return unsubscribe;
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const startDate = getMonthStart(new Date(selectedYear, selectedMonth));
+    const endDate = getMonthEnd(new Date(selectedYear, selectedMonth));
+    useTransactionStore.getState().setPeriod(startDate, endDate);
+  }, [user, selectedMonth, selectedYear]);
+
+  const handleAddTransaction = useCallback(() => {
+    navigation.getParent()?.navigate('AddTransaction' as never);
+  }, [navigation]);
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Transactions</Text>
-      </View>
+    <View style={styles.container}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <PeriodFilter
+          month={selectedMonth}
+          year={selectedYear}
+          onMonthChange={setSelectedMonth}
+          onYearChange={setSelectedYear}
+        />
 
-      {transactions.length === 0 ? (
-        <View style={{ padding: 20, alignItems: 'center' }}>
-          <Text>No transactions yet</Text>
-        </View>
-      ) : (
-        transactions.map((transaction) => (
-          <View key={transaction.id} style={styles.transactionItem}>
-            <View style={styles.transactionInfo}>
-              <Text style={styles.category}>{transaction.category}</Text>
-              <Text style={styles.description}>{transaction.description}</Text>
-              <Text style={styles.date}>{formatDate(transaction.date)}</Text>
-            </View>
-            <Text style={[styles.amount, transaction.type === 'expense' ? styles.expense : styles.income]}>
-              {transaction.type === 'expense' ? '-' : '+'}{formatCurrency(transaction.amount)}
-            </Text>
-          </View>
-        ))
-      )}
-    </ScrollView>
+        <SegmentedControl
+          segments={['Expense', 'Income']}
+          selected={reportTab}
+          onSelect={setReportTab}
+        />
+
+        <FilteredTransactionList type={reportTab === 0 ? 'expense' : 'income'} />
+      </ScrollView>
+
+      <FloatingActionButton onPress={handleAddTransaction} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: C.background,
+    flex: 1,
+  },
+  scroll: {
+    flex: 1,
+  },
+});

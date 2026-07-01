@@ -12,6 +12,7 @@ import firebaseService from '@services/firebase';
 import { useAuthStore } from '@store/index';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const C = { white: '#fff' };
 
@@ -19,6 +20,9 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const styles = StyleSheet.create({
+  gestureRoot: {
+    flex: 1,
+  },
   loadingContainer: {
     alignItems: 'center',
     backgroundColor: C.white,
@@ -109,8 +113,9 @@ export default function App(): React.ReactElement {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
+    <GestureHandlerRootView style={styles.gestureRoot}>
+      <NavigationContainer>
+        <Stack.Navigator>
         {user ? (
           <>
             <Stack.Screen
@@ -133,5 +138,6 @@ export default function App(): React.ReactElement {
         )}
       </Stack.Navigator>
     </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }

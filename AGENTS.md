@@ -73,6 +73,11 @@ const { transactions, balance } = useTransactionStore();
 - Stack Navigator: `if (!user)` → LoginScreen, else → BottomTabNavigator
 - BottomTabNavigator: HomeScreen, TransactionListScreen, AskScreen, SettingsScreen
 
+## Test Credentials
+
+- **Email:** `d2@gmail.com`
+- **Password:** `123456`
+
 ## Firebase Required
 
 App **will not run** without `.env.local`:
@@ -110,6 +115,23 @@ Button.ts (shared), Button.ios.ts (iOS), Button.android.ts (Android)
 // Or inline:
 import { Platform } from 'react-native';
 const fontSize = Platform.select({ ios: 18, android: 16, web: 16 });
+```
+
+## Theme & Styles
+
+Color tokens and shared styles live in two folders:
+
+- **`src/theme/`** — design tokens
+  - `src/theme/index.ts` — barrel export: `import { C } from '@theme/index'`
+  - `src/theme/colors.ts` — `C` object with all color constants (white, textDark, textLight, textMuted, blue, border, bg, green, greenLight, red, redLight, cardBg, grayLight, grayBorder, divider)
+- **`src/styles/`** — shared `StyleSheet` objects
+  - `src/styles/index.ts` — barrel export: `import { transItemStyles } from '@styles/index'`
+  - `src/styles/transactionItem.ts` — styles for transaction feed bubbles and items
+
+Import pattern:
+```typescript
+import { C } from '@theme/index';
+import { transItemStyles } from '@styles/index';
 ```
 
 ## Key Decisions

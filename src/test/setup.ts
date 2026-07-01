@@ -14,7 +14,7 @@ jest.mock('@services/firebase', () => ({
     updateTransaction: jest.fn(),
     deleteTransaction: jest.fn(),
     getTransactions: jest.fn(() => Promise.resolve([])),
-    subscribeToTransactions: jest.fn(),
+    subscribeToTransactions: jest.fn(() => jest.fn()),
     addChatMessage: jest.fn(),
     subscribeToChatMessages: jest.fn(),
   },
@@ -24,6 +24,20 @@ jest.mock('@services/firebase', () => ({
 jest.mock('@services/aiTransactionParser', () => ({
   parseTransactionMessage: jest.fn(),
 }));
+
+// Mock react-native-gesture-handler (native module)
+jest.mock('react-native-gesture-handler', () => ({
+  Swipeable: ({ children }: { children: React.ReactNode }) => children,
+  gestureHandlerRootHOC: (Component: React.ComponentType) => Component,
+  GestureHandlerRootView: ({ children }: { children: React.ReactNode }) => children,
+  State: {},
+  Directions: {},
+}));
+
+jest.mock('react-native-gesture-handler/Swipeable', () => {
+  const MockSwipeable = ({ children }: { children: React.ReactNode }) => children;
+  return MockSwipeable;
+});
 
 // Mock missing native modules
 jest.mock('react-native/Libraries/Alert/Alert', () => ({

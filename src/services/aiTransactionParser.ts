@@ -2,10 +2,12 @@ import axios from 'axios';
 import { AIParseResult, AITransaction } from '@/types';
 import { aiConfig } from './aiConfig';
 import { CATEGORY_LABELS } from '@utils/categories';
+import { formatDate } from '@utils/currency';
 
 const CATEGORIES_LIST = Object.keys(CATEGORY_LABELS).join(', ');
 
 function buildSystemPrompt(): string {
+  const todayStr = formatDate(new Date(), 'dd-MM-yyyy');
   return `You are a personal finance assistant for a Vietnamese user (VND currency). Convert natural language into structured transactions.
 
 CATEGORIES (use only these exact keys):
@@ -35,10 +37,11 @@ AMOUNT RULES (VND only):
 - Output number only, no commas, no currency symbols
 
 DATE RULES:
+- Today's date is ${todayStr}.
 - Understand relative dates: "today", "yesterday", "tomorrow", "last Friday", "this Monday", "3 days ago", "June 20", "20/06", "20-06-2026"
 - Convert ALL dates to DD-MM-YYYY format
 - Use the current year (2026) for dates without a year
-- Default to today's date if no date mentioned
+- Default to today's date (${todayStr}) if no date mentioned
 
 OUTPUT FORMAT:
 For each transaction, return exactly one line:
@@ -46,24 +49,24 @@ TRANSACTION: description | amount | category | type | date
 
 EXAMPLES:
 Input: "hủ tiếu 25k"
-Output: TRANSACTION: hủ tiếu | 25000 | food | expense | 29-06-2026
+Output: TRANSACTION: hủ tiếu | 25000 | food | expense | ${todayStr}
 
 Input: "Starbucks 120k yesterday"
-Output: TRANSACTION: Starbucks | 120000 | food | expense | 28-06-2026
+Output: TRANSACTION: Starbucks | 120000 | food | expense | ${todayStr}
 
 Input: "Grab 120k last Friday"
-Output: TRANSACTION: Grab | 120000 | transport | expense | 26-06-2026
+Output: TRANSACTION: Grab | 120000 | transport | expense | ${todayStr}
 
 Input: "Netflix 350k"
-Output: TRANSACTION: Netflix | 350000 | entertainment | expense | 29-06-2026
+Output: TRANSACTION: Netflix | 350000 | entertainment | expense | ${todayStr}
 
 Input: "salary 20m"
-Output: TRANSACTION: Salary | 20000000 | salary | income | 29-06-2026
+Output: TRANSACTION: Salary | 20000000 | salary | income | ${todayStr}
 
 Input: "lunch 80k\ntaxi 120k"
 Output:
-TRANSACTION: Lunch | 80000 | food | expense | 29-06-2026
-TRANSACTION: Taxi | 120000 | transport | expense | 29-06-2026
+TRANSACTION: Lunch | 80000 | food | expense | ${todayStr}
+TRANSACTION: Taxi | 120000 | transport | expense | ${todayStr}
 
 Input: "coffee"
 Output: (empty — cannot determine amount)
