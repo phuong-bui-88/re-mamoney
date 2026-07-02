@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { C } from '@theme/index';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
 import firebaseService from '@services/firebase';
@@ -11,11 +12,6 @@ import {
   FloatingActionButton,
 } from '@components/index';
 import { getMonthStart, getMonthEnd } from '@utils/currency';
-
-const C = {
-  background: '#F5F5F5',
-  textLight: '#999',
-};
 
 export default function HomeScreen(): React.ReactElement {
   const { user } = useAuthStore();
@@ -87,11 +83,11 @@ export default function HomeScreen(): React.ReactElement {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: C.background,
+    backgroundColor: C.bg,
     flex: 1,
   },
   scroll: {
     flex: 1,
+    paddingBottom: 80,
   },
-
 });

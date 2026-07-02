@@ -1,27 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import { Dimensions, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import Svg, { Path, G, Text as SvgText, Circle } from 'react-native-svg';
 import { useTransactionStore } from '@store/index';
 import SegmentedControl from './SegmentedControl';
 import CategoryBreakdownRow from './CategoryBreakdownRow';
+import FilteredTransactionList from './FilteredTransactionList';
 import { CATEGORY_LABELS, CATEGORY_ICONS, CATEGORY_COLORS, FALLBACK_COLORS } from '@utils/categories';
 import { formatCurrency } from '@utils/currency';
-
-const C = {
-  white: '#fff',
-  textDark: '#1a1a2e',
-  textMedium: '#555',
-  textLight: '#999',
-  shadow: '#000',
-  cardBg: '#fff',
-  background: '#F5F5F5',
-};
+import { Ionicons } from '@expo/vector-icons';
+import { C } from '@theme/index';
 
 const segments = ['Expense', 'Income'];
-const DONUT_RADIUS = 80;
-const DONUT_WIDTH = 36;
-const DONUT_GAP = 3;
+const DONUT_RADIUS = 96;
+const DONUT_WIDTH = 42;
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -53,7 +44,6 @@ interface CategoryEntry {
 
 export default function CategoryChart(): React.ReactElement {
   const { transactions } = useTransactionStore();
-  const navigation = useNavigation();
   const [typeIndex, setTypeIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const type = typeIndex === 0 ? 'expense' : 'income';
@@ -87,12 +77,12 @@ export default function CategoryChart(): React.ReactElement {
   );
 
   const screenWidth = Dimensions.get('window').width;
-  const chartSize = Math.min(screenWidth - 80, 220);
+  const chartSize = Math.min(screenWidth - 80, 280);
   const cx = chartSize / 2;
   const cy = chartSize / 2;
 
   const handleSliceTap = (key: string) => {
-    setSelectedCategory((prev) => (prev === key ? null : key));
+    setSelectedCategory(key);
   };
 
   const ratios = useMemo(
@@ -122,40 +112,84 @@ export default function CategoryChart(): React.ReactElement {
           <View style={styles.donutContainer}>
             <TouchableOpacity activeOpacity={1} onPress={() => setSelectedCategory(null)}>
               <Svg width={chartSize} height={chartSize}>
-                {categories.map((cat, i) => {
-                  const rawStart = ratios.slice(0, i).reduce((s, r) => s + r * 360, 0);
-                  const rawEnd = rawStart + ratios[i] * 360;
-                  const gapAdjust = DONUT_GAP / 2;
-                  const startAngle = rawStart + gapAdjust;
-                  const endAngle = rawEnd - gapAdjust;
-                  if (endAngle <= startAngle) return null;
-                  const isSelected = cat.key === selectedCategory;
-                  const arcRadius = isSelected ? DONUT_RADIUS + 6 : DONUT_RADIUS;
-                  return (
-                    <G key={cat.key}>
-                      <Path
-                        d={describeArc(cx, cy, arcRadius, startAngle, endAngle)}
-                        stroke={isSelected ? darkenColor(cat.color, 0.25) : cat.color}
-                        strokeWidth={isSelected ? DONUT_WIDTH + 2 : DONUT_WIDTH}
-                        fill="none"
-                        strokeLinecap="round"
-                      />
-                      <Path
-                        d={describeArc(cx, cy, arcRadius, startAngle - 2, endAngle + 2)}
-                        stroke="transparent"
-                        strokeWidth={DONUT_WIDTH + 18}
-                        fill="none"
-                        onPress={() => handleSliceTap(cat.key)}
-                      />
-                    </G>
-                  );
-                })}
-                <Circle cx={cx} cy={cy} r={32} fill={C.white} opacity={0.95} />
+                {(() => {
+                  if (categories.length === 1) {
+                    const cat = categories[0];
+                    const isSelected = cat.key === selectedCategory;
+                    return (
+                      <G key={cat.key}>
+                        {isSelected && (
+                          <Circle
+                            cx={cx} cy={cy}
+                            r={DONUT_RADIUS + 12}
+                            stroke={cat.color}
+                            strokeWidth={DONUT_WIDTH + 16}
+                            fill="none"
+                            opacity={0.15}
+                          />
+                        )}
+                        <Circle
+                          cx={cx} cy={cy}
+                          r={isSelected ? DONUT_RADIUS + 6 : DONUT_RADIUS}
+                          stroke={isSelected ? darkenColor(cat.color, 0.25) : cat.color}
+                          strokeWidth={DONUT_WIDTH}
+                          fill="none"
+                        />
+                        <Circle
+                          cx={cx} cy={cy}
+                          r={isSelected ? DONUT_RADIUS + 6 : DONUT_RADIUS}
+                          stroke="transparent"
+                          strokeWidth={DONUT_WIDTH + 20}
+                          fill="none"
+                          onPress={() => handleSliceTap(cat.key)}
+                        />
+                      </G>
+                    );
+                  }
+                  return categories.map((cat, i) => {
+                    const rawStart = ratios.slice(0, i).reduce((s, r) => s + r * 360, 0);
+                    const rawEnd = rawStart + ratios[i] * 360;
+                    const startAngle = rawStart;
+                    const endAngle = rawEnd;
+                    if (endAngle <= startAngle) return null;
+                    const isSelected = cat.key === selectedCategory;
+                    const arcRadius = isSelected ? DONUT_RADIUS + 6 : DONUT_RADIUS;
+                    return (
+                      <G key={cat.key}>
+                        {isSelected && (
+                          <Path
+                            d={describeArc(cx, cy, DONUT_RADIUS + 12, startAngle, endAngle)}
+                            stroke={cat.color}
+                            strokeWidth={DONUT_WIDTH + 16}
+                            fill="none"
+                            strokeLinecap="butt"
+                            opacity={0.15}
+                          />
+                        )}
+                        <Path
+                          d={describeArc(cx, cy, arcRadius, startAngle, endAngle)}
+                          stroke={isSelected ? darkenColor(cat.color, 0.25) : cat.color}
+                          strokeWidth={DONUT_WIDTH}
+                          fill="none"
+                          strokeLinecap="butt"
+                        />
+                        <Path
+                          d={describeArc(cx, cy, arcRadius, startAngle, endAngle)}
+                          stroke="transparent"
+                          strokeWidth={DONUT_WIDTH + 20}
+                          fill="none"
+                          onPress={() => handleSliceTap(cat.key)}
+                        />
+                      </G>
+                    );
+                  });
+                })()}
+                <Circle cx={cx} cy={cy} r={38} fill={C.white} opacity={0.95} />
                 <SvgText
                   x={cx}
-                  y={cy - 10}
+                  y={cy - 12}
                   textAnchor="middle"
-                  fontSize={20}
+                  fontSize={24}
                   fontWeight="bold"
                   fill={centerEntry ? centerEntry.color : C.textDark}
                 >
@@ -163,10 +197,11 @@ export default function CategoryChart(): React.ReactElement {
                 </SvgText>
                 <SvgText
                   x={cx}
-                  y={cy + 12}
+                  y={cy + 14}
                   textAnchor="middle"
-                  fontSize={11}
-                  fill={centerEntry ? C.textMedium : C.textLight}
+                  fontSize={12}
+                  fill={C.chartLabel}
+                  letterSpacing={0.5}
                 >
                   {centerEntry ? centerEntry.label : 'Total'}
                 </SvgText>
@@ -174,30 +209,47 @@ export default function CategoryChart(): React.ReactElement {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.legend}>
-            {categories.map((cat) => {
-              const pct = total > 0 ? (cat.amount / total) * 100 : 0;
-              return (
-                <CategoryBreakdownRow
-                  key={cat.key}
-                  categoryKey={cat.key}
-                  label={cat.label}
-                  icon={cat.icon}
-                  color={cat.color}
-                  amount={cat.amount}
-                  percentage={pct}
-                  isSelected={selectedCategory === cat.key}
-                  onPress={(key) => {
-                    setSelectedCategory((prev) => (prev === key ? null : key));
-                    (navigation.navigate as any)('Transactions', {
-                      category: key,
-                      type,
-                    });
-                  }}
-                />
-              );
-            })}
-          </View>
+          {selectedCategory && centerEntry ? (
+            <View>
+              <TouchableOpacity
+                style={styles.selectedHeader}
+                onPress={() => setSelectedCategory(null)}
+                activeOpacity={0.7}
+                testID="chart-back"
+              >
+                <Ionicons name="arrow-back" size={20} color={C.textDark} />
+                <View style={[styles.headerIconBg, { backgroundColor: centerEntry.color + '20' }]}>
+                  <Ionicons name={centerEntry.icon as any} size={18} color={centerEntry.color} />
+                </View>
+                <View style={styles.headerInfo}>
+                  <Text style={styles.headerLabel}>{centerEntry.label}</Text>
+                  <Text style={styles.headerTotal}>Total: {formatCurrency(centerEntry.amount)}</Text>
+                </View>
+              </TouchableOpacity>
+              <FilteredTransactionList type={type} category={selectedCategory} />
+            </View>
+          ) : (
+            <View style={styles.legend}>
+              {categories.map((cat) => {
+                const pct = total > 0 ? (cat.amount / total) * 100 : 0;
+                return (
+                  <CategoryBreakdownRow
+                    key={cat.key}
+                    categoryKey={cat.key}
+                    label={cat.label}
+                    icon={cat.icon}
+                    color={cat.color}
+                    amount={cat.amount}
+                    percentage={pct}
+                    isSelected={selectedCategory === cat.key}
+                    onPress={(key) => {
+                      setSelectedCategory(key);
+                    }}
+                  />
+                );
+              })}
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -212,14 +264,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginVertical: 8,
     padding: 20,
-    shadowColor: C.shadow,
+    shadowColor: C.textDark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
   },
   donutContainer: {
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: 12,
   },
   emptyText: {
     color: C.textLight,
@@ -227,13 +279,41 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     textAlign: 'center',
   },
+  headerIconBg: {
+    alignItems: 'center',
+    borderRadius: 10,
+    height: 38,
+    justifyContent: 'center',
+    marginLeft: 10,
+    marginRight: 10,
+    width: 38,
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  headerLabel: {
+    color: C.textDark,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  headerTotal: {
+    color: C.textLight,
+    fontSize: 12,
+    marginTop: 2,
+  },
   legend: {
+    marginTop: 4,
+  },
+  selectedHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 12,
     marginTop: 8,
+    paddingHorizontal: 4,
   },
   title: {
     color: C.textDark,
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 12,
   },
 });

@@ -1,21 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { C } from '@theme/index';
 
-const C = {
-  primary: '#00BFA5',
-  primaryLight: '#E0F2F1',
-  white: '#fff',
-  textDark: '#333',
-  textMedium: '#666',
-  shadow: '#000',
-  overlay: 'rgba(0,0,0,0.4)',
-};
-
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+const MONTHS_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
+
+const MONTHS_FULL: string[] = [];
 
 interface PeriodFilterProps {
   month: number;
@@ -25,50 +18,45 @@ interface PeriodFilterProps {
 }
 
 export default function PeriodFilter({ month, year, onMonthChange, onYearChange }: PeriodFilterProps): React.ReactElement {
-  const [monthOpen, setMonthOpen] = useState(false);
   const [yearOpen, setYearOpen] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
-  const years: number[] = [];
   const currentYear = new Date().getFullYear();
+  const years: number[] = [];
   for (let y = currentYear - 5; y <= currentYear + 1; y++) {
     years.push(y);
   }
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.dropdown} onPress={() => setMonthOpen(true)}>
-        <Text style={styles.dropdownText}>{MONTHS[month]}</Text>
-        <Ionicons name="chevron-down" size={16} color={C.textMedium} />
-      </TouchableOpacity>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.pills}
+      >
+        {MONTHS_SHORT.map((label, i) => {
+          const isActive = i === month;
+          return (
+            <TouchableOpacity
+              key={label}
+              style={[styles.pill, isActive && styles.pillActive]}
+              onPress={() => onMonthChange(i)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.pillText, isActive && styles.pillTextActive]}>{label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
 
-      <TouchableOpacity style={styles.dropdown} onPress={() => setYearOpen(true)}>
-        <Text style={styles.dropdownText}>{String(year)}</Text>
-        <Ionicons name="chevron-down" size={16} color={C.textMedium} />
+      <TouchableOpacity style={styles.yearBtn} onPress={() => setYearOpen(true)} activeOpacity={0.7}>
+        <Text style={styles.yearText}>{String(year)}</Text>
+        <Ionicons name="chevron-down" size={14} color={C.textMedium} />
       </TouchableOpacity>
-
-      <Modal visible={monthOpen} transparent animationType="fade">
-        <TouchableOpacity style={styles.overlay} onPress={() => setMonthOpen(false)} activeOpacity={1}>
-          <View style={styles.pickerContainer}>
-            <Text style={styles.pickerTitle}>Select Month</Text>
-            <FlatList
-              data={MONTHS}
-              keyExtractor={(_, i) => String(i)}
-              renderItem={({ item, index }) => (
-                <TouchableOpacity
-                  style={[styles.pickerItem, index === month && styles.pickerItemActive]}
-                  onPress={() => { onMonthChange(index); setMonthOpen(false); }}
-                >
-                  <Text style={[styles.pickerItemText, index === month && styles.pickerItemTextActive]}>{item}</Text>
-                  {index === month && <Ionicons name="checkmark" size={20} color={C.primary} />}
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
 
       <Modal visible={yearOpen} transparent animationType="fade">
-        <TouchableOpacity style={styles.overlay} onPress={() => setYearOpen(false)} activeOpacity={1}>
+        <TouchableOpacity style={styles.overlayBase} onPress={() => setYearOpen(false)} activeOpacity={1}>
           <View style={styles.pickerContainer}>
             <Text style={styles.pickerTitle}>Select Year</Text>
             <FlatList
@@ -93,33 +81,15 @@ export default function PeriodFilter({ month, year, onMonthChange, onYearChange 
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  dropdown: {
+  overlayBase: {
     alignItems: 'center',
-    backgroundColor: C.white,
-    borderRadius: 8,
-    elevation: 2,
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    shadowColor: C.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-  },
-  dropdownText: {
-    color: C.textDark,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  overlay: {
-    alignItems: 'center',
-    backgroundColor: C.overlay,
+    backgroundColor: C.textDark + '66',
     flex: 1,
     justifyContent: 'center',
   },
@@ -154,5 +124,46 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
     textAlign: 'center',
+  },
+  pill: {
+    backgroundColor: C.white,
+    borderColor: C.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  pillActive: {
+    backgroundColor: C.primary,
+    borderColor: C.primary,
+  },
+  pillText: {
+    color: C.textMedium,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  pillTextActive: {
+    color: C.white,
+    fontWeight: '600',
+  },
+  pills: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  yearBtn: {
+    alignItems: 'center',
+    backgroundColor: C.white,
+    borderColor: C.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  yearText: {
+    color: C.textDark,
+    fontSize: 13,
+    fontWeight: '500',
   },
 });
