@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
 import firebaseService from '@services/firebase';
@@ -19,10 +19,15 @@ const C = {
 export default function TransactionListScreen(): React.ReactElement {
   const { user } = useAuthStore();
   const navigation = useNavigation();
+  const route = useRoute();
+  const routeParams = route.params as
+    | { category?: string; type?: 'income' | 'expense' }
+    | undefined;
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [reportTab, setReportTab] = useState(0);
+  const initialTab = routeParams?.type === 'income' ? 1 : 0;
+  const [reportTab, setReportTab] = useState(initialTab);
 
   useEffect(() => {
     if (!user) return;
@@ -67,7 +72,10 @@ export default function TransactionListScreen(): React.ReactElement {
           onSelect={setReportTab}
         />
 
-        <FilteredTransactionList type={reportTab === 0 ? 'expense' : 'income'} />
+        <FilteredTransactionList
+          type={reportTab === 0 ? 'expense' : 'income'}
+          category={routeParams?.category}
+        />
       </ScrollView>
 
       <FloatingActionButton onPress={handleAddTransaction} />

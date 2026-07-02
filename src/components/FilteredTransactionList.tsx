@@ -9,11 +9,16 @@ const C = {
 
 interface FilteredTransactionListProps {
   type: 'income' | 'expense';
+  category?: string;
 }
 
-export default function FilteredTransactionList({ type }: FilteredTransactionListProps): React.ReactElement {
+export default function FilteredTransactionList({ type, category }: FilteredTransactionListProps): React.ReactElement {
   const { transactions } = useTransactionStore();
-  const filtered = transactions.filter((t) => t.type === type);
+  const filtered = transactions.filter((t) => {
+    if (t.type !== type) return false;
+    if (category && t.category !== category) return false;
+    return true;
+  });
 
   const handleDelete = (id: string) => {
     useTransactionStore.getState().deleteTransaction(id);

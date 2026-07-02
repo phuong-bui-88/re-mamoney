@@ -13,8 +13,9 @@ import {
 import { useTransactionStore, useAuthStore } from '@store/index';
 import { parseTransactionMessage } from '@services/aiTransactionParser';
 import { parseDate } from '@utils/dateParser';
+import { Ionicons } from '@expo/vector-icons';
 import { formatCurrency, formatDate } from '@utils/currency';
-import { CATEGORY_ICONS, CATEGORY_LABELS } from '@utils/categories';
+import { CATEGORY_ICONS, CATEGORY_LABELS, CATEGORY_COLORS, FALLBACK_COLORS } from '@utils/categories';
 import { C } from '@theme/colors';
 import { transItemStyles } from '@styles/index';
 
@@ -136,7 +137,8 @@ export default function AddTransactionScreen(): React.ReactElement {
       );
     }
 
-    const icon = CATEGORY_ICONS[item.category || ''] || '📌';
+    const icon = CATEGORY_ICONS[item.category || ''] || 'ellipsis-horizontal-outline';
+    const catColor = CATEGORY_COLORS[item.category || ''] || FALLBACK_COLORS[0];
     const label = CATEGORY_LABELS[item.category || ''] || item.category;
     const sign = item.type === 'income' ? '+' : '-';
     const amountColor =
@@ -147,7 +149,9 @@ export default function AddTransactionScreen(): React.ReactElement {
         <View style={transItemStyles.itemRow}>
           <View style={transItemStyles.itemLeft}>
             <View style={transItemStyles.itemHeader}>
-              <Text style={transItemStyles.itemIcon}>{icon}</Text>
+              <View style={[transItemStyles.itemIconBg, { backgroundColor: catColor }]}>
+                <Ionicons name={icon as any} size={16} color="#fff" />
+              </View>
               <View style={transItemStyles.itemInfo}>
                 <Text style={transItemStyles.itemDescription}>
                   {item.description}

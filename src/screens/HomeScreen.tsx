@@ -5,6 +5,7 @@ import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
 import firebaseService from '@services/firebase';
 import {
+  CategoryChart,
   PeriodFilter,
   StatisticsCard,
   FloatingActionButton,
@@ -76,7 +77,7 @@ export default function HomeScreen(): React.ReactElement {
           income={totalIncome}
           onInfoPress={handleInfo}
         />
-
+        <CategoryChart />
       </ScrollView>
 
       <FloatingActionButton onPress={handleAddTransaction} />

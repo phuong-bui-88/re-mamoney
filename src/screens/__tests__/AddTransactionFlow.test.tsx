@@ -9,6 +9,7 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     getParent: () => ({ navigate: jest.fn() }),
   }),
+  useRoute: () => ({ params: {} }),
 }));
 
 jest.mock('@components/index', () => ({

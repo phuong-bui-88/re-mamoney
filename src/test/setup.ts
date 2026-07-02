@@ -61,6 +61,19 @@ jest.mock('expo', () => ({
   registerRootComponent: jest.fn(),
 }));
 
+// Mock @expo/vector-icons globally (ESM module, can't be parsed by Jest)
+jest.mock('@expo/vector-icons', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const React = require('react');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { Text } = require('react-native');
+  return {
+    Ionicons: function IoniconsMock({ name }: { name: string }) {
+      return React.createElement(Text, null, name);
+    },
+  };
+});
+
 // Suppress console errors in tests
 global.console.error = jest.fn();
 global.console.warn = jest.fn();

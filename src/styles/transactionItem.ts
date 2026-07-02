@@ -50,6 +50,15 @@ export const transItemStyles = StyleSheet.create({
     marginRight: 8,
     marginTop: 1,
   },
+  itemIconBg: {
+    alignItems: 'center',
+    borderRadius: 18,
+    height: 28,
+    justifyContent: 'center',
+    marginRight: 8,
+    marginTop: 1,
+    width: 28,
+  },
   itemInfo: {
     flex: 1,
   },
