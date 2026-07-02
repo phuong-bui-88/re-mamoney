@@ -1,21 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { C } from '@theme/index';
 
-const C = {
-  primary: '#00BFA5',
-  primaryLight: '#E0F2F1',
-  white: '#fff',
-  textDark: '#333',
-  textMedium: '#666',
-  shadow: '#000',
-  overlay: 'rgba(0,0,0,0.4)',
-};
-
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+const MONTHS_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
+
+const ITEM_WIDTH = 80;
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const SIDE_PADDING = (SCREEN_WIDTH - ITEM_WIDTH) / 2;
 
 interface PeriodFilterProps {
   month: number;
@@ -25,65 +20,89 @@ interface PeriodFilterProps {
 }
 
 export default function PeriodFilter({ month, year, onMonthChange, onYearChange }: PeriodFilterProps): React.ReactElement {
-  const [monthOpen, setMonthOpen] = useState(false);
   const [yearOpen, setYearOpen] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const monthRef = useRef(month);
+  monthRef.current = month;
 
-  const years: number[] = [];
   const currentYear = new Date().getFullYear();
+  const years: number[] = [];
   for (let y = currentYear - 5; y <= currentYear + 1; y++) {
     years.push(y);
   }
 
+  const isFirstScroll = useRef(true);
+
+  useEffect(() => {
+    const targetX = month * ITEM_WIDTH;
+    if (isFirstScroll.current) {
+      scrollRef.current?.scrollTo({ x: targetX, animated: false });
+      isFirstScroll.current = false;
+    } else {
+      scrollRef.current?.scrollTo({ x: targetX, animated: true });
+    }
+  }, [month]);
+
+  const onScrollEnd = useCallback((e: { nativeEvent: { contentOffset: { x: number } } }) => {
+    const snappedIndex = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
+    const clamped = Math.min(11, Math.max(0, snappedIndex));
+    if (clamped !== monthRef.current) {
+      onMonthChange(clamped);
+    }
+  }, [onMonthChange]);
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.dropdown} onPress={() => setMonthOpen(true)}>
-        <Text style={styles.dropdownText}>{MONTHS[month]}</Text>
-        <Ionicons name="chevron-down" size={16} color={C.textMedium} />
-      </TouchableOpacity>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={ITEM_WIDTH}
+        decelerationRate="fast"
+        contentContainerStyle={styles.listContent}
+        onMomentumScrollEnd={onScrollEnd}
+        testID="month-scroll"
+      >
+        {MONTHS_SHORT.map((label, i) => {
+          const isActive = i === monthRef.current;
+          return (
+            <View key={label} style={styles.itemWrapper}>
+              <TouchableOpacity
+                style={[styles.item, isActive && styles.itemActive]}
+                onPress={() => onMonthChange(i)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.itemText, isActive && styles.itemTextActive]}>
+                  {label}
+                </Text>
+                {isActive && <Text style={styles.indicator}>•</Text>}
+              </TouchableOpacity>
+            </View>
+          );
+        })}
+      </ScrollView>
 
-      <TouchableOpacity style={styles.dropdown} onPress={() => setYearOpen(true)}>
-        <Text style={styles.dropdownText}>{String(year)}</Text>
-        <Ionicons name="chevron-down" size={16} color={C.textMedium} />
+      <TouchableOpacity style={styles.yearBtn} onPress={() => setYearOpen(true)} activeOpacity={0.7}>
+        <Text style={styles.yearText}>{String(year)}</Text>
+        <Ionicons name="chevron-down" size={14} color={C.textMedium} />
       </TouchableOpacity>
-
-      <Modal visible={monthOpen} transparent animationType="fade">
-        <TouchableOpacity style={styles.overlay} onPress={() => setMonthOpen(false)} activeOpacity={1}>
-          <View style={styles.pickerContainer}>
-            <Text style={styles.pickerTitle}>Select Month</Text>
-            <FlatList
-              data={MONTHS}
-              keyExtractor={(_, i) => String(i)}
-              renderItem={({ item, index }) => (
-                <TouchableOpacity
-                  style={[styles.pickerItem, index === month && styles.pickerItemActive]}
-                  onPress={() => { onMonthChange(index); setMonthOpen(false); }}
-                >
-                  <Text style={[styles.pickerItemText, index === month && styles.pickerItemTextActive]}>{item}</Text>
-                  {index === month && <Ionicons name="checkmark" size={20} color={C.primary} />}
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
 
       <Modal visible={yearOpen} transparent animationType="fade">
-        <TouchableOpacity style={styles.overlay} onPress={() => setYearOpen(false)} activeOpacity={1}>
+        <TouchableOpacity style={styles.overlayBase} onPress={() => setYearOpen(false)} activeOpacity={1}>
           <View style={styles.pickerContainer}>
             <Text style={styles.pickerTitle}>Select Year</Text>
-            <FlatList
-              data={years}
-              keyExtractor={(_, i) => String(i)}
-              renderItem={({ item }) => (
+            <ScrollView>
+              {years.map((y) => (
                 <TouchableOpacity
-                  style={[styles.pickerItem, item === year && styles.pickerItemActive]}
-                  onPress={() => { onYearChange(item); setYearOpen(false); }}
+                  key={y}
+                  style={[styles.pickerItem, y === year && styles.pickerItemActive]}
+                  onPress={() => { onYearChange(y); setYearOpen(false); }}
                 >
-                  <Text style={[styles.pickerItemText, item === year && styles.pickerItemTextActive]}>{String(item)}</Text>
-                  {item === year && <Ionicons name="checkmark" size={20} color={C.primary} />}
+                  <Text style={[styles.pickerItemText, y === year && styles.pickerItemTextActive]}>{String(y)}</Text>
+                  {y === year && <Ionicons name="checkmark" size={20} color={C.primary} />}
                 </TouchableOpacity>
-              )}
-            />
+              ))}
+            </ScrollView>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -93,33 +112,43 @@ export default function PeriodFilter({ month, year, onMonthChange, onYearChange 
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  dropdown: {
-    alignItems: 'center',
-    backgroundColor: C.white,
-    borderRadius: 8,
-    elevation: 2,
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    shadowColor: C.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+  indicator: {
+    color: C.primary,
+    fontSize: 8,
+    lineHeight: 6,
+    marginTop: 2,
   },
-  dropdownText: {
-    color: C.textDark,
-    fontSize: 14,
+  item: {
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  itemActive: {},
+  itemText: {
+    color: C.textMuted,
+    fontSize: 15,
     fontWeight: '500',
   },
-  overlay: {
+  itemTextActive: {
+    color: C.primary,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  itemWrapper: {
     alignItems: 'center',
-    backgroundColor: C.overlay,
+    width: ITEM_WIDTH,
+  },
+  listContent: {
+    alignItems: 'center',
+    paddingHorizontal: SIDE_PADDING,
+  },
+  overlayBase: {
+    alignItems: 'center',
+    backgroundColor: C.textDark + '66',
     flex: 1,
     justifyContent: 'center',
   },
@@ -154,5 +183,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
     textAlign: 'center',
+  },
+  yearBtn: {
+    alignItems: 'center',
+    backgroundColor: C.white,
+    borderColor: C.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  yearText: {
+    color: C.textDark,
+    fontSize: 13,
+    fontWeight: '500',
   },
 });

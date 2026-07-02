@@ -3,7 +3,7 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const C = {
-  fab: '#00BCD4',
+  fab: '#00BFA5',
   white: '#fff',
 };
 

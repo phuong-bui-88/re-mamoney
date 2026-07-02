@@ -3,13 +3,27 @@ import { render, screen, fireEvent } from '@testing-library/react-native';
 import CategoryChart from '@components/CategoryChart';
 import { useTransactionStore } from '@store/index';
 import { CATEGORY_LABELS } from '@utils/categories';
+import { formatCurrency } from '@utils/currency';
 
-jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({
-    navigate: jest.fn(),
-  }),
-  useRoute: () => ({ params: {} }),
-}));
+jest.mock('../FilteredTransactionList', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const React = require('react');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { View, Text } = require('react-native');
+  return function MockFilteredTransactionList({
+    type,
+    category,
+  }: {
+    type: string;
+    category?: string;
+  }) {
+    return React.createElement(
+      View,
+      { testID: 'FilteredTransactionList' },
+      React.createElement(Text, null, `type: ${type}, category: ${category}`),
+    );
+  };
+});
 
 jest.mock('react-native-svg', () => ({
   __esModule: true,
@@ -194,5 +208,103 @@ describe('CategoryChart', () => {
     render(<CategoryChart />);
 
     expect(screen.getByText('gifts')).toBeTruthy();
+  });
+
+  describe('drill-down behavior', () => {
+    it('shows transaction list when a legend row is pressed', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 50000 }),
+          mockTransaction({ id: '2', category: 'transport', amount: 30000 }),
+        ],
+      });
+      render(<CategoryChart />);
+
+      expect(screen.getByText(CATEGORY_LABELS.transport)).toBeTruthy();
+
+      fireEvent.press(screen.getByText(CATEGORY_LABELS.food));
+
+      expect(screen.getByTestId('FilteredTransactionList')).toBeTruthy();
+      expect(screen.queryByText(CATEGORY_LABELS.transport)).toBeNull();
+    });
+
+    it('shows category header with label and total when selected', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 50000 }),
+          mockTransaction({ id: '2', category: 'food', amount: 20000 }),
+        ],
+      });
+      render(<CategoryChart />);
+
+      fireEvent.press(screen.getByText(CATEGORY_LABELS.food));
+
+      expect(screen.getAllByText(CATEGORY_LABELS.food).length).toBe(2);
+      expect(screen.getByText(`Total: ${formatCurrency(70000)}`)).toBeTruthy();
+    });
+
+    it('returns to legend view when back button is pressed', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 50000 }),
+          mockTransaction({ id: '2', category: 'transport', amount: 30000 }),
+        ],
+      });
+      render(<CategoryChart />);
+
+      fireEvent.press(screen.getByText(CATEGORY_LABELS.food));
+      expect(screen.getByTestId('FilteredTransactionList')).toBeTruthy();
+
+      fireEvent.press(screen.getByTestId('chart-back'));
+
+      expect(screen.getByText(CATEGORY_LABELS.transport)).toBeTruthy();
+      expect(screen.queryByTestId('FilteredTransactionList')).toBeNull();
+    });
+
+    it('clears selection when segmented control tab changes', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 50000 }),
+          mockTransaction({ id: '2', type: 'income', category: 'salary', amount: 1000000 }),
+        ],
+      });
+      render(<CategoryChart />);
+
+      fireEvent.press(screen.getByText(CATEGORY_LABELS.food));
+      expect(screen.getByTestId('FilteredTransactionList')).toBeTruthy();
+
+      fireEvent.press(screen.getByText('Income'));
+
+      expect(screen.getByText(CATEGORY_LABELS.salary)).toBeTruthy();
+      expect(screen.queryByTestId('FilteredTransactionList')).toBeNull();
+    });
+
+    it('passes correct type and category to FilteredTransactionList', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 50000 }),
+        ],
+      });
+      render(<CategoryChart />);
+
+      fireEvent.press(screen.getByText(CATEGORY_LABELS.food));
+
+      expect(screen.getByText('type: expense, category: food')).toBeTruthy();
+    });
+
+    it('shows arrow-back icon when a category is selected', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 50000 }),
+        ],
+      });
+      render(<CategoryChart />);
+
+      expect(screen.queryByText('arrow-back')).toBeNull();
+
+      fireEvent.press(screen.getByText(CATEGORY_LABELS.food));
+
+      expect(screen.getByText('arrow-back')).toBeTruthy();
+    });
   });
 });

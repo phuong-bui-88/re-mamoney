@@ -1,16 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { C } from '@theme/index';
 import { formatCurrency } from '@utils/currency';
-
-const C = {
-  white: '#fff',
-  textDark: '#1a1a2e',
-  textLight: '#999',
-  selectedBg: '#F8F6F3',
-  barBg: '#F2EDE7',
-  shadow: '#000',
-};
 
 interface CategoryBreakdownRowProps {
   categoryKey: string;
@@ -37,8 +29,8 @@ export default function CategoryBreakdownRow({
 
   const content = (
     <View style={[styles.container, isSelected && styles.selected]}>
-      <View style={[styles.iconBg, { backgroundColor: color }]}>
-        <Ionicons name={icon as any} size={20} color="#fff" />
+      <View style={[styles.iconBg, { backgroundColor: color + '20' }]}>
+        <Ionicons name={icon as any} size={18} color={color} />
       </View>
       <View style={styles.middle}>
         <Text style={styles.label} numberOfLines={1}>
@@ -71,59 +63,54 @@ export default function CategoryBreakdownRow({
 const styles = StyleSheet.create({
   amount: {
     color: C.textDark,
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: 14,
+    fontWeight: '700',
   },
   barFill: {
     borderRadius: 999,
     height: '100%',
   },
   barTrack: {
-    backgroundColor: C.barBg,
+    backgroundColor: C.border,
     borderRadius: 999,
-    height: 4,
+    height: 3,
     overflow: 'hidden',
   },
   container: {
     alignItems: 'center',
     backgroundColor: C.white,
-    borderRadius: 16,
+    borderRadius: 14,
     flexDirection: 'row',
-    marginBottom: 12,
-    padding: 16,
+    marginBottom: 8,
+    padding: 12,
   },
   iconBg: {
     alignItems: 'center',
     borderRadius: 10,
-    height: 44,
+    height: 38,
     justifyContent: 'center',
-    marginRight: 12,
-    width: 44,
+    marginRight: 10,
+    width: 38,
   },
   label: {
     color: C.textDark,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   middle: {
     flex: 1,
-    marginRight: 12,
+    marginRight: 10,
   },
   percentage: {
     color: C.textLight,
-    fontSize: 13,
+    fontSize: 12,
+    marginTop: 2,
   },
   right: {
     alignItems: 'flex-end',
   },
   selected: {
-    backgroundColor: C.selectedBg,
-    elevation: 2,
-    shadowColor: C.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: C.grayLight,
   },
 });
