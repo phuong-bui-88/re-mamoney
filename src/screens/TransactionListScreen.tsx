@@ -18,14 +18,12 @@ const C = {
 
 export default function TransactionListScreen(): React.ReactElement {
   const { user } = useAuthStore();
+  const { selectedMonth, selectedYear, setSelectedMonth, setSelectedYear } = useTransactionStore();
   const navigation = useNavigation();
   const route = useRoute();
   const routeParams = route.params as
     | { category?: string; type?: 'income' | 'expense' }
     | undefined;
-  const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const initialTab = routeParams?.type === 'income' ? 1 : 0;
   const [reportTab, setReportTab] = useState(initialTab);
 

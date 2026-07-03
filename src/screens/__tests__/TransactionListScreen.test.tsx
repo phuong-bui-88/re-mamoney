@@ -30,6 +30,8 @@ beforeEach(() => {
   useTransactionStore.setState({
     allTransactions: [],
     transactions: [],
+    selectedMonth: 6,
+    selectedYear: 2026,
     periodStart: null,
     periodEnd: null,
     totalIncome: 0,
@@ -142,7 +144,7 @@ describe('TransactionListScreen', () => {
 
     render(<TransactionListScreen />);
 
-    expect(FilteredTransactionList).toHaveBeenCalledTimes(1);
+    expect(FilteredTransactionList).toHaveBeenCalledTimes(2);
     const callArg = (FilteredTransactionList as jest.Mock).mock.calls[0][0];
     expect(callArg.type).toBe('expense');
   });

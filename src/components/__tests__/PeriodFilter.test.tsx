@@ -77,7 +77,7 @@ describe('PeriodFilter', () => {
     render(<PeriodFilter {...defaultProps} month={3} onMonthChange={onMonthChange} />);
     const scroll = screen.getByTestId('month-scroll');
     fireEvent(scroll, 'onMomentumScrollEnd', {
-      nativeEvent: { contentOffset: { x: 6 * 80 } },
+      nativeEvent: { contentOffset: { x: 6 * 55 } },
     });
     expect(onMonthChange).toHaveBeenCalledWith(6);
   });
@@ -87,7 +87,7 @@ describe('PeriodFilter', () => {
     render(<PeriodFilter {...defaultProps} month={6} onMonthChange={onMonthChange} />);
     const scroll = screen.getByTestId('month-scroll');
     fireEvent(scroll, 'onMomentumScrollEnd', {
-      nativeEvent: { contentOffset: { x: 6 * 80 } },
+      nativeEvent: { contentOffset: { x: 6 * 55 } },
     });
     expect(onMonthChange).not.toHaveBeenCalled();
   });

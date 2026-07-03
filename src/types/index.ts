@@ -61,6 +61,13 @@ export interface InvoicePreviewState {
 export type TransactionType = 'income' | 'expense';
 export type FilterType = 'month' | 'year' | 'custom';
 
+export interface MonthlyTotal {
+  month: number;
+  income: number;
+  expense: number;
+  net: number;
+}
+
 export interface AITransaction {
   description: string;
   amount: number;

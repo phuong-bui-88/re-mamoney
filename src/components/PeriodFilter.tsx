@@ -8,7 +8,7 @@ const MONTHS_SHORT = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-const ITEM_WIDTH = 80;
+const ITEM_WIDTH = 55;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SIDE_PADDING = (SCREEN_WIDTH - ITEM_WIDTH) / 2;
 
@@ -192,6 +192,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 4,
+    marginLeft: 8,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },

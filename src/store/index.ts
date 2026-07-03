@@ -97,10 +97,14 @@ interface TransactionStore {
   periodEnd: Date | null;
   isLoading: boolean;
   error: string | null;
+  selectedMonth: number;
+  selectedYear: number;
   totalIncome: number;
   totalExpense: number;
   balance: number;
 
+  setSelectedMonth: (month: number) => void;
+  setSelectedYear: (year: number) => void;
   setAllTransactions: (transactions: Transaction[]) => void;
   setPeriod: (start: Date, end: Date) => void;
   setTransactions: (transactions: Transaction[]) => void;
@@ -116,6 +120,8 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
   allTransactions: [],
   transactions: [],
   filter: {},
+  selectedMonth: new Date().getMonth(),
+  selectedYear: new Date().getFullYear(),
   periodStart: getMonthStart(new Date()),
   periodEnd: getMonthEnd(new Date()),
   isLoading: false,
@@ -145,6 +151,14 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
   setFilter: (filter: TransactionFilter) => {
     set({ filter });
+  },
+
+  setSelectedMonth: (month: number) => {
+    set({ selectedMonth: month });
+  },
+
+  setSelectedYear: (year: number) => {
+    set({ selectedYear: year });
   },
 
   addTransaction: async (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {

@@ -18,6 +18,8 @@ beforeEach(() => {
   useTransactionStore.setState({
     allTransactions: [],
     transactions: [],
+    selectedMonth: 6,
+    selectedYear: 2026,
     periodStart: null,
     periodEnd: null,
     totalIncome: 0,

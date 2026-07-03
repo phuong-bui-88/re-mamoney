@@ -1,3 +1,5 @@
+import { MonthlyTotal, Transaction } from '@/types';
+
 const VND_LOCALE = 'vi-VN';
 const VND_CURRENCY = 'VND';
 
@@ -81,3 +83,29 @@ export const isToday = (date: Date): boolean => {
     date.getFullYear() === today.getFullYear()
   );
 };
+
+export function getMonthlyTotals(transactions: Transaction[], year: number): MonthlyTotal[] {
+  const monthlyData: MonthlyTotal[] = Array.from({ length: 12 }, (_, i) => ({
+    month: i,
+    income: 0,
+    expense: 0,
+    net: 0,
+  }));
+
+  for (const tx of transactions) {
+    const txDate = new Date(tx.date);
+    if (txDate.getFullYear() !== year) continue;
+    const month = txDate.getMonth();
+    if (tx.type === 'income') {
+      monthlyData[month].income += tx.amount;
+    } else {
+      monthlyData[month].expense += tx.amount;
+    }
+  }
+
+  for (const m of monthlyData) {
+    m.net = m.income - m.expense;
+  }
+
+  return monthlyData;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { C } from '@theme/index';
@@ -10,16 +10,14 @@ import {
   PeriodFilter,
   StatisticsCard,
   FloatingActionButton,
+  MonthlyChart,
 } from '@components/index';
 import { getMonthStart, getMonthEnd } from '@utils/currency';
 
 export default function HomeScreen(): React.ReactElement {
   const { user } = useAuthStore();
-  const { totalIncome, totalExpense } = useTransactionStore();
+  const { selectedMonth, selectedYear, totalIncome, totalExpense, setSelectedMonth, setSelectedYear } = useTransactionStore();
   const navigation = useNavigation();
-  const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
   const netChange = totalIncome - totalExpense;
 
@@ -57,6 +55,13 @@ export default function HomeScreen(): React.ReactElement {
     );
   }, []);
 
+  const handleMonthlyInfo = useCallback(() => {
+    Alert.alert(
+      'Monthly Net',
+      'Net amount per month is calculated as income minus expenses for that month in the selected year.',
+    );
+  }, []);
+
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -66,6 +71,8 @@ export default function HomeScreen(): React.ReactElement {
           onMonthChange={setSelectedMonth}
           onYearChange={setSelectedYear}
         />
+
+        <MonthlyChart onMonthSelect={setSelectedMonth} onInfoPress={handleMonthlyInfo} />
 
         <StatisticsCard
           netChange={netChange}
