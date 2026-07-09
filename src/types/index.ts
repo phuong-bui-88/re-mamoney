@@ -44,6 +44,14 @@ export interface TransactionSyncStatus {
   pendingTransactions: Transaction[];
 }
 
+export interface DeviceUser {
+  deviceId: string;
+  userId: string;
+  email: string;
+  displayName?: string;
+  loggedInAt: Date;
+}
+
 export interface InvoiceGroup {
   id: string;
   name: string;

@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { Transaction, User, TransactionFilter } from '@/types';
+import { Transaction, User, TransactionFilter, DeviceUser } from '@/types';
 import { getMonthStart, getMonthEnd } from '@utils/currency';
 import firebaseService from '@services/firebase';
+import * as deviceUsersService from '@services/deviceUsers';
 
 function filterByPeriod(
   transactions: Transaction[],
@@ -33,17 +34,25 @@ function computeTotals(transactions: Transaction[]) {
 
 interface AuthStore {
   user: User | null;
+  selectedUser: User | null;
+  savedAccounts: DeviceUser[];
   isLoading: boolean;
   error: string | null;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   setUser: (user: User | null) => void;
+  setSelectedUser: (user: User | null) => void;
+  setSavedAccounts: (accounts: DeviceUser[]) => void;
+  switchToAccount: (account: DeviceUser) => void;
+  removeDeviceAccount: (userId: string) => Promise<void>;
   clearError: () => void;
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
   user: null,
+  selectedUser: null,
+  savedAccounts: [],
   isLoading: false,
   error: null,
 
@@ -51,7 +60,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const user = await firebaseService.signUp(email, password);
-      set({ user, isLoading: false });
+      set({ user, selectedUser: user, isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
       throw error;
@@ -62,7 +71,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const user = await firebaseService.signIn(email, password);
-      set({ user, isLoading: false });
+      set({ user, selectedUser: user, isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
       throw error;
@@ -73,7 +82,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ isLoading: true, error: null });
     try {
       await firebaseService.signOut();
-      set({ user: null, isLoading: false });
+      set({ user: null, selectedUser: null, isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
       throw error;
@@ -82,6 +91,39 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   setUser: (user: User | null) => {
     set({ user });
+  },
+
+  setSelectedUser: (user: User | null) => {
+    set({ selectedUser: user });
+  },
+
+  setSavedAccounts: (accounts: DeviceUser[]) => {
+    set({ savedAccounts: accounts });
+  },
+
+  switchToAccount: (account: DeviceUser) => {
+    const selectedUser: User = {
+      id: account.userId,
+      email: account.email,
+      displayName: account.displayName,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    set({ selectedUser });
+  },
+
+  removeDeviceAccount: async (userId: string) => {
+    try {
+      const { savedAccounts } = useAuthStore.getState();
+      const account = savedAccounts.find((a) => a.userId === userId);
+      if (account) {
+        await deviceUsersService.removeDeviceUser(account.deviceId, userId);
+        set({ savedAccounts: savedAccounts.filter((a) => a.userId !== userId) });
+      }
+    } catch (error) {
+      set({ error: (error as Error).message });
+      throw error;
+    }
   },
 
   clearError: () => {

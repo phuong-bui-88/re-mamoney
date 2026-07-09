@@ -38,7 +38,7 @@ export default function AddTransactionScreen(): React.ReactElement {
   const scrollRef = useRef<ScrollView>(null);
   const feedIdCounter = useRef(0);
 
-  const { user } = useAuthStore();
+  const { selectedUser } = useAuthStore();
   const { transactions, addTransaction } = useTransactionStore();
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function AddTransactionScreen(): React.ReactElement {
 
   const handleSend = async () => {
     const text = inputText.trim();
-    if (!text || !user?.id || isLoading) return;
+    if (!text || !selectedUser?.id || isLoading) return;
 
     setInputText('');
     setIsLoading(true);
@@ -84,7 +84,7 @@ export default function AddTransactionScreen(): React.ReactElement {
 
         try {
           await addTransaction({
-            userId: user.id,
+            userId: selectedUser.id,
             type: aiTx.type,
             amount: aiTx.amount,
             category: aiTx.category,

@@ -9,6 +9,8 @@ import LoginScreen from '@screens/LoginScreen';
 import SettingsScreen from '@screens/SettingsScreen';
 import TransactionListScreen from '@screens/TransactionListScreen';
 import firebaseService from '@services/firebase';
+import * as deviceUsersService from '@services/deviceUsers';
+import { getDeviceId } from '@utils/device';
 import { useAuthStore } from '@store/index';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -76,7 +78,7 @@ function HomeTabNavigator() {
 }
 
 export default function App(): React.ReactElement {
-  const { user, setUser } = useAuthStore();
+  const { user, setUser, setSelectedUser, setSavedAccounts } = useAuthStore();
   const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
@@ -86,9 +88,16 @@ export default function App(): React.ReactElement {
         await firebaseService.initialize();
         console.info('Firebase initialized successfully');
 
+        const deviceId = await getDeviceId();
+        const accounts = await deviceUsersService.getDeviceUsers(deviceId);
+        setSavedAccounts(accounts);
+
         // Listen to auth state changes
         const unsubscribe = firebaseService.onAuthStateChanged((authUser) => {
           setUser(authUser);
+          if (authUser) {
+            setSelectedUser(authUser);
+          }
           setIsInitializing(false);
         });
 
@@ -102,7 +111,7 @@ export default function App(): React.ReactElement {
     };
 
     initializeApp();
-  }, [setUser]);
+  }, [setUser, setSelectedUser, setSavedAccounts]);
 
   if (isInitializing) {
     return (

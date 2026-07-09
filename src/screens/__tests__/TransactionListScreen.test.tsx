@@ -23,6 +23,8 @@ beforeEach(() => {
 
   useAuthStore.setState({
     user: { id: 'test-user', email: 'test@example.com', createdAt: new Date(), updatedAt: new Date() },
+    selectedUser: { id: 'test-user', email: 'test@example.com', createdAt: new Date(), updatedAt: new Date() },
+    savedAccounts: [],
     isLoading: false,
     error: null,
   });
@@ -73,6 +75,7 @@ describe('TransactionListScreen', () => {
   it('subscribes with the correct userId from auth store', () => {
     useAuthStore.setState({
       user: { id: 'user-42', email: 'bob@example.com', createdAt: new Date(), updatedAt: new Date() },
+      selectedUser: { id: 'user-42', email: 'bob@example.com', createdAt: new Date(), updatedAt: new Date() },
     });
 
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
@@ -85,8 +88,8 @@ describe('TransactionListScreen', () => {
     );
   });
 
-  it('does not subscribe when user is null', () => {
-    useAuthStore.setState({ user: null });
+  it('does not subscribe when selectedUser is null', () => {
+    useAuthStore.setState({ selectedUser: null });
 
     render(<TransactionListScreen />);
 
@@ -123,13 +126,13 @@ describe('TransactionListScreen', () => {
     expect(storeState.periodEnd).toBeInstanceOf(Date);
   });
 
-  it('re-sets period when auth user changes', () => {
+  it('re-sets period when selectedUser changes', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     const { rerender } = render(<TransactionListScreen />);
 
     useAuthStore.setState({
-      user: { id: 'user-99', email: 'new@example.com', createdAt: new Date(), updatedAt: new Date() },
+      selectedUser: { id: 'user-99', email: 'new@example.com', createdAt: new Date(), updatedAt: new Date() },
     });
 
     rerender(<TransactionListScreen />);

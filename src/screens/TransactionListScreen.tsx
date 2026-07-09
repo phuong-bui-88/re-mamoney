@@ -17,7 +17,7 @@ const C = {
 };
 
 export default function TransactionListScreen(): React.ReactElement {
-  const { user } = useAuthStore();
+  const { selectedUser } = useAuthStore();
   const { selectedMonth, selectedYear, setSelectedMonth, setSelectedYear } = useTransactionStore();
   const navigation = useNavigation();
   const route = useRoute();
@@ -28,27 +28,27 @@ export default function TransactionListScreen(): React.ReactElement {
   const [reportTab, setReportTab] = useState(initialTab);
 
   useEffect(() => {
-    if (!user) return;
+    if (!selectedUser) return;
 
     const startDate = getMonthStart(new Date(selectedYear, selectedMonth));
     const endDate = getMonthEnd(new Date(selectedYear, selectedMonth));
     useTransactionStore.getState().setPeriod(startDate, endDate);
 
     const unsubscribe = firebaseService.subscribeToTransactions(
-      { userId: user.id },
+      { userId: selectedUser.id },
       (transactions) => {
         useTransactionStore.getState().setAllTransactions(transactions);
       },
     );
     return unsubscribe;
-  }, [user]);
+  }, [selectedUser]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!selectedUser) return;
     const startDate = getMonthStart(new Date(selectedYear, selectedMonth));
     const endDate = getMonthEnd(new Date(selectedYear, selectedMonth));
     useTransactionStore.getState().setPeriod(startDate, endDate);
-  }, [user, selectedMonth, selectedYear]);
+  }, [selectedUser, selectedMonth, selectedYear]);
 
   const handleAddTransaction = useCallback(() => {
     navigation.getParent()?.navigate('AddTransaction' as never);

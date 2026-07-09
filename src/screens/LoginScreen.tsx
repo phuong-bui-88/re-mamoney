@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
 import { useAuthStore } from '@store/index';
+import { getDeviceId } from '@utils/device';
+import { saveDeviceUser, getDeviceUsers } from '@services/deviceUsers';
 
 const styles = StyleSheet.create({
   button: {
@@ -42,15 +44,11 @@ const styles = StyleSheet.create({
   },
 });
 
-interface LoginScreenProps {
-  navigation: any;
-}
-
-export default function LoginScreen({ navigation }: LoginScreenProps): React.ReactElement {
+export default function LoginScreen(): React.ReactElement {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
-  const { signIn, signUp, isLoading } = useAuthStore();
+  const { signIn, signUp, isLoading, setSavedAccounts } = useAuthStore();
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -63,6 +61,14 @@ export default function LoginScreen({ navigation }: LoginScreenProps): React.Rea
         await signIn(email, password);
       } else {
         await signUp(email, password);
+      }
+
+      const storedUser = useAuthStore.getState().user;
+      if (storedUser) {
+        const deviceId = await getDeviceId();
+        await saveDeviceUser(deviceId, storedUser.id, storedUser.email, storedUser.displayName);
+        const accounts = await getDeviceUsers(deviceId);
+        setSavedAccounts(accounts);
       }
     } catch (error) {
       Alert.alert('Error', (error as Error).message);
