@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Pressable } from 'react-native';
 import Svg, { G, Rect, Line, Text as SvgText } from 'react-native-svg';
 import { C } from '@theme/index';
 import { useTransactionStore } from '@store/index';
@@ -134,82 +134,96 @@ export default function MonthlyChart({ onMonthSelect, onInfoPress }: MonthlyChar
         </View>
       </View>
 
-      <Svg width={cardWidth - 32} height={CHART_HEIGHT}>
-        <G>
-          {tickValues.map((v) => (
-            <Line
-              key={`grid-${v}`}
-              x1={plotLeft}
-              y1={yScale(v)}
-              x2={plotLeft + plotWidth}
-              y2={yScale(v)}
-              stroke={C.border}
-              strokeWidth={1}
-            />
-          ))}
-          {tickValues.map((v) => (
-            <SvgText
-              key={`tick-${v}`}
-              x={plotLeft - 6}
-              y={yScale(v) + 4}
-              textAnchor="end"
-              fontSize={12}
-              fill={C.textDark}
-            >
-              {formatTick(v)}
-            </SvgText>
-          ))}
-          {windowMonths.map((d) => {
-            const net = d.net;
-            const monthIndex = d.month;
-            const zeroY = yScale(0);
-            const barHeight = Math.abs((net / maxTick) * plotHeight);
-            const barY = zeroY - barHeight;
-            const centerX = SIDE_PADDING + ITEM_WIDTH / 2 - 20 + (monthIndex - selectedMonth) * ITEM_WIDTH;
-            const barX = centerX - BAR_WIDTH / 2;
-            const isActive = activeMonth === monthIndex;
-            const color = net >= 0 ? C.green : C.red;
+      <View style={styles.chartWrapper}>
+        <Svg width={cardWidth - 32} height={CHART_HEIGHT}>
+          <G>
+            {tickValues.map((v) => (
+              <Line
+                key={`grid-${v}`}
+                x1={plotLeft}
+                y1={yScale(v)}
+                x2={plotLeft + plotWidth}
+                y2={yScale(v)}
+                stroke={C.border}
+                strokeWidth={1}
+              />
+            ))}
+            {tickValues.map((v) => (
+              <SvgText
+                key={`tick-${v}`}
+                x={plotLeft - 6}
+                y={yScale(v) + 4}
+                textAnchor="end"
+                fontSize={12}
+                fill={C.textDark}
+              >
+                {formatTick(v)}
+              </SvgText>
+            ))}
+            {windowMonths.map((d) => {
+              const net = d.net;
+              const monthIndex = d.month;
+              const zeroY = yScale(0);
+              const barHeight = Math.abs((net / maxTick) * plotHeight);
+              const barY = zeroY - barHeight;
+              const centerX = SIDE_PADDING + ITEM_WIDTH / 2 - 20 + (monthIndex - selectedMonth) * ITEM_WIDTH;
+              const barX = centerX - BAR_WIDTH / 2;
+              const isActive = activeMonth === monthIndex;
+              const color = net >= 0 ? C.green : C.red;
 
-            return (
-              <G key={`bar-${monthIndex}`}>
-                {isActive && (
+              return (
+                <G key={`bar-${monthIndex}`}>
+                  {isActive && (
+                    <SvgText
+                      x={barX + BAR_WIDTH / 2}
+                      y={barY - 8}
+                      textAnchor="middle"
+                      fontSize={11}
+                fontWeight="bold"
+                      fill={color}
+                    >
+                      {formatCurrency(Math.abs(net))}
+                    </SvgText>
+                  )}
+                  <Rect
+                    x={barX}
+                    y={barY}
+                    width={BAR_WIDTH}
+                    height={Math.max(barHeight, 2)}
+                    fill={color}
+                    rx={3}
+                    ry={3}
+                    opacity={isActive ? 1 : 0.75}
+                  />
                   <SvgText
                     x={barX + BAR_WIDTH / 2}
-                    y={barY - 8}
+                    y={plotBottom + 16}
                     textAnchor="middle"
-                    fontSize={11}
-              fontWeight="bold"
-                    fill={color}
+                fontSize={11}
+                fill={isActive ? C.textDark : C.textLight}
+                    fontWeight={isActive ? '700' : '400'}
                   >
-                    {formatCurrency(Math.abs(net))}
+                    {MONTHS_SHORT[monthIndex]}
                   </SvgText>
-                )}
-                <Rect
-                  x={barX}
-                  y={barY}
-                  width={BAR_WIDTH}
-                  height={Math.max(barHeight, 2)}
-                  fill={color}
-                  rx={3}
-                  ry={3}
-                  opacity={isActive ? 1 : 0.75}
-                  onPress={() => handleBarPress(monthIndex)}
-                />
-                <SvgText
-                  x={barX + BAR_WIDTH / 2}
-                  y={plotBottom + 16}
-                  textAnchor="middle"
-              fontSize={11}
-              fill={isActive ? C.textDark : C.textLight}
-                  fontWeight={isActive ? '700' : '400'}
-                >
-                  {MONTHS_SHORT[monthIndex]}
-                </SvgText>
-              </G>
-            );
-          })}
-        </G>
-      </Svg>
+                </G>
+              );
+            })}
+          </G>
+        </Svg>
+
+        {windowMonths.map((d) => {
+          const monthIndex = d.month;
+          const centerX = SIDE_PADDING + ITEM_WIDTH / 2 - 20 + (monthIndex - selectedMonth) * ITEM_WIDTH;
+          return (
+            <Pressable
+              key={`tap-${monthIndex}`}
+              style={[styles.tapOverlay, { left: centerX - ITEM_WIDTH / 2 }]}
+              onPress={() => { handleBarPress(monthIndex); }}
+              accessibilityRole="button"
+            />
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -227,6 +241,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
   },
+  chartWrapper: {
+    position: 'relative',
+  },
   emptyText: {
     color: C.textLight,
     fontSize: 14,
@@ -238,6 +255,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
+  },
+  tapOverlay: {
+    height: CHART_HEIGHT,
+    position: 'absolute',
+    top: 0,
+    width: ITEM_WIDTH,
   },
   title: {
     color: C.textDark,

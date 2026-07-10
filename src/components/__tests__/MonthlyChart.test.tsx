@@ -30,7 +30,10 @@ jest.mock('react-native-svg', () => {
     Svg: function SvgMock({ children }: { children?: React.ReactNode }) {
       return React.createElement(View, null, children);
     },
-    G: function GMock({ children }: { children?: React.ReactNode }) {
+    G: function GMock({ onPress, children }: { onPress?: () => void; children?: React.ReactNode }) {
+      if (onPress) {
+        return React.createElement(TouchableOpacity, { onPress, accessibilityRole: 'button' }, children);
+      }
       return React.createElement(View, null, children);
     },
     Rect: function RectMock({ onPress, children }: { onPress?: () => void; children?: React.ReactNode }) {
