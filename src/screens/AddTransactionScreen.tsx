@@ -36,6 +36,8 @@ export default function AddTransactionScreen(): React.ReactElement {
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
+  const prevLoading = useRef(isLoading);
   const feedIdCounter = useRef(0);
 
   const { selectedUser } = useAuthStore();
@@ -67,6 +69,15 @@ export default function AddTransactionScreen(): React.ReactElement {
       scrollRef.current?.scrollToEnd({ animated: true });
     }, 100);
   }, [feed, isLoading]);
+
+  useEffect(() => {
+    if (prevLoading.current && !isLoading) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 150);
+    }
+    prevLoading.current = isLoading;
+  }, [isLoading]);
 
   const handleSend = async () => {
     const text = inputText.trim();
@@ -206,6 +217,7 @@ export default function AddTransactionScreen(): React.ReactElement {
       <View style={styles.inputContainer}>
         <View style={styles.inputRow}>
           <TextInput
+            ref={inputRef}
             style={styles.input}
             placeholder="What did you spend?"
             placeholderTextColor={C.textLight}
@@ -213,6 +225,7 @@ export default function AddTransactionScreen(): React.ReactElement {
             onChangeText={setInputText}
             editable={!isLoading}
             multiline
+            autoFocus
           />
           <TouchableOpacity
             style={[
