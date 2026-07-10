@@ -9,9 +9,10 @@ interface StatisticsCardProps {
   expense: number;
   income: number;
   onInfoPress?: () => void;
+  onExpensePress?: () => void;
 }
 
-export default function StatisticsCard({ netChange, expense, income, onInfoPress }: StatisticsCardProps): React.ReactElement {
+export default function StatisticsCard({ netChange, expense, income, onInfoPress, onExpensePress }: StatisticsCardProps): React.ReactElement {
   const isPositive = netChange >= 0;
   const total = income + expense || 1;
   const expenseRatio = expense / total;
@@ -35,7 +36,7 @@ export default function StatisticsCard({ netChange, expense, income, onInfoPress
       </View>
 
       <View style={styles.breakdown}>
-        <View style={styles.breakItem}>
+        <TouchableOpacity activeOpacity={0.7} onPress={onExpensePress} style={styles.breakItem}>
           <View style={styles.breakHeader}>
             <View style={styles.breakLabelRow}>
               <View style={[styles.dot, { backgroundColor: C.expense }]} />
@@ -46,7 +47,7 @@ export default function StatisticsCard({ netChange, expense, income, onInfoPress
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${expenseRatio * 100}%`, backgroundColor: C.expense }]} />
           </View>
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.breakItem}>
           <View style={styles.breakHeader}>

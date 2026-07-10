@@ -173,7 +173,7 @@ export default function MonthlyChart({ onMonthSelect, onInfoPress }: MonthlyChar
 
               return (
                 <G key={`bar-${monthIndex}`}>
-                  {isActive && (
+                  {isActive && net !== 0 && (
                     <SvgText
                       x={barX + BAR_WIDTH / 2}
                       y={barY - 8}
@@ -185,16 +185,18 @@ export default function MonthlyChart({ onMonthSelect, onInfoPress }: MonthlyChar
                       {formatCurrency(Math.abs(net))}
                     </SvgText>
                   )}
-                  <Rect
-                    x={barX}
-                    y={barY}
-                    width={BAR_WIDTH}
-                    height={Math.max(barHeight, 2)}
-                    fill={color}
-                    rx={3}
-                    ry={3}
-                    opacity={isActive ? 1 : 0.75}
-                  />
+                  {net !== 0 && (
+                    <Rect
+                      x={barX}
+                      y={barY}
+                      width={BAR_WIDTH}
+                      height={Math.max(barHeight, 2)}
+                      fill={color}
+                      rx={3}
+                      ry={3}
+                      opacity={isActive ? 1 : 0.75}
+                    />
+                  )}
                   <SvgText
                     x={barX + BAR_WIDTH / 2}
                     y={plotBottom + 16}

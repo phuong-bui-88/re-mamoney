@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { C } from '@theme/index';
@@ -15,6 +15,8 @@ import {
 import { getMonthStart, getMonthEnd } from '@utils/currency';
 
 export default function HomeScreen(): React.ReactElement {
+  const scrollRef = useRef<ScrollView>(null);
+  const categoryChartY = useRef(0);
   const { selectedUser } = useAuthStore();
   const { selectedMonth, selectedYear, totalIncome, totalExpense, setSelectedMonth, setSelectedYear } = useTransactionStore();
   const navigation = useNavigation();
@@ -44,6 +46,14 @@ export default function HomeScreen(): React.ReactElement {
     useTransactionStore.getState().setPeriod(startDate, endDate);
   }, [selectedUser, selectedMonth, selectedYear]);
 
+  const handleExpensePress = useCallback(() => {
+    scrollRef.current?.scrollTo({ y: categoryChartY.current, animated: true });
+  }, []);
+
+  const handleCategoryLayout = useCallback((e: { nativeEvent: { layout: { y: number } } }) => {
+    categoryChartY.current = e.nativeEvent.layout.y;
+  }, []);
+
   const handleAddTransaction = useCallback(() => {
     navigation.getParent()?.navigate('AddTransaction' as never);
   }, [navigation]);
@@ -64,7 +74,7 @@ export default function HomeScreen(): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} style={styles.scroll} showsVerticalScrollIndicator={false}>
         <PeriodFilter
           month={selectedMonth}
           year={selectedYear}
@@ -79,8 +89,11 @@ export default function HomeScreen(): React.ReactElement {
           expense={totalExpense}
           income={totalIncome}
           onInfoPress={handleInfo}
+          onExpensePress={handleExpensePress}
         />
-        <CategoryChart />
+        <View onLayout={handleCategoryLayout}>
+          <CategoryChart />
+        </View>
       </ScrollView>
 
       <FloatingActionButton onPress={handleAddTransaction} />
