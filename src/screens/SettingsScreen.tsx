@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuthStore } from '@store/index';
 
 const styles = StyleSheet.create({
@@ -9,17 +9,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 20,
     padding: 15,
-  },
-  buttonRemove: {
-    backgroundColor: '#ff5252',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  buttonRemoveText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
   },
   buttonSwitch: {
     backgroundColor: '#2196F3',
@@ -95,27 +84,12 @@ const styles = StyleSheet.create({
 });
 
 export default function SettingsScreen(): React.ReactElement {
-  const { user, selectedUser, savedAccounts, signOut, switchToAccount, removeDeviceAccount } =
+  const { user, selectedUser, savedAccounts, signOut, switchToAccount } =
     useAuthStore();
 
   const handleSwitch = (account: (typeof savedAccounts)[0]) => {
     if (account.userId === selectedUser?.id) return;
     switchToAccount(account);
-  };
-
-  const handleRemove = (account: (typeof savedAccounts)[0]) => {
-    if (account.userId === selectedUser?.id) {
-      Alert.alert('Cannot Remove', 'Switch to another account first before removing this one.');
-      return;
-    }
-    Alert.alert('Remove Account', `Remove ${account.email} from this device?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => removeDeviceAccount(account.userId),
-      },
-    ]);
   };
 
   const isCurrentUser = (account: (typeof savedAccounts)[0]) =>
@@ -160,20 +134,12 @@ export default function SettingsScreen(): React.ReactElement {
               </View>
               <View style={styles.itemActions}>
                 {!isCurrentUser(account) && (
-                  <>
-                    <TouchableOpacity
-                      style={styles.buttonSwitch}
-                      onPress={() => handleSwitch(account)}
-                    >
-                      <Text style={styles.buttonSwitchText}>Switch</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.buttonRemove}
-                      onPress={() => handleRemove(account)}
-                    >
-                      <Text style={styles.buttonRemoveText}>X</Text>
-                    </TouchableOpacity>
-                  </>
+                  <TouchableOpacity
+                    style={styles.buttonSwitch}
+                    onPress={() => handleSwitch(account)}
+                  >
+                    <Text style={styles.buttonSwitchText}>Switch</Text>
+                  </TouchableOpacity>
                 )}
               </View>
             </View>

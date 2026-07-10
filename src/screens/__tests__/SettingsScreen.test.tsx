@@ -71,7 +71,7 @@ describe('SettingsScreen – device accounts', () => {
     render(<SettingsScreen />);
 
     expect(screen.queryAllByText('Switch')).toHaveLength(2);
-    expect(screen.queryAllByText('X')).toHaveLength(2);
+    expect(screen.queryAllByText('X')).toHaveLength(0);
   });
 
   it('hides the device accounts section when savedAccounts is empty', () => {
