@@ -169,7 +169,7 @@ export default function MonthlyChart({ onMonthSelect, onInfoPress }: MonthlyChar
               const centerX = SIDE_PADDING + ITEM_WIDTH / 2 - 20 + (monthIndex - selectedMonth) * ITEM_WIDTH;
               const barX = centerX - BAR_WIDTH / 2;
               const isActive = activeMonth === monthIndex;
-              const color = net >= 0 ? C.green : C.red;
+              const color = isActive ? C.primary : net >= 0 ? C.green : C.red;
 
               return (
                 <G key={`bar-${monthIndex}`}>
@@ -200,8 +200,8 @@ export default function MonthlyChart({ onMonthSelect, onInfoPress }: MonthlyChar
                     y={plotBottom + 16}
                     textAnchor="middle"
                 fontSize={11}
-                fill={isActive ? C.textDark : C.textLight}
-                    fontWeight={isActive ? '700' : '400'}
+                    fill={isActive ? C.primary : C.textLight}
+                    fontWeight="500"
                   >
                     {MONTHS_SHORT[monthIndex]}
                   </SvgText>
