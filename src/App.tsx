@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import AddTransactionScreen from '@screens/AddTransactionScreen';
 import AskScreen from '@screens/AskScreen';
+import EditTransactionScreen from '@screens/EditTransactionScreen';
 import HomeScreen from '@screens/HomeScreen';
 import LoginScreen from '@screens/LoginScreen';
 import SettingsScreen from '@screens/SettingsScreen';
@@ -136,6 +137,11 @@ export default function App(): React.ReactElement {
               name="AddTransaction"
               component={AddTransactionScreen}
               options={{ title: 'Add Transaction' }}
+            />
+            <Stack.Screen
+              name="EditTransaction"
+              component={EditTransactionScreen}
+              options={{ title: 'Edit Transaction' }}
             />
           </>
         ) : (

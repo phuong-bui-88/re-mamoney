@@ -5,6 +5,16 @@ import { useTransactionStore } from '@store/index';
 import { CATEGORY_LABELS } from '@utils/categories';
 import { formatCurrency } from '@utils/currency';
 
+const mockNavigate = jest.fn();
+jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
+  useNavigation: () => ({
+    getParent: () => ({
+      navigate: mockNavigate,
+    }),
+  }),
+}));
+
 jest.mock('../FilteredTransactionList', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const React = require('react');

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTransactionStore } from '@store/index';
+import type { Transaction } from '@/types';
 import TransactionRow from './TransactionRow';
 
 const C = {
@@ -10,9 +11,10 @@ const C = {
 interface FilteredTransactionListProps {
   type: 'income' | 'expense';
   category?: string;
+  onTransactionPress?: (transaction: Transaction) => void;
 }
 
-export default function FilteredTransactionList({ type, category }: FilteredTransactionListProps): React.ReactElement {
+export default function FilteredTransactionList({ type, category, onTransactionPress }: FilteredTransactionListProps): React.ReactElement {
   const { transactions } = useTransactionStore();
   const filtered = transactions.filter((t) => {
     if (t.type !== type) return false;
@@ -35,7 +37,12 @@ export default function FilteredTransactionList({ type, category }: FilteredTran
   return (
     <View style={styles.container}>
       {filtered.map((transaction) => (
-        <TransactionRow key={transaction.id} transaction={transaction} onDelete={handleDelete} />
+        <TransactionRow
+          key={transaction.id}
+          transaction={transaction}
+          onDelete={handleDelete}
+          onPress={onTransactionPress}
+        />
       ))}
     </View>
   );

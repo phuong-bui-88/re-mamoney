@@ -1,7 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Dimensions, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import Svg, { Path, G, Text as SvgText, Circle } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
+import type { Transaction } from '@/types';
 import SegmentedControl from './SegmentedControl';
 import CategoryBreakdownRow from './CategoryBreakdownRow';
 import FilteredTransactionList from './FilteredTransactionList';
@@ -47,9 +49,17 @@ interface CategoryEntry {
 
 export default function CategoryChart(): React.ReactElement {
   const { transactions } = useTransactionStore();
+  const navigation = useNavigation();
   const [typeIndex, setTypeIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const type = typeIndex === 0 ? 'expense' : 'income';
+
+  const handleTransactionPress = useCallback(
+    (transaction: Transaction) => {
+      (navigation.getParent() as any)?.navigate('EditTransaction', { transaction });
+    },
+    [navigation],
+  );
 
   const categories = useMemo<CategoryEntry[]>(() => {
     const filtered = transactions.filter((t) => t.type === type);
@@ -271,7 +281,11 @@ export default function CategoryChart(): React.ReactElement {
                   <Text style={styles.headerTotal}>Total: {formatCurrency(centerEntry.amount)}</Text>
                 </View>
               </TouchableOpacity>
-              <FilteredTransactionList type={type} category={selectedCategory} />
+              <FilteredTransactionList
+                type={type}
+                category={selectedCategory}
+                onTransactionPress={handleTransactionPress}
+              />
             </View>
           ) : (
             <View style={styles.legend}>

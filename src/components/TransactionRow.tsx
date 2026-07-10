@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Ionicons } from '@expo/vector-icons';
 import type { Transaction } from '@/types';
@@ -19,9 +19,10 @@ const C = {
 interface TransactionRowProps {
   transaction: Transaction;
   onDelete?: (id: string) => void;
+  onPress?: (transaction: Transaction) => void;
 }
 
-export default function TransactionRow({ transaction, onDelete }: TransactionRowProps): React.ReactElement {
+export default function TransactionRow({ transaction, onDelete, onPress }: TransactionRowProps): React.ReactElement {
   const renderRightActions = (
     progress: Animated.AnimatedInterpolation<number>,
   ) => {
@@ -43,7 +44,7 @@ export default function TransactionRow({ transaction, onDelete }: TransactionRow
     catColor = idx >= 0 ? CATEGORY_COLORS[transaction.category] : FALLBACK_COLORS[0];
   }
 
-  const row = (
+  const rowContent = (
     <View style={styles.container}>
       <View style={[styles.iconBg, { backgroundColor: catColor }]}>
         <Ionicons name={catIcon as any} size={16} color="#fff" />
@@ -58,6 +59,14 @@ export default function TransactionRow({ transaction, onDelete }: TransactionRow
         {formatCurrency(transaction.amount)}
       </Text>
     </View>
+  );
+
+  const row = onPress ? (
+    <TouchableOpacity onPress={() => onPress(transaction)} activeOpacity={0.7}>
+      {rowContent}
+    </TouchableOpacity>
+  ) : (
+    rowContent
   );
 
   if (onDelete) {
