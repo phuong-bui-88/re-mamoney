@@ -181,7 +181,8 @@ describe('CategoryChart', () => {
 
     render(<CategoryChart />);
 
-    expect(screen.getByText('restaurant-outline')).toBeTruthy();
+    const icons = screen.getAllByText('restaurant-outline');
+    expect(icons.length).toBeGreaterThanOrEqual(2);
   });
 
   it('sorts categories descending by amount', () => {

@@ -13,6 +13,9 @@ import { C } from '@theme/index';
 const segments = ['Expense', 'Income'];
 const DONUT_RADIUS = 96;
 const DONUT_WIDTH = 42;
+const ICON_SIZE = 24;
+const MIN_ARC_DEGREES = 25;
+const ICON_BG = 'rgba(255,255,255,0.88)';
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -90,6 +93,32 @@ export default function CategoryChart(): React.ReactElement {
     [categories, total],
   );
 
+  const iconPositions = useMemo(() => {
+    if (categories.length === 0) return [];
+    if (categories.length === 1) {
+      return [
+        {
+          key: categories[0].key,
+          icon: categories[0].icon,
+          color: categories[0].color,
+          x: cx,
+          y: cy - DONUT_RADIUS,
+        },
+      ];
+    }
+    return categories
+      .map((cat, i) => {
+        const startDeg = ratios.slice(0, i).reduce((s, r) => s + r * 360, 0);
+        const endDeg = startDeg + ratios[i] * 360;
+        const arcDeg = endDeg - startDeg;
+        if (arcDeg < MIN_ARC_DEGREES) return null;
+        const midDeg = startDeg + arcDeg / 2;
+        const pos = polarToCartesian(cx, cy, DONUT_RADIUS, midDeg);
+        return { key: cat.key, icon: cat.icon, color: cat.color, x: pos.x, y: pos.y };
+      })
+      .filter(Boolean) as { key: string; icon: string; color: string; x: number; y: number }[];
+  }, [categories, ratios, cx, cy]);
+
   const centerEntry = selectedCategory
     ? categories.find((c) => c.key === selectedCategory)
     : null;
@@ -111,6 +140,7 @@ export default function CategoryChart(): React.ReactElement {
         <View>
           <View style={styles.donutContainer}>
             <TouchableOpacity activeOpacity={1} onPress={() => setSelectedCategory(null)}>
+              <View style={{ width: chartSize, height: chartSize }}>
               <Svg width={chartSize} height={chartSize}>
                 {(() => {
                   if (categories.length === 1) {
@@ -206,6 +236,21 @@ export default function CategoryChart(): React.ReactElement {
                   {centerEntry ? centerEntry.label : 'Total'}
                 </SvgText>
               </Svg>
+              <View style={[StyleSheet.absoluteFill, styles.iconOverlay]}>
+                {iconPositions.map((icon) => (
+                  <View
+                    key={icon.key}
+                    testID={`donut-icon-${icon.key}`}
+                    style={[styles.iconBadge, {
+                      left: icon.x - ICON_SIZE / 2,
+                      top: icon.y - ICON_SIZE / 2,
+                    }]}
+                  >
+                    <Ionicons name={icon.icon as any} size={14} color={icon.color} />
+                  </View>
+                ))}
+              </View>
+              </View>
             </TouchableOpacity>
           </View>
 
@@ -300,6 +345,23 @@ const styles = StyleSheet.create({
     color: C.textLight,
     fontSize: 12,
     marginTop: 2,
+  },
+  iconBadge: {
+    alignItems: 'center',
+    backgroundColor: ICON_BG,
+    borderRadius: ICON_SIZE / 2,
+    elevation: 2,
+    height: ICON_SIZE,
+    justifyContent: 'center',
+    position: 'absolute',
+    shadowColor: C.textDark,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    width: ICON_SIZE,
+  },
+  iconOverlay: {
+    pointerEvents: 'none',
   },
   legend: {
     marginTop: 4,
