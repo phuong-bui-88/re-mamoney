@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
-import type { Transaction } from '@/types';
 import { formatCurrency, formatDate } from '@utils/currency';
 import { parseDate } from '@utils/dateParser';
 import {
@@ -29,10 +28,20 @@ import { C } from '@theme/index';
 
 const LABEL_WIDTH = 90;
 
-export default function EditTransactionScreen(): React.ReactElement {
+export default function EditTransactionScreen(): React.ReactElement | null {
   const route = useRoute();
   const navigation = useNavigation();
-  const { transaction } = route.params as { transaction: Transaction };
+  const { transactionId } = route.params as { transactionId: string };
+  const transaction = useTransactionStore((s) => s.transactions.find((t) => t.id === transactionId));
+  const amountRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    if (!transaction) {
+      navigation.goBack();
+    }
+  }, [transaction, navigation]);
+
+  if (!transaction) return null;
 
   const initialMultiply = transaction.amount % 1000 === 0;
   const initialInput = initialMultiply
@@ -46,6 +55,13 @@ export default function EditTransactionScreen(): React.ReactElement {
   const [dateInput, setDateInput] = useState(formatDate(transaction.date));
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      amountRef.current?.focus();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
 
   const isExpense = transaction.type === 'expense';
   const categoryKeys = isExpense ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
@@ -127,6 +143,7 @@ export default function EditTransactionScreen(): React.ReactElement {
           <View style={styles.amountCol}>
             <View style={styles.amountRow}>
               <TextInput
+                ref={amountRef}
                 style={[styles.input, styles.amountInput]}
                 value={amountInput}
                 onChangeText={setAmountInput}

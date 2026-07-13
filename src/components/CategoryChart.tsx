@@ -56,7 +56,7 @@ export default function CategoryChart(): React.ReactElement {
 
   const handleTransactionPress = useCallback(
     (transaction: Transaction) => {
-      (navigation.getParent() as any)?.navigate('EditTransaction', { transaction });
+      (navigation.getParent() as any)?.navigate('EditTransaction', { transactionId: transaction.id });
     },
     [navigation],
   );
