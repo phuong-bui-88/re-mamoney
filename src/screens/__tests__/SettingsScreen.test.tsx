@@ -41,17 +41,18 @@ describe('SettingsScreen – device accounts', () => {
     expect(screen.getAllByText(/a@gmail.com/)).toHaveLength(2);
   });
 
-  it('marks the current selectedUser with ⬤ and shows "Current" label', () => {
+  it('shows "Current" label without dot for current account', () => {
     render(<SettingsScreen />);
 
-    expect(screen.getByText(/⬤/)).toBeTruthy();
     expect(screen.getByText('Current')).toBeTruthy();
+    expect(screen.queryByText(/⬤/)).toBeNull();
+    expect(screen.queryByText(/○/)).toBeNull();
   });
 
-  it('shows non-current accounts with ○', () => {
+  it('renders non-current accounts without dot', () => {
     render(<SettingsScreen />);
 
-    expect(screen.getAllByText(/○/)).toHaveLength(2);
+    expect(screen.queryByText(/○/)).toBeNull();
   });
 
   it('calls switchToAccount when Switch button is tapped', () => {

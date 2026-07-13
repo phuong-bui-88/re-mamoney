@@ -125,7 +125,6 @@ export default function SettingsScreen(): React.ReactElement {
                     isCurrentUser(account) && styles.itemCurrentLabel,
                   ]}
                 >
-                  {isCurrentUser(account) ? '⬤ ' : '○ '}
                   {account.email}
                 </Text>
                 {isCurrentUser(account) && (

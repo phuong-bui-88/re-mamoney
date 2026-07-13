@@ -10,7 +10,6 @@ import {
   Switch,
   Modal,
   KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
@@ -104,7 +103,8 @@ export default function EditTransactionScreen(): React.ReactElement {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
+      keyboardVerticalOffset={90}
     >
       <ScrollView
         style={styles.scroll}
