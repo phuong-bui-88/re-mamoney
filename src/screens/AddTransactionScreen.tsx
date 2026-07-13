@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -41,7 +41,7 @@ export default function AddTransactionScreen(): React.ReactElement {
   const feedIdCounter = useRef(0);
 
   const { selectedUser } = useAuthStore();
-  const { transactions, addTransaction } = useTransactionStore();
+  const { transactions, addTransaction, allTransactions } = useTransactionStore();
 
   useEffect(() => {
     const threeDaysAgo = new Date();
@@ -78,6 +78,20 @@ export default function AddTransactionScreen(): React.ReactElement {
     }
     prevLoading.current = isLoading;
   }, [isLoading]);
+
+  const todaySpent = useMemo(() => {
+    const now = new Date();
+    return allTransactions
+      .filter(
+        (tx) =>
+          tx.date.getDate() === now.getDate() &&
+          tx.date.getMonth() === now.getMonth() &&
+          tx.date.getFullYear() === now.getFullYear(),
+      )
+      .reduce((sum, tx) => {
+        return tx.type === 'expense' ? sum + tx.amount : sum - tx.amount;
+      }, 0);
+  }, [allTransactions]);
 
   const handleSend = async () => {
     const text = inputText.trim();
@@ -215,6 +229,11 @@ export default function AddTransactionScreen(): React.ReactElement {
       </ScrollView>
 
       <View style={styles.inputContainer}>
+        <View style={styles.todayRow}>
+          <Text style={[styles.todayText, todaySpent > 0 ? styles.todayRed : styles.todayGreen]}>
+            Spent today: {formatCurrency(todaySpent)}
+          </Text>
+        </View>
         <View style={styles.inputRow}>
           <TextInput
             ref={inputRef}
@@ -297,6 +316,23 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     color: C.white,
+    fontWeight: 'bold',
+  },
+  todayGreen: {
+    color: C.green,
+  },
+  todayRed: {
+    color: C.red,
+  },
+  todayRow: {
+    alignItems: 'center',
+    borderBottomColor: C.border,
+    borderBottomWidth: 1,
+    marginBottom: 4,
+    paddingBottom: 8,
+  },
+  todayText: {
+    fontSize: 13,
     fontWeight: 'bold',
   },
 });

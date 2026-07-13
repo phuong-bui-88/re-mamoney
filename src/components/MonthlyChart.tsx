@@ -74,7 +74,7 @@ export default function MonthlyChart({ onMonthSelect, onInfoPress }: MonthlyChar
   const cardWidth = SCREEN_WIDTH - 32;
   const plotLeft = Y_LABEL_WIDTH;
   const plotWidth = cardWidth - plotLeft - 8;
-  const plotTop = 12;
+  const plotTop = 28;
   const plotBottom = CHART_HEIGHT - X_LABEL_HEIGHT - BOTTOM_PADDING;
   const plotHeight = plotBottom - plotTop;
 
