@@ -120,4 +120,41 @@ describe('EditTransactionScreen', () => {
       expect(mockGoBack).toHaveBeenCalled();
     });
   });
+
+  it('opens calendar modal when date trigger is pressed', () => {
+    render(<EditTransactionScreen />);
+
+    const dateTrigger = screen.getByText('01/07/2026');
+    fireEvent.press(dateTrigger);
+
+    expect(screen.getByText('Select Date')).toBeTruthy();
+    expect(screen.getByText('July 2026')).toBeTruthy();
+  });
+
+  it('closes calendar modal when cancel is pressed', () => {
+    render(<EditTransactionScreen />);
+
+    const dateTrigger = screen.getByText('01/07/2026');
+    fireEvent.press(dateTrigger);
+    expect(screen.getByText('Select Date')).toBeTruthy();
+
+    const cancelBtn = screen.getByText('Cancel');
+    fireEvent.press(cancelBtn);
+
+    expect(screen.queryByText('Select Date')).toBeNull();
+  });
+
+  it('navigates months in calendar', () => {
+    render(<EditTransactionScreen />);
+
+    const dateTrigger = screen.getByText('01/07/2026');
+    fireEvent.press(dateTrigger);
+
+    expect(screen.getByText('July 2026')).toBeTruthy();
+
+    const nextBtn = screen.getByTestId('calendar-next-month');
+    fireEvent.press(nextBtn);
+
+    expect(screen.getByText('August 2026')).toBeTruthy();
+  });
 });

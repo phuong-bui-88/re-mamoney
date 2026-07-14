@@ -55,6 +55,75 @@ export default function EditTransactionScreen(): React.ReactElement | null {
   const [dateInput, setDateInput] = useState(formatDate(transaction.date));
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [dateModalOpen, setDateModalOpen] = useState(false);
+  const [calendarDate, setCalendarDate] = useState(() => {
+    const d = transaction.date;
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  });
+  const [viewMonth, setViewMonth] = useState(transaction.date.getMonth());
+  const [viewYear, setViewYear] = useState(transaction.date.getFullYear());
+
+  const MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  const DAY_LABELS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+  const getDaysInMonth = (month: number, year: number): number =>
+    new Date(year, month + 1, 0).getDate();
+
+  const getFirstDayOfMonth = (month: number, year: number): number => {
+    const day = new Date(year, month, 1).getDay();
+    return day === 0 ? 6 : day - 1;
+  };
+
+  const calendarDays = useMemo(() => {
+    const total = getDaysInMonth(viewMonth, viewYear);
+    const start = getFirstDayOfMonth(viewMonth, viewYear);
+    const cells: (number | null)[] = [];
+    for (let i = 0; i < start; i++) cells.push(null);
+    for (let d = 1; d <= total; d++) cells.push(d);
+    return cells;
+  }, [viewMonth, viewYear]);
+
+  const navigateMonth = (delta: number) => {
+    let newMonth = viewMonth + delta;
+    let newYear = viewYear;
+    if (newMonth < 0) {
+      newMonth = 11;
+      newYear -= 1;
+    } else if (newMonth > 11) {
+      newMonth = 0;
+      newYear += 1;
+    }
+    setViewMonth(newMonth);
+    setViewYear(newYear);
+  };
+
+  const handleDayPress = (day: number) => {
+    const selected = new Date(viewYear, viewMonth, day);
+    setCalendarDate(selected);
+  };
+
+  const handleToday = () => {
+    const now = new Date();
+    setViewMonth(now.getMonth());
+    setViewYear(now.getFullYear());
+    setCalendarDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+  };
+
+  const handleDateOk = () => {
+    setDateInput(formatDate(calendarDate));
+    setDateModalOpen(false);
+  };
+
+  const handleDateCancel = () => {
+    const d = calendarDate;
+    setCalendarDate(new Date(d.getFullYear(), d.getMonth(), d.getDate()));
+    setViewMonth(d.getMonth());
+    setViewYear(d.getFullYear());
+    setDateModalOpen(false);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -250,15 +319,124 @@ export default function EditTransactionScreen(): React.ReactElement | null {
 
         <View style={styles.fieldRow}>
           <Text style={styles.label}>Date:</Text>
-          <TextInput
-            style={styles.input}
-            value={dateInput}
-            onChangeText={setDateInput}
-            placeholder="dd/MM/yyyy"
-            placeholderTextColor={C.textLight}
-            keyboardType="numbers-and-punctuation"
-          />
+          <TouchableOpacity
+            style={styles.dateTrigger}
+            onPress={() => setDateModalOpen(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.dateTriggerInner}>
+              <Ionicons name="calendar-outline" size={16} color={C.blue} />
+              <Text style={styles.dateTriggerText}>{dateInput}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={C.textMedium} />
+          </TouchableOpacity>
         </View>
+
+        <Modal visible={dateModalOpen} transparent animationType="fade">
+          <TouchableOpacity
+            style={styles.overlayBase}
+            onPress={() => setDateModalOpen(false)}
+            activeOpacity={1}
+          >
+            <View style={styles.calendarContainer}>
+              <Text style={styles.calendarTitle}>Select Date</Text>
+
+              <View style={styles.calendarNav}>
+                <TouchableOpacity
+                  onPress={() => navigateMonth(-1)}
+                  style={styles.calendarNavBtn}
+                  activeOpacity={0.6}
+                >
+                  <Ionicons name="chevron-back" size={20} color={C.textDark} />
+                </TouchableOpacity>
+                <Text style={styles.calendarMonthYear}>
+                  {MONTH_NAMES[viewMonth]} {viewYear}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => navigateMonth(1)}
+                  style={styles.calendarNavBtn}
+                  activeOpacity={0.6}
+                  testID="calendar-next-month"
+                >
+                  <Ionicons name="chevron-forward" size={20} color={C.textDark} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.calendarWeekRow}>
+                {DAY_LABELS.map((label) => (
+                  <Text key={label} style={styles.calendarWeekLabel}>
+                    {label}
+                  </Text>
+                ))}
+              </View>
+
+              <View style={styles.calendarGrid}>
+                {calendarDays.map((day, idx) => {
+                  if (day === null) {
+                    return <View key={`empty-${idx}`} style={styles.calendarDayCell} />;
+                  }
+                  const today = new Date();
+                  const isToday =
+                    day === today.getDate() &&
+                    viewMonth === today.getMonth() &&
+                    viewYear === today.getFullYear();
+                  const isSelected =
+                    day === calendarDate.getDate() &&
+                    viewMonth === calendarDate.getMonth() &&
+                    viewYear === calendarDate.getFullYear();
+                  return (
+                    <TouchableOpacity
+                      key={`day-${day}`}
+                      style={[
+                        styles.calendarDayCell,
+                        isToday && !isSelected && styles.calendarDayToday,
+                        isSelected && styles.calendarDaySelected,
+                      ]}
+                      onPress={() => handleDayPress(day)}
+                      activeOpacity={0.6}
+                    >
+                      <Text
+                        style={[
+                          styles.calendarDayText,
+                          isToday && !isSelected && styles.calendarDayTodayText,
+                          isSelected && styles.calendarDaySelectedText,
+                        ]}
+                      >
+                        {day}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <View style={styles.calendarFooter}>
+                <TouchableOpacity
+                  style={styles.calendarTodayBtn}
+                  onPress={handleToday}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.calendarTodayText}>Today</Text>
+                </TouchableOpacity>
+                <View style={styles.calendarFooterRight}>
+                  <TouchableOpacity
+                    style={styles.calendarCancelBtn}
+                    onPress={handleDateCancel}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.calendarCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.calendarOkBtn}
+                    onPress={handleDateOk}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.calendarOkText}>OK</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -289,6 +467,117 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
+  calendarCancelBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  calendarCancelText: {
+    color: C.textMedium,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  calendarContainer: {
+    backgroundColor: C.white,
+    borderRadius: 14,
+    padding: 16,
+    width: '88%',
+  },
+  calendarDayCell: {
+    alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
+    justifyContent: 'center',
+    width: `${100 / 7}%`,
+  },
+  calendarDaySelected: {
+    backgroundColor: C.blue,
+  },
+  calendarDaySelectedText: {
+    color: C.white,
+    fontWeight: '700',
+  },
+  calendarDayText: {
+    color: C.textDark,
+    fontSize: 14,
+  },
+  calendarDayToday: {
+    borderColor: C.blue,
+    borderWidth: 1.5,
+  },
+  calendarDayTodayText: {
+    color: C.blue,
+    fontWeight: '700',
+  },
+  calendarFooter: {
+    alignItems: 'center',
+    borderTopColor: C.border,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingTop: 12,
+  },
+  calendarFooterRight: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  calendarMonthYear: {
+    color: C.textDark,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  calendarNav: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  calendarNavBtn: {
+    padding: 6,
+  },
+  calendarOkBtn: {
+    backgroundColor: C.blue,
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  calendarOkText: {
+    color: C.white,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  calendarTitle: {
+    color: C.textDark,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  calendarTodayBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  calendarTodayText: {
+    color: C.blue,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  calendarWeekLabel: {
+    color: C.textLight,
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  calendarWeekRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
   categoryTrigger: {
     alignItems: 'center',
     backgroundColor: C.white,
@@ -303,15 +592,15 @@ const styles = StyleSheet.create({
   },
   categoryTriggerInner: {
     alignItems: 'center',
-    flexDirection: 'row',
     flex: 1,
+    flexDirection: 'row',
     gap: 8,
     marginRight: 8,
   },
   categoryTriggerText: {
     color: C.textDark,
-    fontSize: 15,
     flex: 1,
+    fontSize: 15,
   },
   checkboxLabel: {
     color: C.textDark,
@@ -325,6 +614,30 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: C.bg,
     flex: 1,
+  },
+  dateTrigger: {
+    alignItems: 'center',
+    backgroundColor: C.white,
+    borderColor: C.border,
+    borderRadius: 10,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  dateTriggerInner: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    marginRight: 8,
+  },
+  dateTriggerText: {
+    color: C.textDark,
+    flex: 1,
+    fontSize: 15,
   },
   fieldRow: {
     alignItems: 'flex-start',
@@ -388,8 +701,8 @@ const styles = StyleSheet.create({
   },
   pickerItemText: {
     color: C.textDark,
-    fontSize: 15,
     flex: 1,
+    fontSize: 15,
   },
   pickerTitle: {
     color: C.textDark,

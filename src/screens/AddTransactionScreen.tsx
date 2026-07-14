@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   ScrollView,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
 } from 'react-native';
 import { useTransactionStore, useAuthStore } from '@store/index';
@@ -65,10 +66,13 @@ export default function AddTransactionScreen(): React.ReactElement {
   }, [transactions]);
 
   useEffect(() => {
-    setTimeout(() => {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  }, [feed, isLoading]);
+    const keyboardDidShow = Keyboard.addListener('keyboardDidShow', () => {
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 300);
+    });
+    return () => keyboardDidShow.remove();
+  }, []);
 
   useEffect(() => {
     if (prevLoading.current && !isLoading) {
@@ -210,7 +214,7 @@ export default function AddTransactionScreen(): React.ReactElement {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <ScrollView
