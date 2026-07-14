@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { useTransactionStore, useAuthStore } from '@store/index';
 import { parseTransactionMessage } from '@services/aiTransactionParser';
+import { parseLocalTransactions } from '@utils/localTransactionParser';
+import firebaseService from '@services/firebase';
 import { parseDate } from '@utils/dateParser';
 import { Ionicons } from '@expo/vector-icons';
 import { formatCurrency, formatDate } from '@utils/currency';
@@ -42,7 +44,7 @@ export default function AddTransactionScreen(): React.ReactElement {
   const feedIdCounter = useRef(0);
 
   const { selectedUser } = useAuthStore();
-  const { transactions, addTransaction, allTransactions } = useTransactionStore();
+  const { transactions, allTransactions } = useTransactionStore();
 
   useEffect(() => {
     const threeDaysAgo = new Date();
@@ -51,7 +53,7 @@ export default function AddTransactionScreen(): React.ReactElement {
 
     const items: FeedItem[] = [...transactions]
       .filter((tx) => tx.date >= threeDaysAgo)
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .sort((a, b) => a.date.getTime() - b.date.getTime() || a.createdAt.getTime() - b.createdAt.getTime())
       .map((tx) => ({
         id: tx.id,
         kind: 'stored' as const,
@@ -105,41 +107,58 @@ export default function AddTransactionScreen(): React.ReactElement {
     setIsLoading(true);
 
     try {
-      const result = await parseTransactionMessage(text, []);
+      const localTx = parseLocalTransactions(text);
+      let txsToSave: Array<{ type: 'income' | 'expense'; amount: number; category: string; description: string; date: Date; userText: string }> = [];
 
-      if (result.transactions.length > 0) {
-        const aiTx = result.transactions[0];
-        const txDate = parseDate(aiTx.date) || new Date();
-
-        try {
-          await addTransaction({
-            userId: selectedUser.id,
-            type: aiTx.type,
-            amount: aiTx.amount,
-            category: aiTx.category,
-            description: aiTx.description,
-            date: txDate,
+      if (localTx.length > 0) {
+        txsToSave = localTx.map((tx) => ({
+          type: tx.type,
+          amount: tx.amount,
+          category: tx.category,
+          description: tx.description,
+          date: parseDate(tx.date) || new Date(),
+          userText: text,
+        }));
+      } else {
+        const result = await parseTransactionMessage(text, []);
+        if (result.transactions.length > 0) {
+          txsToSave = result.transactions.map((tx) => ({
+            type: tx.type,
+            amount: tx.amount,
+            category: tx.category,
+            description: tx.description,
+            date: parseDate(tx.date) || new Date(),
             userText: text,
+          }));
+        } else {
+          const errItem: FeedItem = {
+            id: (++feedIdCounter.current).toString(),
+            kind: 'error',
+            errorMessage:
+              result.followUpQuestion ||
+              "Could not parse. Try 'Coffee 30k' or 'Grab 120k yesterday'",
+            userText: text,
+          };
+          setFeed((prev) => [...prev, errItem]);
+          return;
+        }
+      }
+
+      for (const tx of txsToSave) {
+        try {
+          await firebaseService.addTransaction({
+            userId: selectedUser.id,
+            ...tx,
           });
         } catch {
           const errItem: FeedItem = {
             id: (++feedIdCounter.current).toString(),
             kind: 'error',
-            errorMessage: 'Failed to save transaction',
+            errorMessage: `Failed to save: ${tx.description} ${tx.amount}`,
             userText: text,
           };
           setFeed((prev) => [...prev, errItem]);
         }
-      } else {
-        const errItem: FeedItem = {
-          id: (++feedIdCounter.current).toString(),
-          kind: 'error',
-          errorMessage:
-            result.followUpQuestion ||
-            "Could not parse. Try 'Coffee 30k' or 'Grab 120k yesterday'",
-          userText: text,
-        };
-        setFeed((prev) => [...prev, errItem]);
       }
     } catch (error) {
       const errItem: FeedItem = {

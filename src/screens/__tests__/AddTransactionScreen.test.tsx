@@ -180,3 +180,75 @@ describe('AddTransactionScreen - keyboard re-focus', () => {
     expect(sendButton.parent?.props.accessibilityState?.disabled ?? true).toBe(true);
   });
 });
+
+describe('AddTransactionScreen - feed sort order', () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  it('same-date items appear in createdAt order (oldest first)', () => {
+    const txA = {
+      id: 'tx-a', userId: 'test-user', type: 'expense' as const,
+      amount: 10000, category: 'food', description: 'First',
+      date: new Date(today), createdAt: new Date(2026, 6, 14, 10, 0), updatedAt: new Date(),
+    };
+    const txB = {
+      id: 'tx-b', userId: 'test-user', type: 'expense' as const,
+      amount: 20000, category: 'food', description: 'Second',
+      date: new Date(today), createdAt: new Date(2026, 6, 14, 10, 5), updatedAt: new Date(),
+    };
+    const txC = {
+      id: 'tx-c', userId: 'test-user', type: 'expense' as const,
+      amount: 30000, category: 'food', description: 'Third',
+      date: new Date(today), createdAt: new Date(2026, 6, 14, 10, 10), updatedAt: new Date(),
+    };
+
+    useTransactionStore.setState({
+      allTransactions: [txC, txA, txB],
+      transactions: [txC, txA, txB],
+    });
+
+    render(<AddTransactionScreen />);
+
+    const descriptions = screen.getAllByText(/^(First|Second|Third)$/);
+    expect(descriptions).toHaveLength(3);
+    expect(descriptions[0].props.children).toBe('First');
+    expect(descriptions[1].props.children).toBe('Second');
+    expect(descriptions[2].props.children).toBe('Third');
+  });
+
+  it('different-date items sort by date first, createdAt second', () => {
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const txOld = {
+      id: 'tx-old', userId: 'test-user', type: 'expense' as const,
+      amount: 10000, category: 'food', description: 'Yesterday',
+      date: new Date(yesterday), createdAt: new Date(2026, 6, 13, 10, 10), updatedAt: new Date(),
+    };
+    const txNew1 = {
+      id: 'tx-new1', userId: 'test-user', type: 'expense' as const,
+      amount: 20000, category: 'food', description: 'Today-First',
+      date: new Date(today), createdAt: new Date(2026, 6, 14, 10, 0), updatedAt: new Date(),
+    };
+    const txNew2 = {
+      id: 'tx-new2', userId: 'test-user', type: 'expense' as const,
+      amount: 30000, category: 'food', description: 'Today-Second',
+      date: new Date(today), createdAt: new Date(2026, 6, 14, 10, 5), updatedAt: new Date(),
+    };
+
+    useTransactionStore.setState({
+      allTransactions: [txNew2, txOld, txNew1],
+      transactions: [txNew2, txOld, txNew1],
+    });
+
+    render(<AddTransactionScreen />);
+
+    const descriptions = screen.getAllByText(/^(Yesterday|Today-First|Today-Second)$/);
+    expect(descriptions).toHaveLength(3);
+    expect(descriptions[0].props.children).toBe('Yesterday');
+    expect(descriptions[1].props.children).toBe('Today-First');
+    expect(descriptions[2].props.children).toBe('Today-Second');
+  });
+});
