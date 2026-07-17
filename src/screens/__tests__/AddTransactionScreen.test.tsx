@@ -4,6 +4,7 @@ import AddTransactionScreen from '@screens/AddTransactionScreen';
 import { useAuthStore, useTransactionStore } from '@store/index';
 import { parseTransactionMessage } from '@services/aiTransactionParser';
 import firebaseService from '@services/firebase';
+import * as Clipboard from 'expo-clipboard';
 
 jest.useFakeTimers();
 
@@ -250,5 +251,65 @@ describe('AddTransactionScreen - feed sort order', () => {
     expect(descriptions[0].props.children).toBe('Yesterday');
     expect(descriptions[1].props.children).toBe('Today-First');
     expect(descriptions[2].props.children).toBe('Today-Second');
+  });
+});
+
+describe('AddTransactionScreen - paste button', () => {
+  it('renders paste button when input is empty', () => {
+    render(<AddTransactionScreen />);
+    const pasteButton = screen.getByLabelText('Paste from clipboard');
+    expect(pasteButton).toBeTruthy();
+  });
+
+  it('pastes clipboard content into input', async () => {
+    (Clipboard.getStringAsync as jest.Mock).mockResolvedValue('Coffee 30k');
+    render(<AddTransactionScreen />);
+
+    const pasteButton = screen.getByLabelText('Paste from clipboard');
+    await act(async () => {
+      fireEvent.press(pasteButton);
+    });
+
+    const input = screen.getByPlaceholderText('What did you spend?');
+    expect(input.props.value).toBe('Coffee 30k');
+  });
+
+  it('does not paste when clipboard is empty', async () => {
+    (Clipboard.getStringAsync as jest.Mock).mockResolvedValue('');
+    render(<AddTransactionScreen />);
+
+    const pasteButton = screen.getByLabelText('Paste from clipboard');
+    await act(async () => {
+      fireEvent.press(pasteButton);
+    });
+
+    const input = screen.getByPlaceholderText('What did you spend?');
+    expect(input.props.value).toBe('');
+  });
+
+  it('hides paste button when input has text', async () => {
+    render(<AddTransactionScreen />);
+    const input = screen.getByPlaceholderText('What did you spend?');
+
+    await act(async () => {
+      fireEvent.changeText(input, 'Coffee 30k');
+    });
+
+    expect(screen.queryByLabelText('Paste from clipboard')).toBeNull();
+  });
+
+  it('shows paste button again after input is cleared', async () => {
+    render(<AddTransactionScreen />);
+    const input = screen.getByPlaceholderText('What did you spend?');
+
+    await act(async () => {
+      fireEvent.changeText(input, 'Coffee 30k');
+    });
+    expect(screen.queryByLabelText('Paste from clipboard')).toBeNull();
+
+    await act(async () => {
+      fireEvent.changeText(input, '');
+    });
+    expect(screen.getByLabelText('Paste from clipboard')).toBeTruthy();
   });
 });

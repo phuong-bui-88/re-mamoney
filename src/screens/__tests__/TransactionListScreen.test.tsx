@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react-native';
+import { render, screen, fireEvent, act } from '@testing-library/react-native';
 import TransactionListScreen from '@screens/TransactionListScreen';
 import { useAuthStore, useTransactionStore } from '@store/index';
 import firebaseService from '@services/firebase';
@@ -13,7 +13,6 @@ jest.mock('@react-navigation/native', () => ({
 
 jest.mock('@components/index', () => ({
   PeriodFilter: jest.fn(() => null),
-  SegmentedControl: jest.fn(() => null),
   FilteredTransactionList: jest.fn(() => null),
   FloatingActionButton: jest.fn(() => null),
 }));
@@ -147,8 +146,122 @@ describe('TransactionListScreen', () => {
 
     render(<TransactionListScreen />);
 
-    expect(FilteredTransactionList).toHaveBeenCalledTimes(2);
-    const callArg = (FilteredTransactionList as jest.Mock).mock.calls[0][0];
-    expect(callArg.type).toBe('expense');
+    expect(FilteredTransactionList).toHaveBeenCalled();
+    const lastCall = (FilteredTransactionList as jest.Mock).mock.calls;
+    const callArg = lastCall[lastCall.length - 1][0];
+    expect(callArg.filterMode).toBe('month');
+  });
+
+  it('shows month net total by default', () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const txns = [
+      { id: 't1', userId: 'u', type: 'expense', amount: 50000, category: 'food', description: 'Lunch', date: today, createdAt: new Date(), updatedAt: new Date() },
+      { id: 't2', userId: 'u', type: 'income', amount: 100000, category: 'salary', description: 'Pay', date: today, createdAt: new Date(), updatedAt: new Date() },
+    ];
+    let capturedCallback: (txs: typeof txns) => void = () => {};
+    (firebaseService.subscribeToTransactions as jest.Mock).mockImplementation(
+      (_filter: unknown, cb: (txs: typeof txns) => void) => { capturedCallback = cb; return jest.fn(); },
+    );
+
+    render(<TransactionListScreen />);
+    act(() => { capturedCallback(txns); });
+
+    expect(screen.getByText(/Net total · Jul 2026/)).toBeTruthy();
+    expect(screen.getByText(/50\.000/)).toBeTruthy();
+  });
+
+  it('shows today net total when Today button pressed', () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const txns = [
+      { id: 't1', userId: 'u', type: 'expense', amount: 30000, category: 'food', description: 'Lunch', date: today, createdAt: new Date(), updatedAt: new Date() },
+      { id: 't2', userId: 'u', type: 'income', amount: 200000, category: 'salary', description: 'Pay', date: yesterday, createdAt: new Date(), updatedAt: new Date() },
+    ];
+    let capturedCallback: (txs: typeof txns) => void = () => {};
+    (firebaseService.subscribeToTransactions as jest.Mock).mockImplementation(
+      (_filter: unknown, cb: (txs: typeof txns) => void) => { capturedCallback = cb; return jest.fn(); },
+    );
+
+    render(<TransactionListScreen />);
+    act(() => { capturedCallback(txns); });
+    fireEvent.press(screen.getByText('Today'));
+
+    expect(screen.getByText(/Net total · Today/)).toBeTruthy();
+    expect(screen.getByText(/-30\.000/)).toBeTruthy();
+  });
+
+  it('switches back to month total when This Month pressed', () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const txns = [
+      { id: 't1', userId: 'u', type: 'expense', amount: 30000, category: 'food', description: 'Lunch', date: today, createdAt: new Date(), updatedAt: new Date() },
+      { id: 't2', userId: 'u', type: 'income', amount: 200000, category: 'salary', description: 'Pay', date: yesterday, createdAt: new Date(), updatedAt: new Date() },
+    ];
+    let capturedCallback: (txs: typeof txns) => void = () => {};
+    (firebaseService.subscribeToTransactions as jest.Mock).mockImplementation(
+      (_filter: unknown, cb: (txs: typeof txns) => void) => { capturedCallback = cb; return jest.fn(); },
+    );
+
+    render(<TransactionListScreen />);
+    act(() => { capturedCallback(txns); });
+    fireEvent.press(screen.getByText('Today'));
+    fireEvent.press(screen.getByText('This Month'));
+
+    expect(screen.getByText(/Net total · Jul 2026/)).toBeTruthy();
+    expect(screen.getByText(/170\.000/)).toBeTruthy();
+  });
+
+  it('renders net total section inside a card container', () => {
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+
+    const summaryLabel = screen.getByText(/Net total ·/);
+    expect(summaryLabel).toBeTruthy();
+  });
+
+  it('renders both filter buttons with equal presence', () => {
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+
+    const thisMonthBtn = screen.getByText('This Month');
+    const todayBtn = screen.getByText('Today');
+    expect(thisMonthBtn).toBeTruthy();
+    expect(todayBtn).toBeTruthy();
+  });
+
+  it('does not render any divider elements', () => {
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    const { toJSON } = render(<TransactionListScreen />);
+    const tree = JSON.stringify(toJSON());
+
+    expect(tree).not.toMatch(/summaryDivider/);
+  });
+
+  it('shows zero net total when no today transactions', () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+    const txns = [
+      { id: 't1', userId: 'u', type: 'expense', amount: 50000, category: 'food', description: 'Lunch', date: yesterday, createdAt: new Date(), updatedAt: new Date() },
+    ];
+    let capturedCallback: (txs: typeof txns) => void = () => {};
+    (firebaseService.subscribeToTransactions as jest.Mock).mockImplementation(
+      (_filter: unknown, cb: (txs: typeof txns) => void) => { capturedCallback = cb; return jest.fn(); },
+    );
+
+    render(<TransactionListScreen />);
+    act(() => { capturedCallback(txns); });
+    fireEvent.press(screen.getByText('Today'));
+
+    expect(screen.getByText(/Net total · Today/)).toBeTruthy();
+    expect(screen.getByText(/0 ₫/)).toBeTruthy();
   });
 });

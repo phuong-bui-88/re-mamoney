@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Keyboard,
   Platform,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useTransactionStore, useAuthStore } from '@store/index';
 import { parseTransactionMessage } from '@services/aiTransactionParser';
 import { parseLocalTransactions } from '@utils/localTransactionParser';
@@ -98,6 +99,11 @@ export default function AddTransactionScreen(): React.ReactElement {
         return tx.type === 'expense' ? sum + tx.amount : sum - tx.amount;
       }, 0);
   }, [allTransactions]);
+
+  const handlePaste = useCallback(async () => {
+    const text = await Clipboard.getStringAsync();
+    if (text) setInputText(text);
+  }, []);
 
   const handleSend = async () => {
     const text = inputText.trim();
@@ -256,6 +262,15 @@ export default function AddTransactionScreen(): React.ReactElement {
           <Text style={[styles.todayText, todaySpent > 0 ? styles.todayRed : styles.todayGreen]}>
             Spent today: {formatCurrency(todaySpent)}
           </Text>
+          {!inputText.trim() && !isLoading && (
+            <TouchableOpacity
+              onPress={handlePaste}
+              style={styles.pasteButton}
+              accessibilityLabel="Paste from clipboard"
+            >
+              <Ionicons name="clipboard-outline" size={18} color={C.textLight} />
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.inputRow}>
           <TextInput
@@ -322,6 +337,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginLeft: 8,
   },
+  pasteButton: {
+    padding: 4,
+  },
   scrollArea: {
     flex: 1,
     paddingHorizontal: 12,
@@ -351,6 +369,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomColor: C.border,
     borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 4,
     paddingBottom: 8,
   },

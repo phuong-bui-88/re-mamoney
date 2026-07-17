@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTransactionStore } from '@store/index';
 import type { Transaction } from '@/types';
@@ -9,18 +9,31 @@ const C = {
 };
 
 interface FilteredTransactionListProps {
-  type: 'income' | 'expense';
   category?: string;
+  filterMode: 'month' | 'today';
   onTransactionPress?: (transaction: Transaction) => void;
 }
 
-export default function FilteredTransactionList({ type, category, onTransactionPress }: FilteredTransactionListProps): React.ReactElement {
+export default function FilteredTransactionList({ category, filterMode, onTransactionPress }: FilteredTransactionListProps): React.ReactElement {
   const { transactions } = useTransactionStore();
-  const filtered = transactions.filter((t) => {
-    if (t.type !== type) return false;
-    if (category && t.category !== category) return false;
-    return true;
-  });
+
+  const filtered = useMemo(() => {
+    let result = [...transactions];
+
+    if (category) {
+      result = result.filter((t) => t.category === category);
+    }
+
+    if (filterMode === 'today') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+      result = result.filter((t) => t.date >= today && t.date <= endOfDay);
+    }
+
+    return result;
+  }, [transactions, category, filterMode]);
 
   const handleDelete = (id: string) => {
     useTransactionStore.getState().deleteTransaction(id);
@@ -29,7 +42,7 @@ export default function FilteredTransactionList({ type, category, onTransactionP
   if (filtered.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyText}>No {type} transactions yet</Text>
+        <Text style={styles.emptyText}>No transactions yet</Text>
       </View>
     );
   }

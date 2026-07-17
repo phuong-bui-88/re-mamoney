@@ -282,8 +282,8 @@ export default function CategoryChart(): React.ReactElement {
                 </View>
               </TouchableOpacity>
               <FilteredTransactionList
-                type={type}
                 category={selectedCategory}
+                filterMode="month"
                 onTransactionPress={handleTransactionPress}
               />
             </View>

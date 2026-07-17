@@ -31,74 +31,70 @@ beforeEach(() => {
 });
 
 describe('FilteredTransactionList', () => {
-  it('shows empty text when no expense transactions exist', () => {
+  it('shows empty text when no transactions exist', () => {
     useTransactionStore.setState({
-      transactions: [mockTransaction({ type: 'income' })],
+      transactions: [],
     });
 
-    render(<FilteredTransactionList type="expense" />);
+    render(<FilteredTransactionList filterMode="month" />);
 
-    expect(screen.getByText('No expense transactions yet')).toBeTruthy();
+    expect(screen.getByText('No transactions yet')).toBeTruthy();
   });
 
-  it('shows empty text when no income transactions exist', () => {
-    useTransactionStore.setState({
-      transactions: [mockTransaction({ type: 'expense' })],
-    });
-
-    render(<FilteredTransactionList type="income" />);
-
-    expect(screen.getByText('No income transactions yet')).toBeTruthy();
-  });
-
-  it('renders transaction rows for matching type', () => {
+  it('renders all transactions (both income and expense) in unified list', () => {
     useTransactionStore.setState({
       transactions: [
         mockTransaction({ id: '1', type: 'expense', description: 'Coffee' }),
-        mockTransaction({ id: '2', type: 'expense', description: 'Lunch' }),
+        mockTransaction({ id: '2', type: 'income', description: 'Salary' }),
       ],
     });
 
-    render(<FilteredTransactionList type="expense" />);
+    render(<FilteredTransactionList filterMode="month" />);
 
     expect(screen.getByText('Coffee')).toBeTruthy();
-    expect(screen.getByText('Lunch')).toBeTruthy();
-  });
-
-  it('filters by type: only shows expenses when type is expense', () => {
-    useTransactionStore.setState({
-      transactions: [
-        mockTransaction({ id: '1', type: 'expense', description: 'Groceries' }),
-        mockTransaction({ id: '2', type: 'income', description: 'Salary' }),
-      ],
-    });
-
-    render(<FilteredTransactionList type="expense" />);
-
-    expect(screen.getByText('Groceries')).toBeTruthy();
-    expect(screen.queryByText('Salary')).toBeNull();
-  });
-
-  it('filters by type: only shows income when type is income', () => {
-    useTransactionStore.setState({
-      transactions: [
-        mockTransaction({ id: '1', type: 'expense', description: 'Groceries' }),
-        mockTransaction({ id: '2', type: 'income', description: 'Salary' }),
-      ],
-    });
-
-    render(<FilteredTransactionList type="income" />);
-
     expect(screen.getByText('Salary')).toBeTruthy();
-    expect(screen.queryByText('Groceries')).toBeNull();
+  });
+
+  it('filters by category when category prop is provided', () => {
+    useTransactionStore.setState({
+      transactions: [
+        mockTransaction({ id: '1', type: 'expense', category: 'food', description: 'Coffee' }),
+        mockTransaction({ id: '2', type: 'expense', category: 'transport', description: 'Bus' }),
+      ],
+    });
+
+    render(<FilteredTransactionList category="food" filterMode="month" />);
+
+    expect(screen.getByText('Coffee')).toBeTruthy();
+    expect(screen.queryByText('Bus')).toBeNull();
+  });
+
+  it('filters to today only when filterMode is today', () => {
+    const today = new Date();
+    today.setHours(10, 0, 0, 0);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(10, 0, 0, 0);
+
+    useTransactionStore.setState({
+      transactions: [
+        mockTransaction({ id: '1', type: 'expense', description: 'Today expense', date: today }),
+        mockTransaction({ id: '2', type: 'expense', description: 'Yesterday expense', date: yesterday }),
+      ],
+    });
+
+    render(<FilteredTransactionList filterMode="today" />);
+
+    expect(screen.getByText('Today expense')).toBeTruthy();
+    expect(screen.queryByText('Yesterday expense')).toBeNull();
   });
 
   it('shows empty text when store has no transactions at all', () => {
     useTransactionStore.setState({ transactions: [] });
 
-    render(<FilteredTransactionList type="expense" />);
+    render(<FilteredTransactionList filterMode="month" />);
 
-    expect(screen.getByText('No expense transactions yet')).toBeTruthy();
+    expect(screen.getByText('No transactions yet')).toBeTruthy();
   });
 
   it('renders multiple transaction rows for many items', () => {
@@ -112,7 +108,7 @@ describe('FilteredTransactionList', () => {
     );
     useTransactionStore.setState({ transactions: manyTransactions });
 
-    render(<FilteredTransactionList type="expense" />);
+    render(<FilteredTransactionList filterMode="month" />);
 
     for (let i = 0; i < 5; i++) {
       expect(screen.getByText(`Item ${i + 1}`)).toBeTruthy();

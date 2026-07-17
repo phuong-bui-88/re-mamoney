@@ -21,16 +21,16 @@ jest.mock('../FilteredTransactionList', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { View, Text } = require('react-native');
   return function MockFilteredTransactionList({
-    type,
     category,
+    filterMode,
   }: {
-    type: string;
     category?: string;
+    filterMode: string;
   }) {
     return React.createElement(
       View,
       { testID: 'FilteredTransactionList' },
-      React.createElement(Text, null, `type: ${type}, category: ${category}`),
+      React.createElement(Text, null, `filterMode: ${filterMode}, category: ${category}`),
     );
   };
 });
@@ -290,7 +290,7 @@ describe('CategoryChart', () => {
       expect(screen.queryByTestId('FilteredTransactionList')).toBeNull();
     });
 
-    it('passes correct type and category to FilteredTransactionList', () => {
+    it('passes correct filterMode and category to FilteredTransactionList', () => {
       useTransactionStore.setState({
         transactions: [
           mockTransaction({ id: '1', category: 'food', amount: 50000 }),
@@ -300,7 +300,7 @@ describe('CategoryChart', () => {
 
       fireEvent.press(screen.getByText(CATEGORY_LABELS.food));
 
-      expect(screen.getByText('type: expense, category: food')).toBeTruthy();
+      expect(screen.getByText('filterMode: month, category: food')).toBeTruthy();
     });
 
     it('shows arrow-back icon when a category is selected', () => {

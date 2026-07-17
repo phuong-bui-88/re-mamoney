@@ -74,6 +74,11 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
+// Mock expo-clipboard
+jest.mock('expo-clipboard', () => ({
+  getStringAsync: jest.fn(),
+}));
+
 // Suppress console errors in tests
 global.console.error = jest.fn();
 global.console.warn = jest.fn();
