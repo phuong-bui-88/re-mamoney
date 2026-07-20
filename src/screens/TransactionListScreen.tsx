@@ -4,6 +4,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
 import firebaseService from '@services/firebase';
+import type { Transaction } from '@/types';
 import {
   PeriodFilter,
   FilteredTransactionList,
@@ -48,6 +49,15 @@ export default function TransactionListScreen(): React.ReactElement {
   const handleAddTransaction = useCallback(() => {
     navigation.getParent()?.navigate('AddTransaction' as never);
   }, [navigation]);
+
+  const handleTransactionPress = useCallback(
+    (transaction: Transaction) => {
+      (navigation.getParent() as any)?.navigate('EditTransaction', {
+        transactionId: transaction.id,
+      });
+    },
+    [navigation],
+  );
 
   const netTotal = useMemo(() => {
     let list = transactions;
@@ -111,6 +121,7 @@ export default function TransactionListScreen(): React.ReactElement {
         <FilteredTransactionList
           category={routeParams?.category}
           filterMode={filterMode}
+          onTransactionPress={handleTransactionPress}
         />
       </ScrollView>
 

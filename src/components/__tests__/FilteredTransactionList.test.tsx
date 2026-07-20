@@ -114,4 +114,22 @@ describe('FilteredTransactionList', () => {
       expect(screen.getByText(`Item ${i + 1}`)).toBeTruthy();
     }
   });
+
+  it('forwards onTransactionPress to each TransactionRow', () => {
+    const onTransactionPress = jest.fn();
+    useTransactionStore.setState({
+      transactions: [
+        mockTransaction({ id: 'tx-1', description: 'Coffee' }),
+      ],
+    });
+
+    const { UNSAFE_getByType } = render(
+      <FilteredTransactionList filterMode="month" onTransactionPress={onTransactionPress} />,
+    );
+
+    const row = UNSAFE_getByType(
+      require('@components/TransactionRow').default,
+    );
+    expect(row.props.onPress).toBe(onTransactionPress);
+  });
 });

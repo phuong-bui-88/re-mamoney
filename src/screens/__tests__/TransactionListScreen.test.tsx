@@ -4,12 +4,16 @@ import TransactionListScreen from '@screens/TransactionListScreen';
 import { useAuthStore, useTransactionStore } from '@store/index';
 import firebaseService from '@services/firebase';
 
-jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({
-    getParent: () => ({ navigate: jest.fn() }),
-  }),
-  useRoute: () => ({ params: {} }),
-}));
+jest.mock('@react-navigation/native', () => {
+  const mockNavigate = jest.fn();
+  return {
+    useNavigation: () => ({
+      getParent: () => ({ navigate: mockNavigate }),
+    }),
+    useRoute: () => ({ params: {} }),
+    __mockNavigate: mockNavigate,
+  };
+});
 
 jest.mock('@components/index', () => ({
   PeriodFilter: jest.fn(() => null),
@@ -150,6 +154,36 @@ describe('TransactionListScreen', () => {
     const lastCall = (FilteredTransactionList as jest.Mock).mock.calls;
     const callArg = lastCall[lastCall.length - 1][0];
     expect(callArg.filterMode).toBe('month');
+  });
+
+  it('passes onTransactionPress to FilteredTransactionList', () => {
+    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
+
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+
+    const lastCall = (FilteredTransactionList as jest.Mock).mock.calls;
+    const callArg = lastCall[lastCall.length - 1][0];
+    expect(typeof callArg.onTransactionPress).toBe('function');
+  });
+
+  it('navigates to EditTransaction when onTransactionPress is called', () => {
+    const { __mockNavigate: mockNavigate } = require('@react-navigation/native');
+
+    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
+
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+
+    const lastCall = (FilteredTransactionList as jest.Mock).mock.calls;
+    const callArg = lastCall[lastCall.length - 1][0];
+    const mockTransaction = { id: 'tx-99', type: 'expense', amount: 30000 };
+
+    callArg.onTransactionPress(mockTransaction);
+
+    expect(mockNavigate).toHaveBeenCalledWith('EditTransaction', { transactionId: 'tx-99' });
   });
 
   it('shows month net total by default', () => {
