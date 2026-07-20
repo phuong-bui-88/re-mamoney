@@ -6,6 +6,20 @@ import { parseTransactionMessage } from '@services/aiTransactionParser';
 import firebaseService from '@services/firebase';
 import * as Clipboard from 'expo-clipboard';
 
+const mockSwipeCalls: Array<((id: string) => void) | null> = [];
+jest.mock('react-native-gesture-handler/Swipeable', () => {
+  const React = require('react');
+  return ({ children, onSwipeableLeftOpen }: any) => {
+    React.useEffect(() => {
+      mockSwipeCalls.push(onSwipeableLeftOpen || null);
+      return () => {
+        mockSwipeCalls.length = 0;
+      };
+    }, []);
+    return children;
+  };
+});
+
 jest.useFakeTimers();
 
 jest.mock('@utils/dateParser', () => ({
@@ -18,6 +32,14 @@ jest.mock('@utils/currency', () => ({
   getMonthStart: jest.fn((d: Date) => d),
   getMonthEnd: jest.fn((d: Date) => d),
 }));
+
+jest.mock('@react-navigation/native', () => {
+  const mockNavigate = jest.fn();
+  return {
+    useNavigation: () => ({ navigate: mockNavigate }),
+    __mockNavigate: mockNavigate,
+  };
+});
 
 jest.mock('@utils/categories', () => ({
   CATEGORY_ICONS: { food: 'restaurant' },
@@ -311,5 +333,131 @@ describe('AddTransactionScreen - paste button', () => {
       fireEvent.changeText(input, '');
     });
     expect(screen.getByLabelText('Paste from clipboard')).toBeTruthy();
+  });
+});
+
+describe('AddTransactionScreen - tap to edit', () => {
+  it('navigates to EditTransaction when stored transaction bubble is tapped', () => {
+    const { __mockNavigate: mockNavigate } = require('@react-navigation/native');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    useTransactionStore.setState({
+      allTransactions: [
+        { id: 'tx-edit-1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date() },
+      ],
+      transactions: [
+        { id: 'tx-edit-1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date() },
+      ],
+    });
+
+    render(<AddTransactionScreen />);
+
+    const bubble = screen.getByText('Coffee');
+    fireEvent.press(bubble);
+
+    expect(mockNavigate).toHaveBeenCalledWith('EditTransaction', { transactionId: 'tx-edit-1' });
+  });
+
+  it('error bubbles are not tappable for edit', async () => {
+    const { __mockNavigate: mockNavigate } = require('@react-navigation/native');
+
+    (parseTransactionMessage as jest.Mock).mockResolvedValue({
+      transactions: [],
+      followUpQuestion: 'Could you clarify?',
+    });
+
+    render(<AddTransactionScreen />);
+    const input = screen.getByPlaceholderText('What did you spend?');
+
+    await act(async () => { fireEvent.changeText(input, 'blah blah'); });
+    await act(async () => { fireEvent.press(screen.getByText('Send')); });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Could you clarify/)).toBeTruthy();
+    });
+
+    const errorBubble = screen.getByText(/Could you clarify/);
+    fireEvent.press(errorBubble);
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+});
+
+describe('AddTransactionScreen - swipe to delete', () => {
+  it('renders Swipeable wrapper for each stored feed item', () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    useTransactionStore.setState({
+      allTransactions: [
+        { id: 'tx-s1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'SwipeMe', date: today, createdAt: new Date(), updatedAt: new Date() },
+        { id: 'tx-s2', userId: 'test-user', type: 'expense', amount: 50000, category: 'food', description: 'SwipeMeToo', date: today, createdAt: new Date(), updatedAt: new Date() },
+      ],
+      transactions: [
+        { id: 'tx-s1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'SwipeMe', date: today, createdAt: new Date(), updatedAt: new Date() },
+        { id: 'tx-s2', userId: 'test-user', type: 'expense', amount: 50000, category: 'food', description: 'SwipeMeToo', date: today, createdAt: new Date(), updatedAt: new Date() },
+      ],
+    });
+
+    render(<AddTransactionScreen />);
+
+    expect(screen.getByText('SwipeMe')).toBeTruthy();
+    expect(screen.getByText('SwipeMeToo')).toBeTruthy();
+    expect(mockSwipeCalls.length).toBe(2);
+    mockSwipeCalls.forEach((cb) => {
+      expect(cb).toEqual(expect.any(Function));
+    });
+  });
+
+  it('deleting a transaction removes it from the feed', async () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    useTransactionStore.setState({
+      periodStart: today,
+      periodEnd: endOfDay,
+      allTransactions: [
+        { id: 'tx-d1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'ToDelete', date: today, createdAt: new Date(), updatedAt: new Date() },
+        { id: 'tx-d2', userId: 'test-user', type: 'expense', amount: 50000, category: 'food', description: 'KeepMe', date: today, createdAt: new Date(), updatedAt: new Date() },
+      ],
+      transactions: [
+        { id: 'tx-d1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'ToDelete', date: today, createdAt: new Date(), updatedAt: new Date() },
+        { id: 'tx-d2', userId: 'test-user', type: 'expense', amount: 50000, category: 'food', description: 'KeepMe', date: today, createdAt: new Date(), updatedAt: new Date() },
+      ],
+    });
+
+    render(<AddTransactionScreen />);
+
+    expect(screen.getByText('ToDelete')).toBeTruthy();
+    expect(screen.getByText('KeepMe')).toBeTruthy();
+
+    await act(async () => {
+      await useTransactionStore.getState().deleteTransaction('tx-d1');
+    });
+
+    expect(screen.queryByText('ToDelete')).toBeNull();
+    expect(screen.getByText('KeepMe')).toBeTruthy();
+  });
+
+  it('add_screen_mock_captures_left_open_callback', () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    useTransactionStore.setState({
+      allTransactions: [
+        { id: 'tx-l1', userId: 'test-user', type: 'expense', amount: 10000, category: 'food',
+          description: 'LeftSwipe', date: today, createdAt: new Date(), updatedAt: new Date() },
+      ],
+      transactions: [
+        { id: 'tx-l1', userId: 'test-user', type: 'expense', amount: 10000, category: 'food',
+          description: 'LeftSwipe', date: today, createdAt: new Date(), updatedAt: new Date() },
+      ],
+    });
+    render(<AddTransactionScreen />);
+    expect(screen.getByText('LeftSwipe')).toBeTruthy();
+    expect(mockSwipeCalls.length).toBe(1);
+    expect(mockSwipeCalls[0]).toEqual(expect.any(Function));
   });
 });

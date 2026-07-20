@@ -10,8 +10,11 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   Platform,
+  Animated,
 } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import * as Clipboard from 'expo-clipboard';
+import { useNavigation } from '@react-navigation/native';
 import { useTransactionStore, useAuthStore } from '@store/index';
 import { parseTransactionMessage } from '@services/aiTransactionParser';
 import { parseLocalTransactions } from '@utils/localTransactionParser';
@@ -43,6 +46,7 @@ export default function AddTransactionScreen(): React.ReactElement {
   const inputRef = useRef<TextInput>(null);
   const prevLoading = useRef(isLoading);
   const feedIdCounter = useRef(0);
+  const navigation = useNavigation();
 
   const { selectedUser } = useAuthStore();
   const { transactions, allTransactions } = useTransactionStore();
@@ -99,6 +103,21 @@ export default function AddTransactionScreen(): React.ReactElement {
         return tx.type === 'expense' ? sum + tx.amount : sum - tx.amount;
       }, 0);
   }, [allTransactions]);
+
+  const handleTransactionPress = useCallback(
+    (item: FeedItem) => {
+      if (item.kind === 'stored') {
+        (navigation as any).navigate('EditTransaction', {
+          transactionId: item.id,
+        });
+      }
+    },
+    [navigation],
+  );
+
+  const handleDelete = useCallback((id: string) => {
+    useTransactionStore.getState().deleteTransaction(id);
+  }, []);
 
   const handlePaste = useCallback(async () => {
     const text = await Clipboard.getStringAsync();
@@ -198,9 +217,19 @@ export default function AddTransactionScreen(): React.ReactElement {
     const amountColor =
       item.type === 'income' ? transItemStyles.incomeColor : transItemStyles.expenseColor;
 
-    return (
-      <View key={item.id} style={transItemStyles.itemBubble}>
-        <View style={transItemStyles.itemRow}>
+    const renderLeftActions = (
+      _progress: Animated.AnimatedInterpolation<number>,
+    ) => (
+      <Animated.View style={styles.deleteBackground} />
+    );
+
+    const rowContent = (
+      <TouchableOpacity
+        onPress={() => handleTransactionPress(item)}
+        activeOpacity={0.7}
+      >
+        <View style={transItemStyles.itemBubble}>
+          <View style={transItemStyles.itemRow}>
           <View style={transItemStyles.itemLeft}>
             <View style={transItemStyles.itemHeader}>
               <View style={[transItemStyles.itemIconBg, { backgroundColor: catColor }]}>
@@ -232,6 +261,18 @@ export default function AddTransactionScreen(): React.ReactElement {
             </>
           )}
         </View>
+      </View>
+      </TouchableOpacity>
+    );
+
+    return (
+      <View key={item.id}>
+        <Swipeable
+          renderLeftActions={renderLeftActions}
+          onSwipeableLeftOpen={() => handleDelete(item.id)}
+        >
+          {rowContent}
+        </Swipeable>
       </View>
     );
   };
@@ -361,6 +402,12 @@ const styles = StyleSheet.create({
   },
   todayGreen: {
     color: C.green,
+  },
+  deleteBackground: {
+    backgroundColor: '#D32F2F',
+    borderRadius: 12,
+    flex: 1,
+    marginBottom: 8,
   },
   todayRed: {
     color: C.red,

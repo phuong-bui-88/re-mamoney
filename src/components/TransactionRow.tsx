@@ -23,7 +23,7 @@ interface TransactionRowProps {
 }
 
 export default function TransactionRow({ transaction, onDelete, onPress }: TransactionRowProps): React.ReactElement {
-  const renderRightActions = (
+  const renderLeftActions = (
     progress: Animated.AnimatedInterpolation<number>,
   ) => {
     const opacity = progress.interpolate({
@@ -72,8 +72,8 @@ export default function TransactionRow({ transaction, onDelete, onPress }: Trans
   if (onDelete) {
     return (
       <Swipeable
-        renderRightActions={renderRightActions}
-        onSwipeableRightOpen={() => onDelete(transaction.id)}
+        renderLeftActions={renderLeftActions}
+        onSwipeableLeftOpen={() => onDelete(transaction.id)}
       >
         {row}
       </Swipeable>
