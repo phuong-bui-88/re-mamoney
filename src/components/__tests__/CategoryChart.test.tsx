@@ -221,6 +221,136 @@ describe('CategoryChart', () => {
     expect(screen.getByText('gifts')).toBeTruthy();
   });
 
+  describe('ring icon percentage badges', () => {
+    it('shows percentage text below icon in ring badges', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 50000 }),
+          mockTransaction({ id: '2', category: 'transport', amount: 30000 }),
+        ],
+      });
+
+      render(<CategoryChart />);
+
+      expect(screen.getByTestId('donut-pct-food')).toBeTruthy();
+      expect(screen.getByTestId('donut-pct-transport')).toBeTruthy();
+    });
+
+    it('shows correct percentage values for each category', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 50000 }),
+          mockTransaction({ id: '2', category: 'transport', amount: 30000 }),
+        ],
+      });
+
+      render(<CategoryChart />);
+
+      expect(screen.getByText('63%')).toBeTruthy();
+      expect(screen.getByText('38%')).toBeTruthy();
+    });
+
+    it('shows 100% for single category', () => {
+      useTransactionStore.setState({
+        transactions: [mockTransaction({ category: 'food', amount: 50000 })],
+      });
+
+      render(<CategoryChart />);
+
+      expect(screen.getByText('100%')).toBeTruthy();
+    });
+
+    it('shows icon for 6 percent slice', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 470000 }),
+          mockTransaction({ id: '2', category: 'transport', amount: 30000 }),
+        ],
+      });
+
+      render(<CategoryChart />);
+
+      expect(screen.getByTestId('donut-icon-transport')).toBeTruthy();
+      expect(screen.getByTestId('donut-pct-transport')).toBeTruthy();
+      expect(screen.getByText('6%')).toBeTruthy();
+    });
+
+    it('filters out sub-1 percent slice', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 99500 }),
+          mockTransaction({ id: '2', category: 'transport', amount: 500 }),
+        ],
+      });
+
+      render(<CategoryChart />);
+
+      expect(screen.queryByTestId('donut-icon-transport')).toBeNull();
+      expect(screen.queryByTestId('donut-pct-transport')).toBeNull();
+    });
+
+    it('shows icon for 1_3 percent slice', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 493500 }),
+          mockTransaction({ id: '2', category: 'transport', amount: 6500 }),
+        ],
+      });
+
+      render(<CategoryChart />);
+
+      expect(screen.getByTestId('donut-icon-transport')).toBeTruthy();
+      expect(screen.getByTestId('donut-pct-transport')).toBeTruthy();
+    });
+
+    it('shows icon for 1 percent slice at exact boundary', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 99000 }),
+          mockTransaction({ id: '2', category: 'transport', amount: 1000 }),
+        ],
+      });
+
+      render(<CategoryChart />);
+
+      expect(screen.getByTestId('donut-icon-transport')).toBeTruthy();
+      expect(screen.getByTestId('donut-pct-transport')).toBeTruthy();
+    });
+
+    it('filters out 0_9 percent slice', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', amount: 99100 }),
+          mockTransaction({ id: '2', category: 'transport', amount: 900 }),
+        ],
+      });
+
+      render(<CategoryChart />);
+
+      expect(screen.queryByTestId('donut-icon-transport')).toBeNull();
+      expect(screen.queryByTestId('donut-pct-transport')).toBeNull();
+    });
+
+    it('updates percentages when toggling Expense/Income', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', type: 'expense', category: 'food', amount: 50000 }),
+          mockTransaction({ id: '2', type: 'income', category: 'salary', amount: 1000000 }),
+          mockTransaction({ id: '3', type: 'income', category: 'freelance', amount: 500000 }),
+        ],
+      });
+
+      render(<CategoryChart />);
+
+      expect(screen.getByTestId('donut-pct-food')).toBeTruthy();
+
+      fireEvent.press(screen.getByText('Income'));
+
+      expect(screen.getByTestId('donut-pct-salary')).toBeTruthy();
+      expect(screen.getByTestId('donut-pct-freelance')).toBeTruthy();
+    });
+  });
+
   describe('drill-down behavior', () => {
     it('shows transaction list when a legend row is pressed', () => {
       useTransactionStore.setState({

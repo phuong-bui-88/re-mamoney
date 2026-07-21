@@ -15,9 +15,10 @@ import { C } from '@theme/index';
 const segments = ['Expense', 'Income'];
 const DONUT_RADIUS = 96;
 const DONUT_WIDTH = 42;
-const ICON_SIZE = 24;
-const MIN_ARC_DEGREES = 25;
-const ICON_BG = 'rgba(255,255,255,0.88)';
+const ICON_BADGE_WIDTH = 30;
+const ICON_BADGE_HEIGHT = 30;
+const ICON_OUTER_RADIUS = DONUT_RADIUS + DONUT_WIDTH / 2 + 8;
+const MIN_ARC_DEGREES = 3.6;
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -111,8 +112,9 @@ export default function CategoryChart(): React.ReactElement {
           key: categories[0].key,
           icon: categories[0].icon,
           color: categories[0].color,
+          pct: 100,
           x: cx,
-          y: cy - DONUT_RADIUS,
+          y: cy - ICON_OUTER_RADIUS,
         },
       ];
     }
@@ -123,10 +125,10 @@ export default function CategoryChart(): React.ReactElement {
         const arcDeg = endDeg - startDeg;
         if (arcDeg < MIN_ARC_DEGREES) return null;
         const midDeg = startDeg + arcDeg / 2;
-        const pos = polarToCartesian(cx, cy, DONUT_RADIUS, midDeg);
-        return { key: cat.key, icon: cat.icon, color: cat.color, x: pos.x, y: pos.y };
+        const pos = polarToCartesian(cx, cy, ICON_OUTER_RADIUS, midDeg);
+        return { key: cat.key, icon: cat.icon, color: cat.color, pct: ratios[i] * 100, x: pos.x, y: pos.y };
       })
-      .filter(Boolean) as { key: string; icon: string; color: string; x: number; y: number }[];
+      .filter(Boolean) as { key: string; icon: string; color: string; pct: number; x: number; y: number }[];
   }, [categories, ratios, cx, cy]);
 
   const centerEntry = selectedCategory
@@ -252,11 +254,15 @@ export default function CategoryChart(): React.ReactElement {
                     key={icon.key}
                     testID={`donut-icon-${icon.key}`}
                     style={[styles.iconBadge, {
-                      left: icon.x - ICON_SIZE / 2,
-                      top: icon.y - ICON_SIZE / 2,
+                      left: icon.x - ICON_BADGE_WIDTH / 2,
+                      top: icon.y - ICON_BADGE_HEIGHT / 2,
+                      backgroundColor: icon.color,
                     }]}
                   >
-                    <Ionicons name={icon.icon as any} size={14} color={icon.color} />
+                    <Ionicons name={icon.icon as any} size={12} color={C.white} />
+                    <Text style={[styles.iconPct, { color: C.white }]} testID={`donut-pct-${icon.key}`}>
+                      {icon.pct.toFixed(0)}%
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -362,20 +368,24 @@ const styles = StyleSheet.create({
   },
   iconBadge: {
     alignItems: 'center',
-    backgroundColor: ICON_BG,
-    borderRadius: ICON_SIZE / 2,
-    elevation: 2,
-    height: ICON_SIZE,
+    borderRadius: 15,
+    elevation: 3,
+    height: ICON_BADGE_HEIGHT,
     justifyContent: 'center',
     position: 'absolute',
     shadowColor: C.textDark,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    width: ICON_SIZE,
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    width: ICON_BADGE_WIDTH,
   },
   iconOverlay: {
     pointerEvents: 'none',
+  },
+  iconPct: {
+    fontSize: 8,
+    fontWeight: '700',
+    marginTop: 1,
   },
   legend: {
     marginTop: 4,
