@@ -102,6 +102,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   switchToAccount: (account: DeviceUser) => {
+    const now = new Date();
     const selectedUser: User = {
       id: account.userId,
       email: account.email,
@@ -110,6 +111,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
       updatedAt: new Date(),
     };
     set({ selectedUser });
+    useTransactionStore.getState().setSelectedMonth(now.getMonth());
+    useTransactionStore.getState().setSelectedYear(now.getFullYear());
   },
 
   removeDeviceAccount: async (userId: string) => {

@@ -1,4 +1,4 @@
-import { useAuthStore } from '@store/index';
+import { useAuthStore, useTransactionStore } from '@store/index';
 import { DeviceUser } from '@/types';
 
 jest.mock('@services/deviceUsers', () => ({
@@ -17,6 +17,10 @@ beforeEach(() => {
     savedAccounts: [],
     isLoading: false,
     error: null,
+  });
+  useTransactionStore.setState({
+    selectedMonth: new Date().getMonth(),
+    selectedYear: new Date().getFullYear(),
   });
   jest.clearAllMocks();
 });
@@ -94,6 +98,34 @@ describe('useAuthStore – device accounts', () => {
 
       expect(useAuthStore.getState().selectedUser!.id).toBe('user-c');
       expect(useAuthStore.getState().selectedUser!.displayName).toBeUndefined();
+    });
+
+    it('resets selectedMonth to the current month', () => {
+      useTransactionStore.getState().setSelectedMonth(2);
+      useTransactionStore.getState().setSelectedYear(2025);
+
+      useAuthStore.getState().switchToAccount({
+        deviceId: 'd1',
+        userId: 'user-b',
+        email: 'b@example.com',
+        loggedInAt: new Date(),
+      });
+
+      expect(useTransactionStore.getState().selectedMonth).toBe(new Date().getMonth());
+    });
+
+    it('resets selectedYear to the current year', () => {
+      useTransactionStore.getState().setSelectedMonth(2);
+      useTransactionStore.getState().setSelectedYear(2025);
+
+      useAuthStore.getState().switchToAccount({
+        deviceId: 'd1',
+        userId: 'user-b',
+        email: 'b@example.com',
+        loggedInAt: new Date(),
+      });
+
+      expect(useTransactionStore.getState().selectedYear).toBe(new Date().getFullYear());
     });
   });
 
