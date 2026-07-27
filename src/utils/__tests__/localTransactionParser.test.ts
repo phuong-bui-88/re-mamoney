@@ -117,4 +117,68 @@ describe('parseLocalTransactions', () => {
     expect(result).toHaveLength(1);
     expect(result[0].amount).toBe(30000);
   });
+
+  it('parses ca suffix as thousands (same as k)', () => {
+    const result = parseLocalTransactions('Cơm sườn 86 ca');
+    expect(result).toHaveLength(1);
+    expect(result[0].description).toBe('Cơm sườn');
+    expect(result[0].amount).toBe(86000);
+  });
+
+  it('multi-line input with ca splits each line correctly', () => {
+    const input = 'Cơm sườn 86 ca\nKẹo 16k';
+    const result = parseLocalTransactions(input);
+    expect(result).toHaveLength(2);
+    expect(result[0].description).toBe('Cơm sườn');
+    expect(result[0].amount).toBe(86000);
+    expect(result[1].description).toBe('Kẹo');
+    expect(result[1].amount).toBe(16000);
+  });
+
+  it('parses full 8-item Vietnamese input with ca suffix', () => {
+    const input = [
+      'Hủ tiếu 25 K',
+      'Cơm 60k',
+      'Cơm sườn 86 ca',
+      'Kẹo 16k',
+      'Dầu gió 86 k',
+      'Khoai lang 11 K',
+      'Hủ tiếu 25 K',
+      'Bánh bèo 15k',
+    ].join('\n');
+    const result = parseLocalTransactions(input);
+    expect(result).toHaveLength(8);
+    expect(result[2].description).toBe('Cơm sườn');
+    expect(result[2].amount).toBe(86000);
+    expect(result[3].description).toBe('Kẹo');
+    expect(result[3].amount).toBe(16000);
+  });
+
+  it('ca at end of input without trailing newline', () => {
+    const result = parseLocalTransactions('Trà 30 ca');
+    expect(result).toHaveLength(1);
+    expect(result[0].description).toBe('Trà');
+    expect(result[0].amount).toBe(30000);
+  });
+
+  it('mixed suffixes k, ca, m, tr all work together', () => {
+    const result = parseLocalTransactions('a 10k b 20 ca c 3m');
+    expect(result).toHaveLength(3);
+    expect(result[0].amount).toBe(10000);
+    expect(result[1].amount).toBe(20000);
+    expect(result[2].amount).toBe(3000000);
+  });
+
+  it('single shorthand still works (regression)', () => {
+    const result = parseLocalTransactions('coffee 30k');
+    expect(result).toHaveLength(1);
+    expect(result[0].amount).toBe(30000);
+  });
+
+  it('comma-separated items still work (regression)', () => {
+    const result = parseLocalTransactions('lunch 80k, taxi 120k');
+    expect(result).toHaveLength(2);
+    expect(result[0].amount).toBe(80000);
+    expect(result[1].amount).toBe(120000);
+  });
 });

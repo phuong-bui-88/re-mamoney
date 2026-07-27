@@ -1,4 +1,5 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { render, screen } from '@testing-library/react-native';
 import FilteredTransactionList from '@components/FilteredTransactionList';
 import { useTransactionStore } from '@store/index';
@@ -131,5 +132,109 @@ describe('FilteredTransactionList', () => {
       require('@components/TransactionRow').default,
     );
     expect(row.props.onPress).toBe(onTransactionPress);
+  });
+
+  describe('sorts transactions oldest to newest', () => {
+    it('renders transactions in ascending date order', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', description: 'Lunch', date: new Date('2026-07-05T10:00:00') }),
+          mockTransaction({ id: '2', description: 'Salary', date: new Date('2026-07-01T10:00:00') }),
+          mockTransaction({ id: '3', description: 'Coffee', date: new Date('2026-07-08T10:00:00') }),
+        ],
+      });
+
+      render(<FilteredTransactionList filterMode="month" />);
+
+      const textNodes = screen.UNSAFE_getAllByType(Text);
+      const descriptions = textNodes
+        .map((node: any) => node.props.children)
+        .filter((child: any) => typeof child === 'string' && ['Salary', 'Lunch', 'Coffee'].includes(child));
+
+      expect(descriptions).toEqual(['Salary', 'Lunch', 'Coffee']);
+    });
+
+    it('renders a single transaction without error', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', description: 'Only item', date: new Date('2026-07-15T10:00:00') }),
+        ],
+      });
+
+      render(<FilteredTransactionList filterMode="month" />);
+      expect(screen.getByText('Only item')).toBeTruthy();
+    });
+
+    it('applies sort after category filter', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', category: 'food', description: 'Dinner', date: new Date('2026-07-10T10:00:00') }),
+          mockTransaction({ id: '2', category: 'food', description: 'Lunch', date: new Date('2026-07-05T10:00:00') }),
+          mockTransaction({ id: '3', category: 'transport', description: 'Bus', date: new Date('2026-07-01T10:00:00') }),
+        ],
+      });
+
+      render(<FilteredTransactionList category="food" filterMode="month" />);
+
+      expect(screen.queryByText('Bus')).toBeNull();
+
+      const textNodes = screen.UNSAFE_getAllByType(Text);
+      const descriptions = textNodes
+        .map((node: any) => node.props.children)
+        .filter((child: any) => typeof child === 'string' && ['Lunch', 'Dinner'].includes(child));
+
+      expect(descriptions).toEqual(['Lunch', 'Dinner']);
+    });
+
+    it('applies sort after today filter', () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const today1 = new Date(today);
+      today1.setHours(12, 0, 0, 0);
+
+      const today2 = new Date(today);
+      today2.setHours(8, 0, 0, 0);
+
+      const today3 = new Date(today);
+      today3.setHours(18, 0, 0, 0);
+
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', description: 'Evening', date: today3 }),
+          mockTransaction({ id: '2', description: 'Morning', date: today2 }),
+          mockTransaction({ id: '3', description: 'Noon', date: today1 }),
+        ],
+      });
+
+      render(<FilteredTransactionList filterMode="today" />);
+
+      const textNodes = screen.UNSAFE_getAllByType(Text);
+      const descriptions = textNodes
+        .map((node: any) => node.props.children)
+        .filter((child: any) => typeof child === 'string' && ['Morning', 'Noon', 'Evening'].includes(child));
+
+      expect(descriptions).toEqual(['Morning', 'Noon', 'Evening']);
+    });
+
+    it('sorts unsorted input into ascending date order', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: '1', description: 'Dec', date: new Date('2026-12-25T10:00:00') }),
+          mockTransaction({ id: '2', description: 'Jan', date: new Date('2026-01-01T10:00:00') }),
+          mockTransaction({ id: '3', description: 'Jun', date: new Date('2026-06-15T10:00:00') }),
+          mockTransaction({ id: '4', description: 'Mar', date: new Date('2026-03-10T10:00:00') }),
+        ],
+      });
+
+      render(<FilteredTransactionList filterMode="month" />);
+
+      const textNodes = screen.UNSAFE_getAllByType(Text);
+      const descriptions = textNodes
+        .map((node: any) => node.props.children)
+        .filter((child: any) => typeof child === 'string' && ['Jan', 'Mar', 'Jun', 'Dec'].includes(child));
+
+      expect(descriptions).toEqual(['Jan', 'Mar', 'Jun', 'Dec']);
+    });
   });
 });

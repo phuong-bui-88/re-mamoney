@@ -32,6 +32,12 @@ export default function FilteredTransactionList({ category, filterMode, onTransa
       result = result.filter((t) => t.date >= today && t.date <= endOfDay);
     }
 
+    result.sort((a, b) => {
+      const dateA = a.date instanceof Date ? a.date.getTime() : new Date(a.date).getTime();
+      const dateB = b.date instanceof Date ? b.date.getTime() : new Date(b.date).getTime();
+      return dateA - dateB;
+    });
+
     return result;
   }, [transactions, category, filterMode]);
 

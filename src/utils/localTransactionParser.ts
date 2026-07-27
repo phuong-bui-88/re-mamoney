@@ -10,7 +10,7 @@ const TODAY_DDMMYYYY = (() => {
 
 export function parseLocalTransactions(input: string): AITransaction[] {
   const normalized = input.replace(/,/g, ' ').trim();
-  const amountTokenRe = /\b(\d+(?:\.\d+)?)\s*(k|m|tr|t|triệu)\b/gi;
+  const amountTokenRe = /\b(\d+(?:\.\d+)?)\s*(k|m|tr|t|triệu|ca)\b/gi;
 
   const amounts: Array<{ value: number; suffix: string; index: number; length: number }> = [];
   let m: RegExpExecArray | null;
@@ -36,6 +36,7 @@ export function parseLocalTransactions(input: string): AITransaction[] {
     let amount: number;
     switch (suffix) {
       case 'k':
+      case 'ca':
         amount = value * 1000;
         break;
       case 'm':
