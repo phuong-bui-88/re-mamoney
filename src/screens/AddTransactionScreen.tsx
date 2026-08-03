@@ -25,6 +25,7 @@ import { formatCurrency, formatDate } from '@utils/currency';
 import { CATEGORY_ICONS, CATEGORY_LABELS, CATEGORY_COLORS, FALLBACK_COLORS } from '@utils/categories';
 import { C } from '@theme/colors';
 import { transItemStyles } from '@styles/index';
+import { getCardWindow, findMatchingLineIndices, RawLinesWindow } from '@utils/rawLinesWindow';
 
 interface FeedItem {
   id: string;
@@ -103,6 +104,44 @@ export default function AddTransactionScreen(): React.ReactElement {
         return tx.type === 'expense' ? sum + tx.amount : sum - tx.amount;
       }, 0);
   }, [allTransactions]);
+
+  const { matchIndices, windows } = useMemo(() => {
+    const matchMap: Record<string, number> = {};
+    const windowMap: Record<string, RawLinesWindow> = {};
+    let group: FeedItem[] = [];
+    let groupKey = '';
+
+    const flush = (): void => {
+      if (group.length === 0) return;
+      const rawLines = group[0].userText!.split('\n').filter((l) => l.trim());
+      const indices = findMatchingLineIndices(group, rawLines);
+      let prevMatch = -1;
+      group.forEach((item, i) => {
+        const match = indices[i];
+        matchMap[item.id] = match;
+        windowMap[item.id] = getCardWindow(rawLines, match, prevMatch);
+        if (match >= 0) {
+          prevMatch = match;
+        }
+      });
+      group = [];
+    };
+
+    for (const item of feed) {
+      if (item.kind === 'stored' && item.userText) {
+        if (item.userText !== groupKey) {
+          flush();
+          groupKey = item.userText;
+        }
+        group.push(item);
+      } else {
+        flush();
+        groupKey = '';
+      }
+    }
+    flush();
+    return { matchIndices: matchMap, windows: windowMap };
+  }, [feed]);
 
   const handleTransactionPress = useCallback(
     (item: FeedItem) => {
@@ -252,14 +291,45 @@ export default function AddTransactionScreen(): React.ReactElement {
             </Text>
           </View>
 
-          {item.userText && (
-            <>
-              <View style={transItemStyles.itemDivider} />
-              <View style={transItemStyles.itemRight}>
-                <Text style={transItemStyles.userText}>{item.userText}</Text>
-              </View>
-            </>
-          )}
+          {item.userText && (() => {
+            const allLines = item.userText.split('\n').filter((l: string) => l.trim());
+            if (allLines.length <= 1) {
+              return (
+                <>
+                  <View style={transItemStyles.itemDivider} />
+                  <View style={transItemStyles.itemRight}>
+                    <Text style={transItemStyles.userText}>{item.userText}</Text>
+                  </View>
+                </>
+              );
+            }
+
+            const matchIdx = matchIndices[item.id] ?? -1;
+            const window = windows[item.id];
+
+            return (
+              <>
+                <View style={transItemStyles.itemDivider} />
+                <View style={transItemStyles.rawLinesPanel}>
+                  {window.lines.map((line: string, idx: number) => {
+                    const globalIdx = window.start + idx;
+                    const isMatch = globalIdx === matchIdx;
+                    return (
+                      <Text
+                        key={idx}
+                        style={[
+                          transItemStyles.rawLine,
+                          isMatch && transItemStyles.rawLineMatch,
+                        ]}
+                      >
+                        {line}
+                      </Text>
+                    );
+                  })}
+                </View>
+              </>
+            );
+          })()}
         </View>
       </View>
       </TouchableOpacity>

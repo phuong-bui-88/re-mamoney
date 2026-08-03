@@ -461,3 +461,339 @@ describe('AddTransactionScreen - swipe to delete', () => {
     expect(mockSwipeCalls[0]).toEqual(expect.any(Function));
   });
 });
+
+describe('AddTransactionScreen - raw lines panel', () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  it('shows raw lines when userText has multiple lines', () => {
+    const userText = 'Coffee 30k\nTea 15k\nSnack 10k';
+    useTransactionStore.setState({
+      allTransactions: [
+        { id: 'tx-rl1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+      ],
+      transactions: [
+        { id: 'tx-rl1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+      ],
+    });
+
+    render(<AddTransactionScreen />);
+
+    expect(screen.getByText('Coffee 30k')).toBeTruthy();
+    expect(screen.getByText('Tea 15k')).toBeTruthy();
+    expect(screen.getByText('Snack 10k')).toBeTruthy();
+  });
+
+  it('limits raw lines to 5 when more than 5 lines', () => {
+    const userText = 'Line1 10k\nLine2 20k\nLine3 30k\nLine4 40k\nLine5 50k\nLine6 60k\nLine7 70k\nLine8 80k';
+    useTransactionStore.setState({
+      allTransactions: [
+        { id: 'tx-rl2', userId: 'test-user', type: 'expense', amount: 10000, category: 'food', description: 'Line1', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+      ],
+      transactions: [
+        { id: 'tx-rl2', userId: 'test-user', type: 'expense', amount: 10000, category: 'food', description: 'Line1', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+      ],
+    });
+
+    render(<AddTransactionScreen />);
+
+    expect(screen.getByText('Line1 10k')).toBeTruthy();
+    expect(screen.getByText('Line2 20k')).toBeTruthy();
+    expect(screen.getByText('Line3 30k')).toBeTruthy();
+    expect(screen.getByText('Line4 40k')).toBeTruthy();
+    expect(screen.getByText('Line5 50k')).toBeTruthy();
+    expect(screen.queryByText('Line6 60k')).toBeNull();
+    expect(screen.queryByText('Line7 70k')).toBeNull();
+    expect(screen.queryByText('Line8 80k')).toBeNull();
+  });
+
+  it('highlights only the matching line in the raw lines panel', () => {
+    const userText = 'Hủ tiếu 25k\nCơm 60k\nKẹo 16k';
+    useTransactionStore.setState({
+      allTransactions: [
+        { id: 'tx-rl3', userId: 'test-user', type: 'expense', amount: 60000, category: 'food', description: 'Cơm', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+      ],
+      transactions: [
+        { id: 'tx-rl3', userId: 'test-user', type: 'expense', amount: 60000, category: 'food', description: 'Cơm', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+      ],
+    });
+
+    render(<AddTransactionScreen />);
+
+    const LINES = ['Hủ tiếu 25k', 'Cơm 60k', 'Kẹo 16k'];
+    const rawNodes = screen.root.findAll(
+      (node: any) =>
+        typeof node.children?.join('') === 'string' &&
+        LINES.includes(node.children.join('')),
+    );
+    expect(rawNodes).toHaveLength(3);
+
+    const highlighted: number[] = [];
+    rawNodes.forEach((node: any, i: number) => {
+      const style = node.props.style;
+      const isMatch =
+        Array.isArray(style) &&
+        style.some((s: any) => s && s.borderLeftWidth === 3 && s.borderLeftColor === '#2196F3');
+      if (isMatch) highlighted.push(i);
+    });
+
+    expect(highlighted).toEqual([1]);
+    expect(rawNodes[1].children.join('')).toBe('Cơm 60k');
+  });
+
+  it('shows single-line userText without raw lines panel', () => {
+    const userText = 'Coffee 30k';
+    useTransactionStore.setState({
+      allTransactions: [
+        { id: 'tx-rl4', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+      ],
+      transactions: [
+        { id: 'tx-rl4', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+      ],
+    });
+
+    render(<AddTransactionScreen />);
+
+    const coffeeTexts = screen.getAllByText('Coffee 30k');
+    expect(coffeeTexts.length).toBe(1);
+  });
+
+  it('does not show raw lines panel when userText is missing', () => {
+    useTransactionStore.setState({
+      allTransactions: [
+        { id: 'tx-rl5', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'NoText', date: today, createdAt: new Date(), updatedAt: new Date() },
+      ],
+      transactions: [
+        { id: 'tx-rl5', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'NoText', date: today, createdAt: new Date(), updatedAt: new Date() },
+      ],
+    });
+
+    render(<AddTransactionScreen />);
+
+    expect(screen.getByText('NoText')).toBeTruthy();
+    expect(screen.getByText('-30000')).toBeTruthy();
+  });
+
+  it('highlights each duplicate-description card on its own line', () => {
+    const userText = 'Hủ tiếu 25k\nHủ tiếu 25k\nĐổ xăng 50k';
+    useTransactionStore.setState({
+      allTransactions: [
+        { id: 'tx-rl7a', userId: 'test-user', type: 'expense', amount: 25000, category: 'food', description: 'Hủ tiếu', date: today, createdAt: new Date(2026, 6, 27, 10, 0), updatedAt: new Date(), userText },
+        { id: 'tx-rl7b', userId: 'test-user', type: 'expense', amount: 25000, category: 'food', description: 'Hủ tiếu', date: today, createdAt: new Date(2026, 6, 27, 10, 1), updatedAt: new Date(), userText },
+      ],
+      transactions: [
+        { id: 'tx-rl7a', userId: 'test-user', type: 'expense', amount: 25000, category: 'food', description: 'Hủ tiếu', date: today, createdAt: new Date(2026, 6, 27, 10, 0), updatedAt: new Date(), userText },
+        { id: 'tx-rl7b', userId: 'test-user', type: 'expense', amount: 25000, category: 'food', description: 'Hủ tiếu', date: today, createdAt: new Date(2026, 6, 27, 10, 1), updatedAt: new Date(), userText },
+      ],
+    });
+
+    render(<AddTransactionScreen />);
+
+    const LINES = ['Hủ tiếu 25k', 'Đổ xăng 50k'];
+    const rawLineNodes = screen.root.findAll(
+      (node: any) =>
+        typeof node.children?.join('') === 'string' &&
+        LINES.includes(node.children.join('')),
+    );
+    const texts = rawLineNodes.map((n: any) => n.children.join(''));
+
+    expect(texts.filter((t: string) => t === 'Hủ tiếu 25k').length).toBe(4);
+
+    const isMatch = (n: any): boolean => {
+      const style = n.props.style;
+      return (
+        Array.isArray(style) &&
+        style.some((s: any) => s && s.borderLeftWidth === 3 && s.borderLeftColor === '#2196F3')
+      );
+    };
+    const highlighted: number[] = [];
+    rawLineNodes.forEach((n: any, i: number) => { if (isMatch(n)) highlighted.push(i); });
+    expect(highlighted).toEqual([0, 4]);
+    expect(highlighted.map((i: number) => texts[i])).toEqual(['Hủ tiếu 25k', 'Hủ tiếu 25k']);
+  });
+
+  it('jumps to page [4-7] for cards matching lines 5-6 (8-line paste)', () => {
+    const userText = 'Line0 10k\nLine1 20k\nLine2 30k\nLine3 40k\nLine4 50k\nLine5 60k\nLine6 70k\nLine7 80k';
+    useTransactionStore.setState({
+      allTransactions: [
+        { id: 'tx-rl6a', userId: 'test-user', type: 'expense', amount: 60000, category: 'food', description: 'Line5', date: today, createdAt: new Date(2026, 6, 27, 10, 0), updatedAt: new Date(), userText },
+        { id: 'tx-rl6b', userId: 'test-user', type: 'expense', amount: 70000, category: 'food', description: 'Line6', date: today, createdAt: new Date(2026, 6, 27, 10, 1), updatedAt: new Date(), userText },
+      ],
+      transactions: [
+        { id: 'tx-rl6a', userId: 'test-user', type: 'expense', amount: 60000, category: 'food', description: 'Line5', date: today, createdAt: new Date(2026, 6, 27, 10, 0), updatedAt: new Date(), userText },
+        { id: 'tx-rl6b', userId: 'test-user', type: 'expense', amount: 70000, category: 'food', description: 'Line6', date: today, createdAt: new Date(2026, 6, 27, 10, 1), updatedAt: new Date(), userText },
+      ],
+    });
+
+    render(<AddTransactionScreen />);
+
+    const LINES = ['Line4 50k', 'Line5 60k', 'Line6 70k', 'Line7 80k'];
+    const rawNodes = screen.root.findAll(
+      (node: any) =>
+        typeof node.children?.join('') === 'string' &&
+        LINES.includes(node.children.join('')),
+    );
+    const texts = rawNodes.map((n: any) => n.children.join(''));
+
+    expect(texts).toHaveLength(8);
+    expect(texts.filter((t: string) => t === 'Line4 50k').length).toBe(2);
+    expect(texts.filter((t: string) => t === 'Line5 60k').length).toBe(2);
+    expect(texts.filter((t: string) => t === 'Line6 70k').length).toBe(2);
+    expect(texts.filter((t: string) => t === 'Line7 80k').length).toBe(2);
+
+    expect(screen.queryByText('Line0 10k')).toBeNull();
+    expect(screen.queryByText('Line1 20k')).toBeNull();
+
+    const isMatch = (n: any): boolean => {
+      const style = n.props.style;
+      return (
+        Array.isArray(style) &&
+        style.some((s: any) => s && s.borderLeftWidth === 3 && s.borderLeftColor === '#2196F3')
+      );
+    };
+    const highlighted: number[] = [];
+    rawNodes.forEach((n: any, i: number) => { if (isMatch(n)) highlighted.push(i); });
+    expect(highlighted).toEqual([1, 6]);
+    expect(rawNodes[1].children.join('')).toBe('Line5 60k');
+    expect(rawNodes[6].children.join('')).toBe('Line6 70k');
+  });
+
+  it('keeps page-jump windows across a 6-line batch', () => {
+    const userText =
+      'Hủ tiếu 25k\nHủ tiếu 25k\nĐổ xăng 50k\nĐổi bình nước 50 K\nĐặt xe 40 K\nBánh tráng trộn 20k';
+    const mkTx = (id: string, description: string, amount: number, createdAt: Date) => ({
+      id,
+      userId: 'test-user',
+      type: 'expense' as const,
+      amount,
+      category: 'food',
+      description,
+      date: today,
+      createdAt,
+      updatedAt: new Date(),
+      userText,
+    });
+    const all = [
+      mkTx('tx-6a', 'Hủ tiếu', 25000, new Date(2026, 6, 27, 10, 0)),
+      mkTx('tx-6b', 'Hủ tiếu', 25000, new Date(2026, 6, 27, 10, 1)),
+      mkTx('tx-6c', 'Đổ xăng', 50000, new Date(2026, 6, 27, 10, 2)),
+      mkTx('tx-6d', 'Đổi bình nước', 50000, new Date(2026, 6, 27, 10, 3)),
+      mkTx('tx-6e', 'Đặt xe', 40000, new Date(2026, 6, 27, 10, 4)),
+      mkTx('tx-6f', 'Bánh tráng trộn', 20000, new Date(2026, 6, 27, 10, 5)),
+    ];
+    useTransactionStore.setState({ allTransactions: all, transactions: all });
+
+    render(<AddTransactionScreen />);
+
+    const LINES = ['Hủ tiếu 25k', 'Đổ xăng 50k', 'Đổi bình nước 50 K', 'Đặt xe 40 K', 'Bánh tráng trộn 20k'];
+    const rawLineNodes = screen.root.findAll(
+      (node: any) =>
+        typeof node.children?.join('') === 'string' &&
+        LINES.includes(node.children.join('')),
+    );
+
+    const texts = rawLineNodes.map((n: any) => n.children.join(''));
+
+    expect(texts.filter((t: string) => t === 'Hủ tiếu 25k').length).toBe(10);
+    expect(texts.filter((t: string) => t === 'Đổ xăng 50k').length).toBe(5);
+    expect(texts.filter((t: string) => t === 'Đổi bình nước 50 K').length).toBe(5);
+    expect(texts.filter((t: string) => t === 'Đặt xe 40 K').length).toBe(6);
+    expect(texts.filter((t: string) => t === 'Bánh tráng trộn 20k').length).toBe(1);
+
+    const lastTwo = texts.slice(-2);
+    expect(lastTwo).toEqual(['Đặt xe 40 K', 'Bánh tráng trộn 20k']);
+
+    const isMatch = (n: any): boolean => {
+      const style = n.props.style;
+      return (
+        Array.isArray(style) &&
+        style.some((s: any) => s && s.borderLeftWidth === 3 && s.borderLeftColor === '#2196F3')
+      );
+    };
+    const highlighted: number[] = [];
+    rawLineNodes.forEach((n: any, i: number) => { if (isMatch(n)) highlighted.push(i); });
+    expect(highlighted).toEqual([0, 6, 12, 18, 24, 26]);
+    expect(isMatch(rawLineNodes[rawLineNodes.length - 1])).toBe(true);
+  });
+
+  it('13-line paste: 13 cards page through [0-4]/[4-8]/[8-12], each highlights its own line', () => {
+    const pasteLines = [
+      'Hủ tiếu 25k', 'Chè mè đen 15k', 'Hủ tiếu 25k', 'Hủ tiếu 25 K', 'Bánh mì 30 K',
+      'Hủ tiếu 25 K', 'Cơm 60k', 'Cơm sườn 30k', 'Kẹo 16k', 'Dầu gió 20k',
+      'Khoai lang 20k', 'Hủ tiếu 25 K', 'Bánh bèo 15k',
+    ];
+    const userText = pasteLines.join('\n');
+
+    const mkTx = (id: string, description: string, amount: number, min: number) => ({
+      id,
+      userId: 'test-user',
+      type: 'expense' as const,
+      amount,
+      category: 'food',
+      description,
+      date: today,
+      createdAt: new Date(2026, 6, 27, 10, min),
+      updatedAt: new Date(),
+      userText,
+    });
+    const all = [
+      mkTx('tx-13a', 'Hủ tiếu', 25000, 0),
+      mkTx('tx-13b', 'Chè mè đen', 15000, 1),
+      mkTx('tx-13c', 'Hủ tiếu', 25000, 2),
+      mkTx('tx-13d', 'Hủ tiếu', 25000, 3),
+      mkTx('tx-13e', 'Bánh mì', 30000, 4),
+      mkTx('tx-13f', 'Hủ tiếu', 25000, 5),
+      mkTx('tx-13g', 'Cơm', 60000, 6),
+      mkTx('tx-13h', 'Cơm sườn', 30000, 7),
+      mkTx('tx-13i', 'Kẹo', 16000, 8),
+      mkTx('tx-13j', 'Dầu gió', 20000, 9),
+      mkTx('tx-13k', 'Khoai lang', 20000, 10),
+      mkTx('tx-13l', 'Hủ tiếu', 25000, 11),
+      mkTx('tx-13m', 'Bánh bèo', 15000, 12),
+    ];
+    useTransactionStore.setState({ allTransactions: all, transactions: all });
+
+    render(<AddTransactionScreen />);
+
+    const DISTINCT_LINES = [
+      'Hủ tiếu 25k', 'Chè mè đen 15k', 'Hủ tiếu 25 K', 'Bánh mì 30 K',
+      'Cơm 60k', 'Cơm sườn 30k', 'Kẹo 16k', 'Dầu gió 20k',
+      'Khoai lang 20k', 'Bánh bèo 15k',
+    ];
+    const rawLineNodes = screen.root.findAll(
+      (node: any) =>
+        typeof node.children?.join('') === 'string' &&
+        DISTINCT_LINES.includes(node.children.join('')),
+    );
+    const texts = rawLineNodes.map((n: any) => n.children.join(''));
+
+    expect(texts).toHaveLength(65);
+
+    const count = (t: string): number => texts.filter((x: string) => x === t).length;
+    expect(count('Hủ tiếu 25k')).toBe(10);
+    expect(count('Hủ tiếu 25 K')).toBe(13);
+    expect(count('Bánh mì 30 K')).toBe(9);
+    expect(count('Kẹo 16k')).toBe(8);
+    expect(count('Chè mè đen 15k')).toBe(5);
+    expect(count('Cơm 60k')).toBe(4);
+    expect(count('Cơm sườn 30k')).toBe(4);
+    expect(count('Dầu gió 20k')).toBe(4);
+    expect(count('Khoai lang 20k')).toBe(4);
+    expect(count('Bánh bèo 15k')).toBe(4);
+
+    const isMatch = (n: any): boolean => {
+      const style = n.props.style;
+      return (
+        Array.isArray(style) &&
+        style.some((s: any) => s && s.borderLeftWidth === 3 && s.borderLeftColor === '#2196F3')
+      );
+    };
+    const highlighted: number[] = [];
+    rawLineNodes.forEach((n: any, i: number) => { if (isMatch(n)) highlighted.push(i); });
+
+    expect(highlighted).toEqual([0, 6, 12, 18, 24, 26, 32, 38, 44, 46, 52, 58, 64]);
+
+    const highlightedTexts = highlighted.map((i: number) => texts[i]);
+    expect(highlightedTexts).toEqual(pasteLines);
+  });
+});
