@@ -20,9 +20,10 @@ interface TransactionRowProps {
   transaction: Transaction;
   onDelete?: (id: string) => void;
   onPress?: (transaction: Transaction) => void;
+  insideGroup?: boolean;
 }
 
-export default function TransactionRow({ transaction, onDelete, onPress }: TransactionRowProps): React.ReactElement {
+export default function TransactionRow({ transaction, onDelete, onPress, insideGroup }: TransactionRowProps): React.ReactElement {
   const renderLeftActions = (
     progress: Animated.AnimatedInterpolation<number>,
   ) => {
@@ -45,7 +46,7 @@ export default function TransactionRow({ transaction, onDelete, onPress }: Trans
   }
 
   const rowContent = (
-    <View style={styles.container}>
+    <View style={[styles.container, insideGroup && styles.containerGrouped]}>
       <View style={[styles.iconBg, { backgroundColor: catColor }]}>
         <Ionicons name={catIcon as any} size={16} color="#fff" />
       </View>
@@ -101,6 +102,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginVertical: 4,
     padding: 15,
+  },
+  containerGrouped: {
+    marginHorizontal: 0,
+    marginVertical: 2,
   },
   date: {
     color: C.textLight,

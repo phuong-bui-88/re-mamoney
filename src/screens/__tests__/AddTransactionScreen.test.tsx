@@ -797,3 +797,135 @@ describe('AddTransactionScreen - raw lines panel', () => {
     expect(highlightedTexts).toEqual(pasteLines);
   });
 });
+
+describe('AddTransactionScreen - grouped multi-input feed', () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const mkTx = (
+    id: string,
+    description: string,
+    amount: number,
+    userText: string,
+    createdAt = new Date(2026, 6, 27, 10, 0),
+  ) => ({
+    id,
+    userId: 'test-user',
+    type: 'expense' as const,
+    amount,
+    category: 'food',
+    description,
+    date: today,
+    createdAt,
+    updatedAt: new Date(),
+    userText,
+  });
+
+  const setTransactions = (txs: any[]) => {
+    useTransactionStore.setState({ allTransactions: txs, transactions: txs });
+  };
+
+  it('wraps multiple items from one multi-line input in a single teal group container', () => {
+    const userText = 'Hủ tiếu 25k\nCơm 60k\nKẹo 16k';
+    setTransactions([
+      mkTx('tx-g1', 'Hủ tiếu', 25000, userText, new Date(2026, 6, 27, 10, 0)),
+      mkTx('tx-g2', 'Cơm', 60000, userText, new Date(2026, 6, 27, 10, 1)),
+      mkTx('tx-g3', 'Kẹo', 16000, userText, new Date(2026, 6, 27, 10, 2)),
+    ]);
+
+    render(<AddTransactionScreen />);
+
+    const group = screen.getByTestId('group-tx-g1');
+    expect(group).toBeTruthy();
+    expect(screen.getByText('GROUP')).toBeTruthy();
+    expect(screen.getByText(/3 transactions/)).toBeTruthy();
+    expect(screen.getByText(/3 transactions · -101000/)).toBeTruthy();
+
+    const style = group.props.style;
+    const flattened = Array.isArray(style) ? style : [style];
+    expect(flattened.some((s: any) => s && s.backgroundColor === '#E0F2F1')).toBe(true);
+    expect(screen.getAllByText(/transactions/)).toHaveLength(1);
+  });
+
+  it('renders each item bubble and Swipeable inside the group', () => {
+    const userText = 'Hủ tiếu 25k\nCơm 60k';
+    setTransactions([
+      mkTx('tx-gs1', 'Hủ tiếu', 25000, userText, new Date(2026, 6, 27, 10, 0)),
+      mkTx('tx-gs2', 'Cơm', 60000, userText, new Date(2026, 6, 27, 10, 1)),
+    ]);
+
+    render(<AddTransactionScreen />);
+
+    expect(screen.getByText('Hủ tiếu')).toBeTruthy();
+    expect(screen.getByText('Cơm')).toBeTruthy();
+    expect(mockSwipeCalls.length).toBe(2);
+  });
+
+  it('does not group a single-line input', () => {
+    const userText = 'Coffee 30k';
+    setTransactions([mkTx('tx-sg1', 'Coffee', 30000, userText)]);
+
+    render(<AddTransactionScreen />);
+
+    expect(screen.queryByText('GROUP')).toBeNull();
+    expect(screen.queryAllByTestId(/group-/)).toHaveLength(0);
+  });
+
+  it('does not group multiple items sharing a single-line userText', () => {
+    const userText = 'Coffee 30k';
+    setTransactions([
+      mkTx('tx-sg2a', 'Coffee', 30000, userText, new Date(2026, 6, 27, 10, 0)),
+      mkTx('tx-sg2b', 'Coffee', 30000, userText, new Date(2026, 6, 27, 10, 1)),
+    ]);
+
+    render(<AddTransactionScreen />);
+
+    expect(screen.queryByText('GROUP')).toBeNull();
+    expect(screen.queryAllByTestId(/group-/)).toHaveLength(0);
+    expect(screen.getAllByText('Coffee')).toHaveLength(2);
+  });
+
+  it('creates two separate groups for two different multi-line inputs', () => {
+    const ut1 = 'A 10k\nB 20k';
+    const ut2 = 'C 30k\nD 40k';
+    setTransactions([
+      mkTx('tx-2a', 'A', 10000, ut1, new Date(2026, 6, 27, 10, 0)),
+      mkTx('tx-2b', 'B', 20000, ut1, new Date(2026, 6, 27, 10, 1)),
+      mkTx('tx-2c', 'C', 30000, ut2, new Date(2026, 6, 27, 10, 2)),
+      mkTx('tx-2d', 'D', 40000, ut2, new Date(2026, 6, 27, 10, 3)),
+    ]);
+
+    render(<AddTransactionScreen />);
+
+    const groups = screen.queryAllByTestId(/group-/);
+    expect(groups).toHaveLength(2);
+    expect(screen.getAllByText('GROUP')).toHaveLength(2);
+  });
+
+  it('shows the summed total of the group in the header', () => {
+    const userText = 'Hủ tiếu 25k\nCơm 60k';
+    setTransactions([
+      mkTx('tx-t1', 'Hủ tiếu', 25000, userText, new Date(2026, 6, 27, 10, 0)),
+      mkTx('tx-t2', 'Cơm', 60000, userText, new Date(2026, 6, 27, 10, 1)),
+    ]);
+
+    render(<AddTransactionScreen />);
+
+    expect(screen.getByText(/2 transactions/)).toBeTruthy();
+    expect(screen.getByText(/-85000/)).toBeTruthy();
+  });
+
+  it('tapping a bubble inside a group still navigates to EditTransaction', () => {
+    const { __mockNavigate: mockNavigate } = require('@react-navigation/native');
+    const userText = 'Hủ tiếu 25k\nCơm 60k';
+    setTransactions([
+      mkTx('tx-ge1', 'Hủ tiếu', 25000, userText, new Date(2026, 6, 27, 10, 0)),
+      mkTx('tx-ge2', 'Cơm', 60000, userText, new Date(2026, 6, 27, 10, 1)),
+    ]);
+
+    render(<AddTransactionScreen />);
+
+    fireEvent.press(screen.getByText('Cơm'));
+    expect(mockNavigate).toHaveBeenCalledWith('EditTransaction', { transactionId: 'tx-ge2' });
+  });
+});

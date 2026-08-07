@@ -39,6 +39,13 @@ interface FeedItem {
   errorMessage?: string;
 }
 
+interface FeedSegment {
+  kind: 'single' | 'group';
+  items: FeedItem[];
+  userText: string;
+  totalAmount: number;
+}
+
 export default function AddTransactionScreen(): React.ReactElement {
   const [inputText, setInputText] = useState('');
   const [feed, setFeed] = useState<FeedItem[]>([]);
@@ -105,9 +112,10 @@ export default function AddTransactionScreen(): React.ReactElement {
       }, 0);
   }, [allTransactions]);
 
-  const { matchIndices, windows } = useMemo(() => {
+  const { matchIndices, windows, segments } = useMemo(() => {
     const matchMap: Record<string, number> = {};
     const windowMap: Record<string, RawLinesWindow> = {};
+    const segs: FeedSegment[] = [];
     let group: FeedItem[] = [];
     let groupKey = '';
 
@@ -124,6 +132,15 @@ export default function AddTransactionScreen(): React.ReactElement {
           prevMatch = match;
         }
       });
+      const totalAmount = group.reduce((sum, item) => {
+        return item.type === 'expense' ? sum + (item.amount || 0) : sum - (item.amount || 0);
+      }, 0);
+      segs.push({
+        kind: group.length >= 2 && rawLines.length >= 2 ? 'group' : 'single',
+        items: group,
+        userText: groupKey,
+        totalAmount,
+      });
       group = [];
     };
 
@@ -137,10 +154,11 @@ export default function AddTransactionScreen(): React.ReactElement {
       } else {
         flush();
         groupKey = '';
+        segs.push({ kind: 'single', items: [item], userText: '', totalAmount: 0 });
       }
     }
     flush();
-    return { matchIndices: matchMap, windows: windowMap };
+    return { matchIndices: matchMap, windows: windowMap, segments: segs };
   }, [feed]);
 
   const handleTransactionPress = useCallback(
@@ -347,6 +365,30 @@ export default function AddTransactionScreen(): React.ReactElement {
     );
   };
 
+  const renderSegment = (seg: FeedSegment): React.ReactElement => {
+    if (seg.kind === 'group') {
+      const net = seg.totalAmount;
+      const sign = net < 0 ? '+' : '-';
+      return (
+        <View
+          key={seg.items[0].id}
+          style={styles.groupContainer}
+          testID={`group-${seg.items[0].id}`}
+        >
+          <View style={styles.groupHeader}>
+            <Text style={styles.groupHeaderLabel}>GROUP</Text>
+            <Text style={styles.groupHeaderMeta}>
+              {seg.items.length} transactions · {sign}
+              {formatCurrency(Math.abs(net))}
+            </Text>
+          </View>
+          {seg.items.map(renderItem)}
+        </View>
+      );
+    }
+    return <React.Fragment key={seg.items[0].id}>{seg.items.map(renderItem)}</React.Fragment>;
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -358,7 +400,7 @@ export default function AddTransactionScreen(): React.ReactElement {
         style={styles.scrollArea}
         keyboardShouldPersistTaps="handled"
       >
-        {feed.map(renderItem)}
+        {segments.map(renderSegment)}
 
         {isLoading && (
           <View style={styles.loadingRow}>
@@ -425,6 +467,31 @@ const styles = StyleSheet.create({
     maxHeight: 100,
     paddingHorizontal: 14,
     paddingVertical: 10,
+  },
+  groupContainer: {
+    backgroundColor: C.primaryLight,
+    borderRadius: 12,
+    marginBottom: 8,
+    padding: 8,
+  },
+  groupHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 6,
+    paddingHorizontal: 4,
+    paddingTop: 2,
+  },
+  groupHeaderLabel: {
+    color: C.primary,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  groupHeaderMeta: {
+    color: C.textMedium,
+    fontSize: 11,
+    fontWeight: '600',
   },
   inputContainer: {
     backgroundColor: C.white,
