@@ -23,6 +23,8 @@ jest.mock('@components/index', () => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.useFakeTimers();
+  jest.setSystemTime(new Date(2026, 6, 15, 12, 0, 0));
 
   useAuthStore.setState({
     user: { id: 'test-user', email: 'test@example.com', createdAt: new Date(), updatedAt: new Date() },
@@ -45,6 +47,10 @@ beforeEach(() => {
     isLoading: false,
     error: null,
   });
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe('TransactionListScreen', () => {
