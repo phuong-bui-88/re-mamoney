@@ -6,24 +6,64 @@ import { useAuthStore } from '@store/index';
 import { C } from '@theme/index';
 
 const styles = StyleSheet.create({
+  accountAvatar: {
+    alignItems: 'center',
+    backgroundColor: C.primaryLight,
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  accountAvatarCurrent: {
+    backgroundColor: C.primary,
+  },
+  accountAvatarText: {
+    color: C.primary,
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  accountAvatarTextCurrent: {
+    color: C.white,
+  },
+  accountEmail: {
+    color: C.textDark,
+    flex: 1,
+    fontSize: 14,
+    marginLeft: 12,
+  },
+  accountItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  accountItemCurrent: {
+    backgroundColor: C.primaryLight,
+    borderBottomWidth: 0,
+    borderRadius: 8,
+    marginBottom: 2,
+    marginTop: 8,
+  },
+  accountSwitch: {
+    alignItems: 'center',
+    backgroundColor: C.primary,
+    borderRadius: 6,
+    flexDirection: 'row',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  accountSwitchText: {
+    color: C.white,
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
   button: {
     alignItems: 'center',
     backgroundColor: '#f44336',
     borderRadius: 8,
     marginTop: 20,
     padding: 15,
-  },
-  buttonSwitch: {
-    backgroundColor: '#2196F3',
-    borderRadius: 6,
-    marginRight: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  buttonSwitchText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
   },
   buttonText: {
     color: '#fff',
@@ -34,15 +74,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     flex: 1,
   },
-  emailValue: {
-    color: '#999',
-    fontSize: 11,
-  },
-  header: {
-    backgroundColor: '#2196F3',
-    padding: 20,
-    paddingTop: 40,
-  },
   item: {
     borderBottomColor: '#eee',
     borderBottomWidth: 1,
@@ -50,18 +81,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
   },
-  itemActions: {
-    flexDirection: 'row',
-  },
-  itemCurrentLabel: {
-    fontWeight: 'bold',
-  },
   label: {
     color: '#333',
     fontSize: 14,
-  },
-  labelFlex: {
-    flex: 1,
   },
   quickAction: {
     alignItems: 'center',
@@ -95,11 +117,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
   },
-  title: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
   value: {
     color: '#999',
     fontSize: 14,
@@ -125,10 +142,6 @@ export default function SettingsScreen(): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Settings</Text>
-      </View>
-
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.item}>
@@ -158,33 +171,37 @@ export default function SettingsScreen(): React.ReactElement {
       {savedAccounts.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Accounts on this device</Text>
-          {savedAccounts.map((account) => (
-            <View key={account.userId} style={styles.item}>
-              <View style={styles.labelFlex}>
-                <Text
-                  style={[
-                    styles.label,
-                    isCurrentUser(account) && styles.itemCurrentLabel,
-                  ]}
+          {savedAccounts.map((account) => {
+            const current = isCurrentUser(account);
+            return (
+              <View
+                key={account.userId}
+                style={[styles.accountItem, current && styles.accountItemCurrent]}
+              >
+                <View
+                  style={[styles.accountAvatar, current && styles.accountAvatarCurrent]}
                 >
+                  <Text
+                    style={[styles.accountAvatarText, current && styles.accountAvatarTextCurrent]}
+                  >
+                    {(account.email || '?').charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={styles.accountEmail} numberOfLines={1}>
                   {account.email}
                 </Text>
-                {isCurrentUser(account) && (
-                  <Text style={styles.emailValue}>Current</Text>
-                )}
-              </View>
-              <View style={styles.itemActions}>
-                {!isCurrentUser(account) && (
+                {!current && (
                   <TouchableOpacity
-                    style={styles.buttonSwitch}
+                    style={styles.accountSwitch}
                     onPress={() => handleSwitch(account)}
                   >
-                    <Text style={styles.buttonSwitchText}>Switch</Text>
+                    <Ionicons name="swap-horizontal" size={14} color={C.white} />
+                    <Text style={styles.accountSwitchText}>Switch</Text>
                   </TouchableOpacity>
                 )}
               </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
       )}
 

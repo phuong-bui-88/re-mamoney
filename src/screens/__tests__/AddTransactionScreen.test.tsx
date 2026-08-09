@@ -929,3 +929,125 @@ describe('AddTransactionScreen - grouped multi-input feed', () => {
     expect(mockNavigate).toHaveBeenCalledWith('EditTransaction', { transactionId: 'tx-ge2' });
   });
 });
+
+describe('AddTransactionScreen - dashboard month reset', () => {
+  const sendText = async (text: string): Promise<void> => {
+    render(<AddTransactionScreen />);
+    const input = screen.getByPlaceholderText('What did you spend?');
+
+    await act(async () => {
+      fireEvent.changeText(input, text);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Send'));
+    });
+
+    await waitFor(() => {
+      expect(useTransactionStore.getState().isLoading).toBe(false);
+    });
+  };
+
+  const mockParsedTransactions = (count: number): void => {
+    (parseTransactionMessage as jest.Mock).mockResolvedValue({
+      transactions: Array.from({ length: count }, (_, i) => ({
+        type: 'expense',
+        amount: 30000,
+        category: 'food',
+        description: `Coffee ${i + 1}`,
+        date: '2026-01-01',
+      })),
+      followUpQuestion: null,
+    });
+  };
+
+  it('resets selected month and year to current after successful add', async () => {
+    mockParsedTransactions(1);
+
+    await sendText('Coffee 30k');
+
+    await waitFor(() => {
+      expect(firebaseService.addTransaction).toHaveBeenCalledTimes(1);
+    });
+    expect(useTransactionStore.getState().selectedMonth).toBe(new Date().getMonth());
+    expect(useTransactionStore.getState().selectedYear).toBe(new Date().getFullYear());
+  });
+
+  it('resets selected year when viewing different year', async () => {
+    useTransactionStore.setState({ selectedMonth: 11, selectedYear: 2025 });
+    mockParsedTransactions(1);
+
+    await sendText('Coffee 30k');
+
+    await waitFor(() => {
+      expect(firebaseService.addTransaction).toHaveBeenCalledTimes(1);
+    });
+    expect(useTransactionStore.getState().selectedMonth).toBe(new Date().getMonth());
+    expect(useTransactionStore.getState().selectedYear).toBe(new Date().getFullYear());
+  });
+
+  it('keeps selected month when parse fails', async () => {
+    (parseTransactionMessage as jest.Mock).mockResolvedValue({
+      transactions: [],
+      followUpQuestion: 'Could you clarify?',
+    });
+
+    await sendText('blah blah');
+
+    expect(firebaseService.addTransaction).not.toHaveBeenCalled();
+    expect(useTransactionStore.getState().selectedMonth).toBe(6);
+    expect(useTransactionStore.getState().selectedYear).toBe(2026);
+  });
+
+  it('keeps selected month when save fails', async () => {
+    mockParsedTransactions(1);
+    (firebaseService.addTransaction as jest.Mock).mockRejectedValue(new Error('Network error'));
+
+    await sendText('Coffee 30k');
+
+    await waitFor(() => {
+      expect(firebaseService.addTransaction).toHaveBeenCalledTimes(1);
+    });
+    expect(useTransactionStore.getState().selectedMonth).toBe(6);
+    expect(useTransactionStore.getState().selectedYear).toBe(2026);
+  });
+
+  it('resets month once after multi-transaction message', async () => {
+    mockParsedTransactions(2);
+    const setMonthSpy = jest.spyOn(useTransactionStore.getState(), 'setSelectedMonth');
+
+    await sendText('Coffee 30k\nTea 20k');
+
+    await waitFor(() => {
+      expect(firebaseService.addTransaction).toHaveBeenCalledTimes(2);
+    });
+    expect(setMonthSpy).toHaveBeenCalledTimes(1);
+    expect(setMonthSpy).toHaveBeenCalledWith(new Date().getMonth());
+    expect(useTransactionStore.getState().selectedMonth).toBe(new Date().getMonth());
+    setMonthSpy.mockRestore();
+  });
+
+  it('shows new transaction in feed regardless of selected month', () => {
+    const now = new Date();
+    useTransactionStore.setState({
+      allTransactions: [
+        {
+          id: 'tx-feed1',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'Fresh Coffee',
+          date: now,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ],
+      transactions: [],
+    });
+
+    render(<AddTransactionScreen />);
+
+    expect(screen.getByText('Fresh Coffee')).toBeTruthy();
+  });
+});

@@ -51,10 +51,10 @@ describe('SettingsScreen – device accounts', () => {
     expect(screen.getAllByText(/a@gmail.com/)).toHaveLength(2);
   });
 
-  it('shows "Current" label without dot for current account', () => {
+  it('does not show a Current label for the current account', () => {
     render(<SettingsScreen />);
 
-    expect(screen.getByText('Current')).toBeTruthy();
+    expect(screen.queryByText('Current')).toBeNull();
     expect(screen.queryByText(/⬤/)).toBeNull();
     expect(screen.queryByText(/○/)).toBeNull();
   });

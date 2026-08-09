@@ -57,14 +57,14 @@ export default function AddTransactionScreen(): React.ReactElement {
   const navigation = useNavigation();
 
   const { selectedUser } = useAuthStore();
-  const { transactions, allTransactions } = useTransactionStore();
+  const { allTransactions } = useTransactionStore();
 
   useEffect(() => {
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
     threeDaysAgo.setHours(0, 0, 0, 0);
 
-    const items: FeedItem[] = [...transactions]
+    const items: FeedItem[] = [...allTransactions]
       .filter((tx) => tx.date >= threeDaysAgo)
       .sort((a, b) => a.date.getTime() - b.date.getTime() || a.createdAt.getTime() - b.createdAt.getTime())
       .map((tx) => ({
@@ -78,7 +78,7 @@ export default function AddTransactionScreen(): React.ReactElement {
         userText: tx.userText,
       }));
     setFeed(items);
-  }, [transactions]);
+  }, [allTransactions]);
 
   useEffect(() => {
     const keyboardDidShow = Keyboard.addListener('keyboardDidShow', () => {
@@ -226,12 +226,14 @@ export default function AddTransactionScreen(): React.ReactElement {
         }
       }
 
+      let savedAny = false;
       for (const tx of txsToSave) {
         try {
           await firebaseService.addTransaction({
             userId: selectedUser.id,
             ...tx,
           });
+          savedAny = true;
         } catch {
           const errItem: FeedItem = {
             id: (++feedIdCounter.current).toString(),
@@ -241,6 +243,12 @@ export default function AddTransactionScreen(): React.ReactElement {
           };
           setFeed((prev) => [...prev, errItem]);
         }
+      }
+
+      if (savedAny) {
+        const now = new Date();
+        useTransactionStore.getState().setSelectedMonth(now.getMonth());
+        useTransactionStore.getState().setSelectedYear(now.getFullYear());
       }
     } catch (error) {
       const errItem: FeedItem = {
