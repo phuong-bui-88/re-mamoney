@@ -3,6 +3,18 @@ import { render, screen, fireEvent } from '@testing-library/react-native';
 import SettingsScreen from '@screens/SettingsScreen';
 import { useAuthStore } from '@store/index';
 
+jest.mock('@react-navigation/native', () => {
+  const mockNavigate = jest.fn();
+  return {
+    useNavigation: () => ({
+      getParent: () => ({ navigate: mockNavigate }),
+    }),
+    __mockNavigate: mockNavigate,
+  };
+});
+
+const mockNavigate = (jest.requireMock('@react-navigation/native') as { __mockNavigate: jest.Mock }).__mockNavigate;
+
 jest.mock('@services/deviceUsers', () => ({
   removeDeviceUser: jest.fn(),
   saveDeviceUser: jest.fn(),
@@ -12,8 +24,6 @@ jest.mock('@services/deviceUsers', () => ({
 
 const currentDate = new Date();
 const userA = { id: 'uid-a', email: 'a@gmail.com', createdAt: currentDate, updatedAt: currentDate };
-const userB = { id: 'uid-b', email: 'b@gmail.com', createdAt: currentDate, updatedAt: currentDate };
-const userC = { id: 'uid-c', email: 'c@gmail.com', createdAt: currentDate, updatedAt: currentDate };
 
 const savedAccounts = [
   { deviceId: 'd1', userId: 'uid-a', email: 'a@gmail.com', loggedInAt: currentDate },
@@ -86,5 +96,22 @@ describe('SettingsScreen – device accounts', () => {
     render(<SettingsScreen />);
 
     expect(screen.getByText('Sign Out')).toBeTruthy();
+  });
+});
+
+describe('SettingsScreen – quick actions', () => {
+  it('renders the Add Transaction quick action', () => {
+    render(<SettingsScreen />);
+
+    expect(screen.getByText('Add Transaction')).toBeTruthy();
+  });
+
+  it('navigates to AddTransaction when Add Transaction is tapped', () => {
+    render(<SettingsScreen />);
+
+    fireEvent.press(screen.getByText('Add Transaction'));
+
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledWith('AddTransaction');
   });
 });

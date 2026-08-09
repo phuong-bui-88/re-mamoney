@@ -1,6 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuthStore } from '@store/index';
+import { C } from '@theme/index';
 
 const styles = StyleSheet.create({
   button: {
@@ -60,6 +63,26 @@ const styles = StyleSheet.create({
   labelFlex: {
     flex: 1,
   },
+  quickAction: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    paddingVertical: 6,
+  },
+  quickActionIcon: {
+    alignItems: 'center',
+    backgroundColor: C.primary,
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    marginRight: 12,
+    width: 36,
+  },
+  quickActionLabel: {
+    color: C.textDark,
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+  },
   section: {
     backgroundColor: '#fff',
     borderRadius: 8,
@@ -86,6 +109,11 @@ const styles = StyleSheet.create({
 export default function SettingsScreen(): React.ReactElement {
   const { user, selectedUser, savedAccounts, signOut, switchToAccount } =
     useAuthStore();
+  const navigation = useNavigation();
+
+  const handleAddTransaction = () => {
+    navigation.getParent()?.navigate('AddTransaction' as never);
+  };
 
   const handleSwitch = (account: (typeof savedAccounts)[0]) => {
     if (account.userId === selectedUser?.id) return;
@@ -111,6 +139,20 @@ export default function SettingsScreen(): React.ReactElement {
           <Text style={styles.label}>Display Name</Text>
           <Text style={styles.value}>{user?.displayName || 'Not set'}</Text>
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <TouchableOpacity
+          style={styles.quickAction}
+          onPress={handleAddTransaction}
+          activeOpacity={0.7}
+        >
+          <View style={styles.quickActionIcon}>
+            <Ionicons name="add" size={20} color={C.white} />
+          </View>
+          <Text style={styles.quickActionLabel}>Add Transaction</Text>
+          <Ionicons name="chevron-forward" size={18} color={C.textLight} />
+        </TouchableOpacity>
       </View>
 
       {savedAccounts.length > 0 && (
