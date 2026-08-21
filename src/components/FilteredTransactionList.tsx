@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTransactionStore } from '@store/index';
 import type { Transaction } from '@/types';
 import { formatCurrency } from '@utils/currency';
+import { matchesSearch } from '@utils/search';
 import TransactionRow from './TransactionRow';
 
 const C = {
@@ -14,7 +15,9 @@ const C = {
 
 interface FilteredTransactionListProps {
   category?: string;
-  filterMode: 'month' | 'today';
+  filterMode: 'month' | 'today' | 'day' | 'search';
+  selectedDate?: Date | null;
+  searchQuery?: string;
   onTransactionPress?: (transaction: Transaction) => void;
 }
 
@@ -25,7 +28,13 @@ interface ListSegment {
   totalAmount: number;
 }
 
-export default function FilteredTransactionList({ category, filterMode, onTransactionPress }: FilteredTransactionListProps): React.ReactElement {
+export default function FilteredTransactionList({
+  category,
+  filterMode,
+  selectedDate,
+  searchQuery,
+  onTransactionPress,
+}: FilteredTransactionListProps): React.ReactElement {
   const { transactions } = useTransactionStore();
 
   const filtered = useMemo(() => {
@@ -33,6 +42,18 @@ export default function FilteredTransactionList({ category, filterMode, onTransa
 
     if (category) {
       result = result.filter((t) => t.category === category);
+    }
+
+    if (selectedDate) {
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      result = result.filter((t) => t.date >= startOfDay && t.date <= endOfDay);
+    }
+
+    if (searchQuery && searchQuery.trim()) {
+      result = result.filter((t) => matchesSearch(t, searchQuery));
     }
 
     if (filterMode === 'today') {
@@ -50,7 +71,7 @@ export default function FilteredTransactionList({ category, filterMode, onTransa
     });
 
     return result;
-  }, [transactions, category, filterMode]);
+  }, [transactions, category, filterMode, selectedDate, searchQuery]);
 
   const segments = useMemo(() => {
     const segs: ListSegment[] = [];
@@ -121,22 +142,24 @@ export default function FilteredTransactionList({ category, filterMode, onTransa
         </View>
       );
     }
-    return <React.Fragment key={segment.items[0].id}>{segment.items.map((t) => renderRow(t, false))}</React.Fragment>;
+    return (
+      <React.Fragment key={segment.items[0].id}>
+        {segment.items.map((t) => renderRow(t, false))}
+      </React.Fragment>
+    );
   };
 
   if (filtered.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyText}>No transactions yet</Text>
+        <Text style={styles.emptyText}>
+          {searchQuery && searchQuery.trim() ? 'No transactions found' : 'No transactions yet'}
+        </Text>
       </View>
     );
   }
 
-  return (
-    <View style={styles.container}>
-      {segments.map(renderSegment)}
-    </View>
-  );
+  return <View style={styles.container}>{segments.map(renderSegment)}</View>;
 }
 
 const styles = StyleSheet.create({

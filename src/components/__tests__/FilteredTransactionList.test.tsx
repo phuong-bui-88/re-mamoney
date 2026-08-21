@@ -80,7 +80,12 @@ describe('FilteredTransactionList', () => {
     useTransactionStore.setState({
       transactions: [
         mockTransaction({ id: '1', type: 'expense', description: 'Today expense', date: today }),
-        mockTransaction({ id: '2', type: 'expense', description: 'Yesterday expense', date: yesterday }),
+        mockTransaction({
+          id: '2',
+          type: 'expense',
+          description: 'Yesterday expense',
+          date: yesterday,
+        }),
       ],
     });
 
@@ -105,7 +110,7 @@ describe('FilteredTransactionList', () => {
         type: 'expense',
         description: `Item ${i + 1}`,
         amount: (i + 1) * 10000,
-      }),
+      })
     );
     useTransactionStore.setState({ transactions: manyTransactions });
 
@@ -119,18 +124,14 @@ describe('FilteredTransactionList', () => {
   it('forwards onTransactionPress to each TransactionRow', () => {
     const onTransactionPress = jest.fn();
     useTransactionStore.setState({
-      transactions: [
-        mockTransaction({ id: 'tx-1', description: 'Coffee' }),
-      ],
+      transactions: [mockTransaction({ id: 'tx-1', description: 'Coffee' })],
     });
 
     const { UNSAFE_getByType } = render(
-      <FilteredTransactionList filterMode="month" onTransactionPress={onTransactionPress} />,
+      <FilteredTransactionList filterMode="month" onTransactionPress={onTransactionPress} />
     );
 
-    const row = UNSAFE_getByType(
-      require('@components/TransactionRow').default,
-    );
+    const row = UNSAFE_getByType(require('@components/TransactionRow').default);
     expect(row.props.onPress).toBe(onTransactionPress);
   });
 
@@ -139,8 +140,16 @@ describe('FilteredTransactionList', () => {
       useTransactionStore.setState({
         transactions: [
           mockTransaction({ id: '1', description: 'Lunch', date: new Date('2026-07-05T10:00:00') }),
-          mockTransaction({ id: '2', description: 'Salary', date: new Date('2026-07-01T10:00:00') }),
-          mockTransaction({ id: '3', description: 'Coffee', date: new Date('2026-07-08T10:00:00') }),
+          mockTransaction({
+            id: '2',
+            description: 'Salary',
+            date: new Date('2026-07-01T10:00:00'),
+          }),
+          mockTransaction({
+            id: '3',
+            description: 'Coffee',
+            date: new Date('2026-07-08T10:00:00'),
+          }),
         ],
       });
 
@@ -149,7 +158,9 @@ describe('FilteredTransactionList', () => {
       const textNodes = screen.UNSAFE_getAllByType(Text);
       const descriptions = textNodes
         .map((node: any) => node.props.children)
-        .filter((child: any) => typeof child === 'string' && ['Salary', 'Lunch', 'Coffee'].includes(child));
+        .filter(
+          (child: any) => typeof child === 'string' && ['Salary', 'Lunch', 'Coffee'].includes(child)
+        );
 
       expect(descriptions).toEqual(['Salary', 'Lunch', 'Coffee']);
     });
@@ -157,7 +168,11 @@ describe('FilteredTransactionList', () => {
     it('renders a single transaction without error', () => {
       useTransactionStore.setState({
         transactions: [
-          mockTransaction({ id: '1', description: 'Only item', date: new Date('2026-07-15T10:00:00') }),
+          mockTransaction({
+            id: '1',
+            description: 'Only item',
+            date: new Date('2026-07-15T10:00:00'),
+          }),
         ],
       });
 
@@ -168,9 +183,24 @@ describe('FilteredTransactionList', () => {
     it('applies sort after category filter', () => {
       useTransactionStore.setState({
         transactions: [
-          mockTransaction({ id: '1', category: 'food', description: 'Dinner', date: new Date('2026-07-10T10:00:00') }),
-          mockTransaction({ id: '2', category: 'food', description: 'Lunch', date: new Date('2026-07-05T10:00:00') }),
-          mockTransaction({ id: '3', category: 'transport', description: 'Bus', date: new Date('2026-07-01T10:00:00') }),
+          mockTransaction({
+            id: '1',
+            category: 'food',
+            description: 'Dinner',
+            date: new Date('2026-07-10T10:00:00'),
+          }),
+          mockTransaction({
+            id: '2',
+            category: 'food',
+            description: 'Lunch',
+            date: new Date('2026-07-05T10:00:00'),
+          }),
+          mockTransaction({
+            id: '3',
+            category: 'transport',
+            description: 'Bus',
+            date: new Date('2026-07-01T10:00:00'),
+          }),
         ],
       });
 
@@ -212,7 +242,10 @@ describe('FilteredTransactionList', () => {
       const textNodes = screen.UNSAFE_getAllByType(Text);
       const descriptions = textNodes
         .map((node: any) => node.props.children)
-        .filter((child: any) => typeof child === 'string' && ['Morning', 'Noon', 'Evening'].includes(child));
+        .filter(
+          (child: any) =>
+            typeof child === 'string' && ['Morning', 'Noon', 'Evening'].includes(child)
+        );
 
       expect(descriptions).toEqual(['Morning', 'Noon', 'Evening']);
     });
@@ -232,7 +265,9 @@ describe('FilteredTransactionList', () => {
       const textNodes = screen.UNSAFE_getAllByType(Text);
       const descriptions = textNodes
         .map((node: any) => node.props.children)
-        .filter((child: any) => typeof child === 'string' && ['Jan', 'Mar', 'Jun', 'Dec'].includes(child));
+        .filter(
+          (child: any) => typeof child === 'string' && ['Jan', 'Mar', 'Jun', 'Dec'].includes(child)
+        );
 
       expect(descriptions).toEqual(['Jan', 'Mar', 'Jun', 'Dec']);
     });
@@ -243,9 +278,27 @@ describe('FilteredTransactionList', () => {
       const userText = 'Hủ tiếu 25k\nCơm 60k\nKẹo 16k';
       useTransactionStore.setState({
         transactions: [
-          mockTransaction({ id: 'g1', description: 'Hủ tiếu', amount: 25000, userText, date: new Date('2026-07-15T10:00:00') }),
-          mockTransaction({ id: 'g2', description: 'Cơm', amount: 60000, userText, date: new Date('2026-07-15T10:01:00') }),
-          mockTransaction({ id: 'g3', description: 'Kẹo', amount: 16000, userText, date: new Date('2026-07-15T10:02:00') }),
+          mockTransaction({
+            id: 'g1',
+            description: 'Hủ tiếu',
+            amount: 25000,
+            userText,
+            date: new Date('2026-07-15T10:00:00'),
+          }),
+          mockTransaction({
+            id: 'g2',
+            description: 'Cơm',
+            amount: 60000,
+            userText,
+            date: new Date('2026-07-15T10:01:00'),
+          }),
+          mockTransaction({
+            id: 'g3',
+            description: 'Kẹo',
+            amount: 16000,
+            userText,
+            date: new Date('2026-07-15T10:02:00'),
+          }),
         ],
       });
 
@@ -267,14 +320,32 @@ describe('FilteredTransactionList', () => {
       const userText = 'Hủ tiếu 25k\nCơm 60k';
       useTransactionStore.setState({
         transactions: [
-          mockTransaction({ id: 'gi1', description: 'Hủ tiếu', amount: 25000, userText, date: new Date('2026-07-15T10:00:00') }),
-          mockTransaction({ id: 'gi2', description: 'Cơm', amount: 60000, userText, date: new Date('2026-07-15T10:01:00') }),
-          mockTransaction({ id: 'gi3', description: 'Solo', amount: 5000, userText: 'Solo 5k', date: new Date('2026-07-16T10:00:00') }),
+          mockTransaction({
+            id: 'gi1',
+            description: 'Hủ tiếu',
+            amount: 25000,
+            userText,
+            date: new Date('2026-07-15T10:00:00'),
+          }),
+          mockTransaction({
+            id: 'gi2',
+            description: 'Cơm',
+            amount: 60000,
+            userText,
+            date: new Date('2026-07-15T10:01:00'),
+          }),
+          mockTransaction({
+            id: 'gi3',
+            description: 'Solo',
+            amount: 5000,
+            userText: 'Solo 5k',
+            date: new Date('2026-07-16T10:00:00'),
+          }),
         ],
       });
 
       const { UNSAFE_getAllByType } = render(
-        <FilteredTransactionList filterMode="month" onTransactionPress={onTransactionPress} />,
+        <FilteredTransactionList filterMode="month" onTransactionPress={onTransactionPress} />
       );
 
       const TransactionRow = require('@components/TransactionRow').default;
@@ -291,8 +362,20 @@ describe('FilteredTransactionList', () => {
       const userText = 'Coffee 30k';
       useTransactionStore.setState({
         transactions: [
-          mockTransaction({ id: 'sl1', description: 'Coffee', amount: 30000, userText, date: new Date('2026-07-15T10:00:00') }),
-          mockTransaction({ id: 'sl2', description: 'Coffee', amount: 30000, userText, date: new Date('2026-07-15T10:01:00') }),
+          mockTransaction({
+            id: 'sl1',
+            description: 'Coffee',
+            amount: 30000,
+            userText,
+            date: new Date('2026-07-15T10:00:00'),
+          }),
+          mockTransaction({
+            id: 'sl2',
+            description: 'Coffee',
+            amount: 30000,
+            userText,
+            date: new Date('2026-07-15T10:01:00'),
+          }),
         ],
       });
 
@@ -307,7 +390,13 @@ describe('FilteredTransactionList', () => {
       const userText = 'Hủ tiếu 25k\nCơm 60k';
       useTransactionStore.setState({
         transactions: [
-          mockTransaction({ id: 'one', description: 'Hủ tiếu', amount: 25000, userText, date: new Date('2026-07-15T10:00:00') }),
+          mockTransaction({
+            id: 'one',
+            description: 'Hủ tiếu',
+            amount: 25000,
+            userText,
+            date: new Date('2026-07-15T10:00:00'),
+          }),
         ],
       });
 
@@ -322,10 +411,34 @@ describe('FilteredTransactionList', () => {
       const ut2 = 'C 30k\nD 40k';
       useTransactionStore.setState({
         transactions: [
-          mockTransaction({ id: 'g2a', description: 'A', amount: 10000, userText: ut1, date: new Date('2026-07-15T10:00:00') }),
-          mockTransaction({ id: 'g2b', description: 'B', amount: 20000, userText: ut1, date: new Date('2026-07-15T10:01:00') }),
-          mockTransaction({ id: 'g2c', description: 'C', amount: 30000, userText: ut2, date: new Date('2026-07-16T10:00:00') }),
-          mockTransaction({ id: 'g2d', description: 'D', amount: 40000, userText: ut2, date: new Date('2026-07-16T10:01:00') }),
+          mockTransaction({
+            id: 'g2a',
+            description: 'A',
+            amount: 10000,
+            userText: ut1,
+            date: new Date('2026-07-15T10:00:00'),
+          }),
+          mockTransaction({
+            id: 'g2b',
+            description: 'B',
+            amount: 20000,
+            userText: ut1,
+            date: new Date('2026-07-15T10:01:00'),
+          }),
+          mockTransaction({
+            id: 'g2c',
+            description: 'C',
+            amount: 30000,
+            userText: ut2,
+            date: new Date('2026-07-16T10:00:00'),
+          }),
+          mockTransaction({
+            id: 'g2d',
+            description: 'D',
+            amount: 40000,
+            userText: ut2,
+            date: new Date('2026-07-16T10:01:00'),
+          }),
         ],
       });
 
@@ -340,9 +453,30 @@ describe('FilteredTransactionList', () => {
       const userText = 'Hủ tiếu 25k\nCơm 60k';
       useTransactionStore.setState({
         transactions: [
-          mockTransaction({ id: 'cf1', description: 'Hủ tiếu', category: 'food', amount: 25000, userText, date: new Date('2026-07-15T10:00:00') }),
-          mockTransaction({ id: 'cf2', description: 'Cơm', category: 'transport', amount: 60000, userText, date: new Date('2026-07-15T10:01:00') }),
-          mockTransaction({ id: 'cf3', description: 'Kẹo', category: 'food', amount: 16000, userText, date: new Date('2026-07-15T10:02:00') }),
+          mockTransaction({
+            id: 'cf1',
+            description: 'Hủ tiếu',
+            category: 'food',
+            amount: 25000,
+            userText,
+            date: new Date('2026-07-15T10:00:00'),
+          }),
+          mockTransaction({
+            id: 'cf2',
+            description: 'Cơm',
+            category: 'transport',
+            amount: 60000,
+            userText,
+            date: new Date('2026-07-15T10:01:00'),
+          }),
+          mockTransaction({
+            id: 'cf3',
+            description: 'Kẹo',
+            category: 'food',
+            amount: 16000,
+            userText,
+            date: new Date('2026-07-15T10:02:00'),
+          }),
         ],
       });
 
@@ -352,6 +486,160 @@ describe('FilteredTransactionList', () => {
       const groups = screen.queryAllByTestId(/group-/);
       expect(groups).toHaveLength(1);
       expect(screen.getByText(/2 transactions/)).toBeTruthy();
+    });
+  });
+
+  describe('selectedDate day filtering', () => {
+    it('shows only transactions of the selected date', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({
+            id: 'd1',
+            description: 'Before',
+            date: new Date('2026-07-14T09:00:00'),
+          }),
+          mockTransaction({
+            id: 'd2',
+            description: 'Target',
+            date: new Date('2026-07-15T10:00:00'),
+          }),
+          mockTransaction({
+            id: 'd3',
+            description: 'After',
+            date: new Date('2026-07-16T18:00:00'),
+          }),
+        ],
+      });
+
+      render(<FilteredTransactionList filterMode="month" selectedDate={new Date(2026, 6, 15)} />);
+
+      expect(screen.getByText('Target')).toBeTruthy();
+      expect(screen.queryByText('Before')).toBeNull();
+      expect(screen.queryByText('After')).toBeNull();
+    });
+
+    it('includes transactions at any time on the selected date', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({
+            id: 'e1',
+            description: 'Early',
+            date: new Date('2026-07-15T00:00:00'),
+          }),
+          mockTransaction({ id: 'e2', description: 'Late', date: new Date('2026-07-15T23:59:59') }),
+        ],
+      });
+
+      render(<FilteredTransactionList filterMode="month" selectedDate={new Date(2026, 6, 15)} />);
+
+      expect(screen.getByText('Early')).toBeTruthy();
+      expect(screen.getByText('Late')).toBeTruthy();
+    });
+
+    it('shows all month transactions when selectedDate is null (regression)', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({
+            id: 'r1',
+            description: 'Before',
+            date: new Date('2026-07-14T09:00:00'),
+          }),
+          mockTransaction({
+            id: 'r2',
+            description: 'Target',
+            date: new Date('2026-07-15T10:00:00'),
+          }),
+        ],
+      });
+
+      render(<FilteredTransactionList filterMode="month" selectedDate={null} />);
+
+      expect(screen.getByText('Before')).toBeTruthy();
+      expect(screen.getByText('Target')).toBeTruthy();
+    });
+  });
+
+  describe('searchQuery filtering', () => {
+    it('filters by description case-insensitively and diacritic-insensitively', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: 's1', description: 'Bánh tráng cuốn' }),
+          mockTransaction({ id: 's2', description: 'Coffee' }),
+        ],
+      });
+
+      render(<FilteredTransactionList filterMode="month" searchQuery="banh trang cuon" />);
+
+      expect(screen.getByText('Bánh tráng cuốn')).toBeTruthy();
+      expect(screen.queryByText('Coffee')).toBeNull();
+    });
+
+    it('ignores userText and category fields', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: 'u1', description: 'Snack', userText: 'trang cuon set' }),
+          mockTransaction({ id: 'u2', description: 'Rice', category: 'groceries' }),
+        ],
+      });
+
+      render(<FilteredTransactionList filterMode="month" searchQuery="CUON" />);
+      expect(screen.queryByText('Snack')).toBeNull();
+      expect(screen.getByText('No transactions found')).toBeTruthy();
+
+      render(<FilteredTransactionList filterMode="month" searchQuery="groceries" />);
+      expect(screen.queryByText('Rice')).toBeNull();
+    });
+
+    it('shows only the description match within a shared-userText group (Kẹo regression)', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({
+            id: 'g1',
+            description: 'Kẹo',
+            userText: 'chè mè đen',
+            amount: 16000,
+            date: new Date('2026-08-04T09:00:00'),
+          }),
+          mockTransaction({
+            id: 'g2',
+            description: 'Chè mè đen',
+            userText: 'chè mè đen',
+            amount: 15000,
+            date: new Date('2026-08-04T09:05:00'),
+          }),
+        ],
+      });
+
+      render(<FilteredTransactionList filterMode="month" searchQuery="che" />);
+
+      expect(screen.getByText('Chè mè đen')).toBeTruthy();
+      expect(screen.queryByText('Kẹo')).toBeNull();
+      expect(screen.queryByText(/GROUP/)).toBeNull();
+    });
+
+    it('shows "No transactions found" when nothing matches the query', () => {
+      useTransactionStore.setState({
+        transactions: [mockTransaction({ id: 'n1', description: 'Coffee' })],
+      });
+
+      render(<FilteredTransactionList filterMode="month" searchQuery="banh trang cuon" />);
+
+      expect(screen.getByText('No transactions found')).toBeTruthy();
+      expect(screen.queryByText('Coffee')).toBeNull();
+    });
+
+    it('shows everything when query is blank (regression)', () => {
+      useTransactionStore.setState({
+        transactions: [
+          mockTransaction({ id: 'b1', description: 'Coffee' }),
+          mockTransaction({ id: 'b2', description: 'Bus' }),
+        ],
+      });
+
+      render(<FilteredTransactionList filterMode="month" searchQuery="" />);
+
+      expect(screen.getByText('Coffee')).toBeTruthy();
+      expect(screen.getByText('Bus')).toBeTruthy();
     });
   });
 });

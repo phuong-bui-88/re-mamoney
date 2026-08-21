@@ -13,7 +13,7 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 jest.mock('@components/index', () => ({
-  PeriodFilter: jest.fn(() => null),
+  MonthCalendar: jest.fn(() => null),
   SegmentedControl: jest.fn(() => null),
   FilteredTransactionList: jest.requireActual('../../components/FilteredTransactionList').default,
   FloatingActionButton: jest.fn(() => null),
