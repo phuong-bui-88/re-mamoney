@@ -1,27 +1,32 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
 import firebaseService from '@services/firebase';
 import type { Transaction } from '@/types';
-import {
-  PeriodFilter,
-  FilteredTransactionList,
-  FloatingActionButton,
-} from '@components/index';
-import { getMonthStart, getMonthEnd, formatCurrency } from '@utils/currency';
+import { MonthCalendar, FilteredTransactionList, FloatingActionButton } from '@components/index';
+import { getMonthStart, getMonthEnd, formatCurrency, formatDate } from '@utils/currency';
+import { matchesSearch } from '@utils/search';
 import { C } from '@theme/index';
 
 export default function TransactionListScreen(): React.ReactElement {
   const { selectedUser } = useAuthStore();
-  const { selectedMonth, selectedYear, setSelectedMonth, setSelectedYear, transactions } = useTransactionStore();
+  const {
+    selectedMonth,
+    selectedYear,
+    setSelectedMonth,
+    setSelectedYear,
+    transactions,
+    allTransactions,
+  } = useTransactionStore();
   const navigation = useNavigation();
   const route = useRoute();
   const routeParams = route.params as
     | { category?: string; type?: 'income' | 'expense' }
     | undefined;
-  const [filterMode, setFilterMode] = useState<'month' | 'today'>('month');
+  const [selectedDayDate, setSelectedDayDate] = useState<Date | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -34,7 +39,7 @@ export default function TransactionListScreen(): React.ReactElement {
       { userId: selectedUser.id },
       (transactions) => {
         useTransactionStore.getState().setAllTransactions(transactions);
-      },
+      }
     );
     return unsubscribe;
   }, [selectedUser]);
@@ -50,77 +55,151 @@ export default function TransactionListScreen(): React.ReactElement {
     navigation.getParent()?.navigate('AddTransaction' as never);
   }, [navigation]);
 
+  const clearDaySelection = useCallback(() => {
+    setSelectedDayDate(null);
+    setSearchQuery('');
+  }, []);
+
+  const handleDayPress = useCallback(
+    (day: number | null) => {
+      if (day === null) {
+        clearDaySelection();
+        return;
+      }
+      setSelectedDayDate(new Date(selectedYear, selectedMonth, day));
+    },
+    [selectedMonth, selectedYear, clearDaySelection]
+  );
+
+  const handleSearchChange = useCallback((text: string) => {
+    setSearchQuery(text);
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    handleSearchChange('');
+  }, [handleSearchChange]);
+
+  const handleMonthChange = useCallback(
+    (month: number) => {
+      setSelectedMonth(month);
+      clearDaySelection();
+    },
+    [setSelectedMonth, clearDaySelection]
+  );
+
+  const handleYearChange = useCallback(
+    (year: number) => {
+      setSelectedYear(year);
+      clearDaySelection();
+    },
+    [setSelectedYear, clearDaySelection]
+  );
+
   const handleTransactionPress = useCallback(
     (transaction: Transaction) => {
       (navigation.getParent() as any)?.navigate('EditTransaction', {
         transactionId: transaction.id,
       });
     },
-    [navigation],
+    [navigation]
   );
+
+  const trimmedQuery = searchQuery.trim();
+  const filterMode: 'month' | 'day' | 'search' = selectedDayDate
+    ? 'day'
+    : trimmedQuery
+      ? 'search'
+      : 'month';
 
   const netTotal = useMemo(() => {
     let list = transactions;
-    if (filterMode === 'today') {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const endOfDay = new Date();
+    if (selectedDayDate) {
+      const startOfDay = new Date(selectedDayDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDayDate);
       endOfDay.setHours(23, 59, 59, 999);
-      list = transactions.filter((t) => t.date >= today && t.date <= endOfDay);
+      list = list.filter((t) => t.date >= startOfDay && t.date <= endOfDay);
+    }
+    if (trimmedQuery) {
+      list = list.filter((t) => matchesSearch(t, searchQuery));
     }
     return list.reduce((sum, t) => {
       return sum + (t.type === 'income' ? t.amount : -t.amount);
     }, 0);
-  }, [transactions, filterMode]);
+  }, [transactions, selectedDayDate, searchQuery, trimmedQuery]);
 
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const summaryLabel = filterMode === 'today'
-    ? `Net total · Today:`
-    : `Net total · ${monthNames[selectedMonth]} ${selectedYear}:`;
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const summaryLabel = selectedDayDate
+    ? trimmedQuery
+      ? `Net total · ${formatDate(selectedDayDate)} · "${trimmedQuery}":`
+      : `Net total · ${formatDate(selectedDayDate)}:`
+    : trimmedQuery
+      ? `Net total · "${trimmedQuery}":`
+      : `Net total · ${monthNames[selectedMonth]} ${selectedYear}:`;
 
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        <PeriodFilter
+        <MonthCalendar
           month={selectedMonth}
           year={selectedYear}
-          onMonthChange={setSelectedMonth}
-          onYearChange={setSelectedYear}
+          transactions={allTransactions}
+          onMonthChange={handleMonthChange}
+          onYearChange={handleYearChange}
+          selectedDay={selectedDayDate ? selectedDayDate.getDate() : null}
+          onDayPress={handleDayPress}
         />
 
         <View style={styles.netTotalCard}>
           <View style={styles.summarySection}>
             <Text style={styles.summaryLabel}>{summaryLabel}</Text>
             <Text style={[styles.summaryAmount, netTotal >= 0 ? styles.income : styles.expense]}>
-              {netTotal >= 0 ? '+' : ''}{formatCurrency(netTotal)} đ
+              {netTotal >= 0 ? '+' : ''}
+              {formatCurrency(netTotal)}
             </Text>
           </View>
 
-          <View style={styles.filterButtons}>
-            <TouchableOpacity
-              style={[styles.filterButton, filterMode === 'month' && styles.filterButtonActive]}
-              onPress={() => setFilterMode('month')}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.filterButtonText, filterMode === 'month' && styles.filterButtonTextActive]}>
-                This Month
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.filterButton, filterMode === 'today' && styles.filterButtonActive]}
-              onPress={() => setFilterMode('today')}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.filterButtonText, filterMode === 'today' && styles.filterButtonTextActive]}>
-                Today
-              </Text>
-            </TouchableOpacity>
+          <View style={styles.searchBar}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search e.g. banh trang cuon"
+              placeholderTextColor={C.textMuted}
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+              returnKeyType="search"
+              testID="search-input"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                onPress={handleClearSearch}
+                activeOpacity={0.7}
+                testID="search-clear"
+              >
+                <Text style={styles.searchClearText}>✕</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
         <FilteredTransactionList
           category={routeParams?.category}
           filterMode={filterMode}
+          selectedDate={selectedDayDate}
+          searchQuery={searchQuery}
           onTransactionPress={handleTransactionPress}
         />
       </ScrollView>
@@ -137,31 +216,6 @@ const styles = StyleSheet.create({
   },
   expense: {
     color: C.red,
-  },
-  filterButton: {
-    alignItems: 'center',
-    borderColor: C.border,
-    borderRadius: 10,
-    borderWidth: 1,
-    flex: 1,
-    paddingVertical: 12,
-  },
-  filterButtonActive: {
-    backgroundColor: C.primary,
-    borderColor: C.primary,
-  },
-  filterButtonText: {
-    color: C.textMedium,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  filterButtonTextActive: {
-    color: C.white,
-    fontWeight: '600',
-  },
-  filterButtons: {
-    flexDirection: 'row',
-    gap: 12,
   },
   income: {
     color: C.green,
@@ -180,6 +234,29 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+  },
+  searchBar: {
+    alignItems: 'center',
+    backgroundColor: C.grayLight,
+    borderRadius: 10,
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  searchClearText: {
+    color: C.textLight,
+    fontSize: 16,
+    paddingHorizontal: 4,
+  },
+  searchIcon: {
+    fontSize: 14,
+    marginRight: 8,
+  },
+  searchInput: {
+    color: C.textDark,
+    flex: 1,
+    fontSize: 14,
+    padding: 0,
   },
   summaryAmount: {
     fontSize: 18,

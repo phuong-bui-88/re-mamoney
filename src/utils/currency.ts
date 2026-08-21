@@ -38,10 +38,25 @@ export const formatDate = (date: Date, format: string = 'dd/MM/yyyy'): string =>
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
 
-  return format
-    .replace('dd', day)
-    .replace('MM', month)
-    .replace('yyyy', year.toString());
+  return format.replace('dd', day).replace('MM', month).replace('yyyy', year.toString());
+};
+
+/**
+ * Format a net amount (income - expense) compactly for small calendar cells.
+ * Always includes a sign for non-zero values (e.g. "+50k", "-20k", "+1.5M").
+ */
+export const formatCompactNet = (amount: number): string => {
+  const abs = Math.abs(amount);
+  const sign = amount > 0 ? '+' : amount < 0 ? '-' : '';
+  if (abs >= 1_000_000) {
+    const millions = abs / 1_000_000;
+    const body = Number.isInteger(millions) ? String(millions) : millions.toFixed(1);
+    return `${sign}${body}M`;
+  }
+  if (abs >= 1_000) {
+    return `${sign}${Math.round(abs / 1_000)}k`;
+  }
+  return `${sign}${abs}`;
 };
 
 /**
