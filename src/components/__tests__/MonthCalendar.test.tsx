@@ -214,4 +214,22 @@ describe('MonthCalendar', () => {
       expect.arrayContaining([expect.objectContaining({ fontWeight: '700' })])
     );
   });
+
+  it('renders matching dot on dates with matching transactions', () => {
+    render(<MonthCalendar {...defaultProps} matchingDays={[5, 15]} />);
+
+    const day5 = screen.getByTestId('day-5');
+    const day15 = screen.getByTestId('day-15');
+    const day10 = screen.getByTestId('day-10');
+
+    expect(within(day5).getByTestId('matching-dot')).toBeTruthy();
+    expect(within(day15).getByTestId('matching-dot')).toBeTruthy();
+    expect(() => within(day10).getByTestId('matching-dot')).toThrow();
+  });
+
+  it('does not render matching dot when matchingDays is empty', () => {
+    render(<MonthCalendar {...defaultProps} matchingDays={[]} />);
+
+    expect(() => screen.getByTestId('matching-dot')).toThrow();
+  });
 });

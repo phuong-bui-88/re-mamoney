@@ -7,27 +7,26 @@ const C = {
   white: '#fff',
 };
 
-interface FloatingActionButtonProps {
+interface ScrollToTopButtonProps {
   onPress?: () => void;
-  bottom?: number;
 }
 
-export default function FloatingActionButton({ onPress, bottom }: FloatingActionButtonProps): React.ReactElement {
+export default function ScrollToTopButton({ onPress }: ScrollToTopButtonProps): React.ReactElement {
   return (
-    <TouchableOpacity style={[styles.fab, bottom != null && { bottom }]} onPress={onPress} activeOpacity={0.8}>
-      <Ionicons name="add" size={28} color={C.white} />
+    <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
+      <Ionicons name="chevron-up" size={24} color={C.white} />
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  fab: {
+  button: {
     alignItems: 'center',
     backgroundColor: C.fab,
-    borderRadius: 28,
-    bottom: 24,
+    borderRadius: 22,
+    bottom: 134,
     elevation: 6,
-    height: 56,
+    height: 44,
     justifyContent: 'center',
     position: 'absolute',
     right: 20,
@@ -35,6 +34,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    width: 56,
+    width: 44,
   },
 });

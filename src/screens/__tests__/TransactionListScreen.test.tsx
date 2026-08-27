@@ -4,6 +4,8 @@ import TransactionListScreen from '@screens/TransactionListScreen';
 import { useAuthStore, useTransactionStore } from '@store/index';
 import firebaseService from '@services/firebase';
 
+let focusCallback: (() => void) | null = null;
+
 jest.mock('@react-navigation/native', () => {
   const mockNavigate = jest.fn();
   return {
@@ -11,7 +13,16 @@ jest.mock('@react-navigation/native', () => {
       getParent: () => ({ navigate: mockNavigate }),
     }),
     useRoute: () => ({ params: {} }),
+    useFocusEffect: (cb: () => void) => {
+      focusCallback = cb;
+    },
     __mockNavigate: mockNavigate,
+    __triggerFocus: () => {
+      if (focusCallback) focusCallback();
+    },
+    __resetFocusCallback: () => {
+      focusCallback = null;
+    },
   };
 });
 
@@ -19,6 +30,7 @@ jest.mock('@components/index', () => ({
   MonthCalendar: jest.fn(() => null),
   FilteredTransactionList: jest.fn(() => null),
   FloatingActionButton: jest.fn(() => null),
+  ScrollToTopButton: jest.fn(() => null),
 }));
 
 beforeEach(() => {
@@ -70,6 +82,22 @@ describe('TransactionListScreen', () => {
     render(<TransactionListScreen />);
 
     expect(screen).toBeDefined();
+  });
+
+  it('does not register a keyboardDidShow listener for auto-scrolling', () => {
+    const Keyboard = require('react-native').Keyboard;
+    const addListenerSpy = jest.spyOn(Keyboard, 'addListener');
+
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+
+    const keyboardDidShowCalls = addListenerSpy.mock.calls.filter(
+      (call: unknown[]) => call[0] === 'keyboardDidShow'
+    );
+    expect(keyboardDidShowCalls).toHaveLength(0);
+
+    addListenerSpy.mockRestore();
   });
 
   it('subscribes to Firebase transactions on mount', () => {
@@ -365,6 +393,9 @@ describe('TransactionListScreen', () => {
       capturedCallback(txns);
     });
     fireEvent.changeText(screen.getByTestId('search-input'), 'banh trang cuon');
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
     fireEvent.press(screen.getByTestId('search-clear'));
 
     expect(screen.getByText(/Net total · Jul 2026/)).toBeTruthy();
@@ -546,6 +577,34 @@ describe('TransactionListScreen', () => {
     expect(listProps.filterMode).toBe('day');
   });
 
+  it('clears search query when a new day is tapped on the calendar', () => {
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+
+    const MonthCalendar = jest.requireMock('@components/index').MonthCalendar;
+    let calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
+    act(() => {
+      calProps.onDayPress(10);
+    });
+    fireEvent.changeText(screen.getByTestId('search-input'), 'banh');
+
+    expect(screen.getByTestId('search-input').props.value).toBe('banh');
+
+    calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
+    act(() => {
+      calProps.onDayPress(15);
+    });
+
+    expect(screen.getByTestId('search-input').props.value).toBe('');
+
+    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
+    const listProps =
+      FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
+    expect(listProps.searchQuery).toBe('');
+    expect(listProps.selectedDate).toEqual(new Date(2026, 6, 15));
+  });
+
   it('passes searchQuery to FilteredTransactionList while typing', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
@@ -559,7 +618,7 @@ describe('TransactionListScreen', () => {
     expect(listProps.searchQuery).toBe('banh trang cuon');
   });
 
-  it('keeps the search text when tapping a calendar day', () => {
+  it('clears search text when tapping a calendar day', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
@@ -578,7 +637,7 @@ describe('TransactionListScreen', () => {
     const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
     const listProps =
       FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
-    expect(listProps.searchQuery).toBe('banh trang cuon');
+    expect(listProps.searchQuery).toBe('');
     expect(listProps.selectedDate).toEqual(new Date(2026, 6, 10));
   });
 
@@ -655,6 +714,9 @@ describe('TransactionListScreen', () => {
       calProps.onDayPress(10);
     });
     fireEvent.changeText(screen.getByTestId('search-input'), 'banh');
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
     fireEvent.press(screen.getByTestId('search-clear'));
 
     calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
@@ -694,5 +756,227 @@ describe('TransactionListScreen', () => {
     const listProps =
       FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
     expect(listProps.searchQuery).toBe('');
+  });
+
+  it('clears selected day when screen gains focus', () => {
+    const { __triggerFocus: triggerFocus, __resetFocusCallback } = require('@react-navigation/native');
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+    __resetFocusCallback();
+
+    const MonthCalendar = jest.requireMock('@components/index').MonthCalendar;
+    let calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
+    act(() => {
+      calProps.onDayPress(10);
+    });
+    calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
+    expect(calProps.selectedDay).toBe(10);
+
+    act(() => {
+      triggerFocus();
+    });
+
+    calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
+    expect(calProps.selectedDay).toBeNull();
+  });
+
+  it('clears day selection on re-focus after navigating away', () => {
+    const { __triggerFocus: triggerFocus, __resetFocusCallback } = require('@react-navigation/native');
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+    __resetFocusCallback();
+
+    const MonthCalendar = jest.requireMock('@components/index').MonthCalendar;
+    let calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
+    act(() => {
+      calProps.onDayPress(25);
+    });
+    calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
+    expect(calProps.selectedDay).toBe(25);
+
+    act(() => {
+      triggerFocus();
+    });
+
+    calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
+    expect(calProps.selectedDay).toBeNull();
+  });
+
+  it('passes bottom={66} to FloatingActionButton so it sits above the search bar', () => {
+    const FloatingActionButton = jest.requireMock('@components/index').FloatingActionButton;
+
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+
+    const lastCall = FloatingActionButton.mock.calls[FloatingActionButton.mock.calls.length - 1][0];
+    expect(lastCall.bottom).toBe(66);
+  });
+
+  it('clears search query on focus as well', () => {
+    const { __triggerFocus: triggerFocus, __resetFocusCallback } = require('@react-navigation/native');
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+    __resetFocusCallback();
+
+    fireEvent.changeText(screen.getByTestId('search-input'), 'test query');
+
+    act(() => {
+      triggerFocus();
+    });
+
+    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
+    const listProps =
+      FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
+    expect(listProps.searchQuery).toBe('');
+  });
+
+  it('renders ScrollToTopButton', () => {
+    const ScrollToTopButton = jest.requireMock('@components/index').ScrollToTopButton;
+
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+
+    expect(ScrollToTopButton).toHaveBeenCalled();
+  });
+
+  it('passes onPress to ScrollToTopButton that scrolls to top', () => {
+    const ScrollToTopButton = jest.requireMock('@components/index').ScrollToTopButton;
+
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+
+    const lastCall = ScrollToTopButton.mock.calls[ScrollToTopButton.mock.calls.length - 1][0];
+    expect(typeof lastCall.onPress).toBe('function');
+  });
+
+  it('scrolls to top when search transitions from empty to non-empty', () => {
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    const { getByTestId } = render(<TransactionListScreen />);
+    const scrollView = getByTestId('transaction-list-scroll');
+
+    fireEvent.changeText(getByTestId('search-input'), 'banh');
+
+    expect(scrollView.props.testID).toBe('transaction-list-scroll');
+  });
+
+  it('shows search spinner while filtering on first keystroke', () => {
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    const { getByTestId, queryByTestId } = render(<TransactionListScreen />);
+
+    expect(queryByTestId('search-spinner')).toBeNull();
+
+    fireEvent.changeText(getByTestId('search-input'), 'banh');
+
+    expect(getByTestId('search-spinner')).toBeTruthy();
+  });
+
+  it('hides spinner after filtering completes', () => {
+    jest.useFakeTimers();
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    const { getByTestId, queryByTestId } = render(<TransactionListScreen />);
+
+    fireEvent.changeText(getByTestId('search-input'), 'banh');
+    expect(getByTestId('search-spinner')).toBeTruthy();
+
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    expect(queryByTestId('search-spinner')).toBeNull();
+    jest.useRealTimers();
+  });
+
+  it('dismisses keyboard when spinner hides', () => {
+    jest.useFakeTimers();
+    const Keyboard = require('react-native').Keyboard;
+    const dismissSpy = jest.spyOn(Keyboard, 'dismiss');
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    const { getByTestId } = render(<TransactionListScreen />);
+
+    fireEvent.changeText(getByTestId('search-input'), 'banh');
+
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    expect(dismissSpy).toHaveBeenCalledTimes(1);
+    dismissSpy.mockRestore();
+    jest.useRealTimers();
+  });
+
+  it('clears search text when input is focused after search completes', () => {
+    jest.useFakeTimers();
+    const Keyboard = require('react-native').Keyboard;
+    jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    const { getByTestId, getByText } = render(<TransactionListScreen />);
+
+    fireEvent.changeText(getByTestId('search-input'), 'banh');
+
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    expect(getByTestId('search-input').props.value).toBe('banh');
+
+    fireEvent(getByTestId('search-input'), 'focus');
+
+    expect(getByTestId('search-input').props.value).toBe('');
+    expect(getByText(/Net total · Jul 2026:/)).toBeTruthy();
+
+    Keyboard.dismiss.mockRestore();
+    jest.useRealTimers();
+  });
+
+  it('shows clear button when not searching and has text', () => {
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    const { getByTestId, queryByTestId } = render(<TransactionListScreen />);
+
+    fireEvent.changeText(getByTestId('search-input'), 'banh');
+
+    expect(queryByTestId('search-clear')).toBeNull();
+  });
+
+  it('triggers search on keyboard submit', () => {
+    jest.useFakeTimers();
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    const { getByTestId, queryByTestId } = render(<TransactionListScreen />);
+
+    fireEvent.changeText(getByTestId('search-input'), 'banh');
+    fireEvent(getByTestId('search-input'), 'submitEditing');
+
+    expect(getByTestId('search-spinner')).toBeTruthy();
+
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    expect(queryByTestId('search-spinner')).toBeNull();
+    jest.useRealTimers();
+  });
+
+  it('does not re-scroll on subsequent keystrokes', () => {
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    const { getByTestId } = render(<TransactionListScreen />);
+
+    fireEvent.changeText(getByTestId('search-input'), 'b');
+    fireEvent.changeText(getByTestId('search-input'), 'ba');
+    fireEvent.changeText(getByTestId('search-input'), 'ban');
+
+    expect(getByTestId('search-input')).toBeTruthy();
   });
 });

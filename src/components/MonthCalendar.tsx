@@ -29,6 +29,7 @@ interface MonthCalendarProps {
   onYearChange: (year: number) => void;
   selectedDay: number | null;
   onDayPress: (day: number | null) => void;
+  matchingDays?: number[];
 }
 
 export default function MonthCalendar({
@@ -39,6 +40,7 @@ export default function MonthCalendar({
   onYearChange,
   selectedDay,
   onDayPress,
+  matchingDays = [],
 }: MonthCalendarProps): React.ReactElement {
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -142,6 +144,11 @@ export default function MonthCalendar({
                       {day}
                     </Text>
                   </View>
+                  {matchingDays.includes(day) && (
+                    <View style={styles.matchingDotWrap}>
+                      <View style={styles.matchingDot} testID="matching-dot" />
+                    </View>
+                  )}
                   <View style={styles.amountSlot}>
                     {net !== undefined && (
                       <Text
@@ -276,6 +283,17 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 6,
     textAlign: 'center',
+  },
+  matchingDot: {
+    backgroundColor: C.primary,
+    borderRadius: 2,
+    height: 4,
+    width: 4,
+  },
+  matchingDotWrap: {
+    alignItems: 'center',
+    height: 6,
+    justifyContent: 'center',
   },
   monthGrid: {
     flexDirection: 'row',

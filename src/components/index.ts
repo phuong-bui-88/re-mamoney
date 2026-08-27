@@ -4,6 +4,7 @@ export { default as MonthCalendar } from './MonthCalendar';
 export { default as StatisticsCard } from './StatisticsCard';
 export { default as SegmentedControl } from './SegmentedControl';
 export { default as FloatingActionButton } from './FloatingActionButton';
+export { default as ScrollToTopButton } from './ScrollToTopButton';
 export { default as TransactionRow } from './TransactionRow';
 export { default as FilteredTransactionList } from './FilteredTransactionList';
 export { default as CategoryBreakdownRow } from './CategoryBreakdownRow';

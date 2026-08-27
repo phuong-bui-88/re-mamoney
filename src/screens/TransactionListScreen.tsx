@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, InteractionManager, Keyboard } from 'react-native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
 import firebaseService from '@services/firebase';
 import type { Transaction } from '@/types';
-import { MonthCalendar, FilteredTransactionList, FloatingActionButton } from '@components/index';
+import { MonthCalendar, FilteredTransactionList, FloatingActionButton, ScrollToTopButton } from '@components/index';
 import { getMonthStart, getMonthEnd, formatCurrency, formatDate } from '@utils/currency';
 import { matchesSearch } from '@utils/search';
 import { C } from '@theme/index';
@@ -27,6 +27,33 @@ export default function TransactionListScreen(): React.ReactElement {
     | undefined;
   const [selectedDayDate, setSelectedDayDate] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const prevQueryRef = useRef('');
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const wasEmpty = prevQueryRef.current.trim().length === 0;
+    const isNotEmpty = searchQuery.trim().length > 0;
+
+    if (isNotEmpty && wasEmpty) {
+      setIsSearching(true);
+      searchTimerRef.current = setTimeout(() => {
+        setIsSearching(false);
+        Keyboard.dismiss();
+        InteractionManager.runAfterInteractions(() => {
+          scrollRef.current?.scrollTo({ y: 0, animated: true });
+        });
+      }, 300);
+    }
+
+    if (!isNotEmpty && searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+      searchTimerRef.current = null;
+    }
+
+    prevQueryRef.current = searchQuery;
+  }, [searchQuery]);
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -60,12 +87,19 @@ export default function TransactionListScreen(): React.ReactElement {
     setSearchQuery('');
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      clearDaySelection();
+    }, [clearDaySelection])
+  );
+
   const handleDayPress = useCallback(
     (day: number | null) => {
       if (day === null) {
         clearDaySelection();
         return;
       }
+      setSearchQuery('');
       setSelectedDayDate(new Date(selectedYear, selectedMonth, day));
     },
     [selectedMonth, selectedYear, clearDaySelection]
@@ -78,6 +112,22 @@ export default function TransactionListScreen(): React.ReactElement {
   const handleClearSearch = useCallback(() => {
     handleSearchChange('');
   }, [handleSearchChange]);
+
+  const handleSearchFocus = useCallback(() => {
+    if (!isSearching && searchQuery.length > 0) {
+      setSearchQuery('');
+    }
+  }, [isSearching, searchQuery]);
+
+  const handleSubmitSearch = useCallback(() => {
+    if (searchQuery.trim().length > 0) {
+      setIsSearching(true);
+      setTimeout(() => {
+        setIsSearching(false);
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+      }, 300);
+    }
+  }, [searchQuery]);
 
   const handleMonthChange = useCallback(
     (month: number) => {
@@ -128,6 +178,20 @@ export default function TransactionListScreen(): React.ReactElement {
     }, 0);
   }, [transactions, selectedDayDate, searchQuery, trimmedQuery]);
 
+  const matchingDays = useMemo(() => {
+    if (!trimmedQuery) return [];
+    const days = new Set<number>();
+    allTransactions.forEach((t) => {
+      const d = new Date(t.date);
+      if (d.getMonth() === selectedMonth && d.getFullYear() === selectedYear) {
+        if (matchesSearch(t, searchQuery)) {
+          days.add(d.getDate());
+        }
+      }
+    });
+    return Array.from(days);
+  }, [trimmedQuery, allTransactions, selectedMonth, selectedYear, searchQuery]);
+
   const monthNames = [
     'Jan',
     'Feb',
@@ -151,8 +215,19 @@ export default function TransactionListScreen(): React.ReactElement {
       : `Net total · ${monthNames[selectedMonth]} ${selectedYear}:`;
 
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        testID="transaction-list-scroll"
+      >
         <MonthCalendar
           month={selectedMonth}
           year={selectedYear}
@@ -161,6 +236,7 @@ export default function TransactionListScreen(): React.ReactElement {
           onYearChange={handleYearChange}
           selectedDay={selectedDayDate ? selectedDayDate.getDate() : null}
           onDayPress={handleDayPress}
+          matchingDays={matchingDays}
         />
 
         <View style={styles.netTotalCard}>
@@ -170,28 +246,6 @@ export default function TransactionListScreen(): React.ReactElement {
               {netTotal >= 0 ? '+' : ''}
               {formatCurrency(netTotal)}
             </Text>
-          </View>
-
-          <View style={styles.searchBar}>
-            <Text style={styles.searchIcon}>🔍</Text>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search e.g. banh trang cuon"
-              placeholderTextColor={C.textMuted}
-              value={searchQuery}
-              onChangeText={handleSearchChange}
-              returnKeyType="search"
-              testID="search-input"
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity
-                onPress={handleClearSearch}
-                activeOpacity={0.7}
-                testID="search-clear"
-              >
-                <Text style={styles.searchClearText}>✕</Text>
-              </TouchableOpacity>
-            )}
           </View>
         </View>
 
@@ -204,8 +258,35 @@ export default function TransactionListScreen(): React.ReactElement {
         />
       </ScrollView>
 
-      <FloatingActionButton onPress={handleAddTransaction} />
-    </View>
+      <View style={styles.searchBar}>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search e.g. banh trang cuon"
+          placeholderTextColor={C.textMuted}
+          value={searchQuery}
+          onChangeText={handleSearchChange}
+          onSubmitEditing={handleSubmitSearch}
+          onFocus={handleSearchFocus}
+          returnKeyType="search"
+          testID="search-input"
+        />
+        {isSearching ? (
+          <ActivityIndicator size="small" color={C.primary} testID="search-spinner" />
+        ) : searchQuery.length > 0 ? (
+          <TouchableOpacity
+            onPress={handleClearSearch}
+            activeOpacity={0.7}
+            testID="search-clear"
+          >
+            <Text style={styles.searchClearText}>✕</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
+      <FloatingActionButton onPress={handleAddTransaction} bottom={66} />
+      <ScrollToTopButton onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })} />
+    </KeyboardAvoidingView>
   );
 }
 
@@ -240,6 +321,8 @@ const styles = StyleSheet.create({
     backgroundColor: C.grayLight,
     borderRadius: 10,
     flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
