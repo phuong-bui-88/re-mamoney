@@ -23,6 +23,8 @@ npm run test:coverage     # With coverage
 
 **Pre-commit:** `npm run type-check && npm test && npm run lint && npm run format:check`
 
+**Auto-reload (after build):** `npm run reload` — checks if Expo is running, detects devices, reloads app
+
 ## Project Structure (React Native only)
 
 Active code is in **`src/`**. Old Flutter files (`lib/`, `pubspec.yaml`, Android/iOS native Flutter dirs) are **NOT active** but still in repo—ignore them.
@@ -50,6 +52,11 @@ Config:
 ├── .eslintrc.json                  # ESLint + React + TypeScript
 ├── .prettierrc.json                # 100 char line width
 └── app.json                        # Expo config
+
+Scripts:
+├── scripts/reload-app.sh           # Auto-reload Expo app (detects devices, sends reload)
+├── scripts/test-reload.sh          # Test suite for reload script
+└── package.json                    # "reload": "./scripts/reload-app.sh"
 ```
 
 ## State Management (Zustand)
