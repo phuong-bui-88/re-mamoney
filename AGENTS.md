@@ -23,7 +23,17 @@ npm run test:coverage     # With coverage
 
 **Pre-commit:** `npm run type-check && npm test && npm run lint && npm run format:check`
 
-**Auto-reload (after build):** `npm run reload` — checks if Expo is running, detects devices, reloads app
+## Auto-Reload After Code Changes
+
+**When AI makes code changes:** Run `./scripts/reload-app.sh` to reload the app.
+
+This script:
+1. Checks if Expo is running (creates tmux session if not)
+2. Sends 'r' keystroke to reload the app
+3. Works on WSL2 with tmux
+
+**To attach to Expo session:** `tmux attach -t expo`
+**To detach from tmux:** `Ctrl+b` then `d`
 
 ## Project Structure (React Native only)
 

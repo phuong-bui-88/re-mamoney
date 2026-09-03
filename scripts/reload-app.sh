@@ -1,10 +1,12 @@
 #!/bin/bash
 
 # Auto-Reload Expo App Script
-# Checks if Expo is running with a device connected, then reloads the app.
+# Sends reload command to Metro bundler via WebSocket.
 # Usage: ./scripts/reload-app.sh
 
 set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Colors for output
 RED='\033[0;31m'
@@ -14,10 +16,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-EXPO_PORT=19000
 METRO_PORT=8081
-STARTUP_TIMEOUT=30
-RELOAD_TIMEOUT=10
 
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -35,138 +34,143 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check if Expo is running
-check_expo_running() {
-    if pgrep -f "expo start" > /dev/null 2>&1; then
-        return 0
-    fi
-    return 1
+# Check if running in WSL
+is_wsl() {
+    grep -qi microsoft /proc/version 2>/dev/null
 }
 
 # Check if Metro bundler is running
 check_metro_running() {
-    if lsof -i :$METRO_PORT > /dev/null 2>&1; then
+    if curl -s "http://localhost:$METRO_PORT/status" > /dev/null 2>&1; then
         return 0
     fi
     return 1
 }
 
-# Start Expo in background
-start_expo() {
-    log_info "Starting Expo with tunnel..."
-    
-    # Start expo in background
-    nohup npx expo start --tunnel > /tmp/expo_output.log 2>&1 &
-    EXPO_PID=$!
-    
-    log_info "Expo started with PID: $EXPO_PID"
-    log_info "Waiting for server to be ready..."
-    
-    # Wait for Expo to start
-    local count=0
-    while [ $count -lt $STARTUP_TIMEOUT ]; do
+# Kill any existing Expo processes
+kill_expo_processes() {
+    local pids
+    pids=$(pgrep -f "expo start" 2>/dev/null)
+    if [ -n "$pids" ]; then
+        log_warning "Killing existing Expo processes: $pids"
+        echo "$pids" | xargs kill -9 2>/dev/null || true
+        sleep 1
+    fi
+}
+
+# Check if Expo process is running, start it if not
+ensure_expo_running() {
+    if pgrep -f "expo start --tunnel" > /dev/null 2>&1; then
+        if is_wsl && tmux has-session -t expo 2>/dev/null; then
+            log_info "Expo is running - sending reload..."
+            tmux send-keys -t expo r
+            log_success "Reload sent"
+        fi
+        return 0
+    fi
+
+    # Kill any existing Expo processes that might block
+    kill_expo_processes
+
+    log_warning "Expo is not running. Opening new terminal with: npx expo start --tunnel"
+
+    local project_dir
+    project_dir="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+    if is_wsl; then
+        log_info "WSL detected - creating new tmux session"
+        if ! tmux has-session -t expo 2>/dev/null; then
+            tmux new-session -d -s expo -n "Expo" "cd $project_dir && npx expo start --tunnel"
+            log_success "Expo session created"
+        else
+            log_info "Expo session exists, opening new window"
+            tmux new-window -t expo -n "Expo" "cd $project_dir && npx expo start --tunnel"
+        fi
+        log_info "Attach with: tmux attach -t expo"
+    elif command -v gnome-terminal &> /dev/null; then
+        gnome-terminal -- bash -c "cd \"$project_dir\" && npx expo start --tunnel; exec bash" &
+    elif command -v xterm &> /dev/null; then
+        xterm -e bash -c "cd \"$project_dir\" && npx expo start --tunnel" &
+    else
+        log_warning "No terminal emulator found. Starting in background."
+        cd "$project_dir" && nohup npx expo start --tunnel > /dev/null 2>&1 &
+    fi
+
+    log_info "Waiting for Expo to start..."
+
+    local max_wait=30
+    local waited=0
+    while [ $waited -lt $max_wait ]; do
         if check_metro_running; then
-            log_success "Expo server is ready!"
+            log_success "Metro bundler is ready"
             return 0
         fi
         sleep 1
-        count=$((count + 1))
-        echo -n "."
+        waited=$((waited + 1))
     done
-    
+
+    log_error "Expo failed to start within ${max_wait}s"
+    return 1
+}
+
+# Send reload via Metro WebSocket
+send_reload() {
+    log_info "Sending reload to Metro (ws://localhost:$METRO_PORT/hot)..."
+
+    node -e "
+        const WebSocket = require('ws');
+        const ws = new WebSocket('ws://localhost:$METRO_PORT/hot');
+        const timeout = setTimeout(() => { console.error('WebSocket timeout'); process.exit(1); }, 5000);
+        ws.on('open', () => {
+            ws.send(JSON.stringify({type:'reload'}));
+            clearTimeout(timeout);
+            setTimeout(() => { ws.close(); process.exit(0); }, 500);
+        });
+        ws.on('error', (err) => {
+            clearTimeout(timeout);
+            console.error('WebSocket error: ' + err.message);
+            process.exit(1);
+        });
+    "
+}
+
+# Capture and display Expo QR code from tmux pane
+capture_expo_qr() {
+    if ! is_wsl || ! tmux has-session -t expo 2>/dev/null; then
+        return 0
+    fi
+
+    log_info "Expo QR code:"
     echo ""
-    log_error "Expo startup timeout after ${STARTUP_TIMEOUT}s"
-    return 1
-}
 
-# Check for Android devices via adb
-check_android_device() {
-    if command -v adb &> /dev/null; then
-        local devices=$(adb devices | grep -v "List" | grep "device$" | wc -l)
-        if [ "$devices" -gt 0 ]; then
-            return 0
-        fi
-    fi
-    return 1
-}
-
-# Check for iOS Simulator
-check_ios_simulator() {
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        if command -v xcrun &> /dev/null; then
-            local simulators=$(xcrun simctl list devices booted | grep "Booted" | wc -l)
-            if [ "$simulators" -gt 0 ]; then
-                return 0
-            fi
-        fi
-    fi
-    return 1
-}
-
-# Check for Expo Go connections via WebSocket
-check_expo_go_connection() {
-    # Check if there are active WebSocket connections to the Expo dev server
-    if lsof -i :$EXPO_PORT -sTCP:ESTABLISHED > /dev/null 2>&1; then
-        return 0
-    fi
-    return 1
-}
-
-# Send reload command via Expo's dev server API
-send_reload_command() {
-    log_info "Sending reload command..."
+    # Capture pane content and extract QR code lines (only lines with block chars + spaces)
+    local qr_lines
+    qr_lines=$(tmux capture-pane -t expo -p | grep -E '^[ ▄█▀]+$' | head -25)
     
-    # Method 1: Try Expo's /__reload endpoint
-    if curl -s -X POST "http://localhost:$EXPO_PORT/__reload" > /dev/null 2>&1; then
-        log_success "Reload command sent via Expo API"
-        return 0
-    fi
-    
-    # Method 2: Try Metro bundler's reload endpoint
-    if curl -s -X POST "http://localhost:$METRO_PORT/reload" > /dev/null 2>&1; then
-        log_success "Reload command sent via Metro bundler"
-        return 0
-    fi
-    
-    # Method 3: For Android devices, use adb
-    if check_android_device; then
-        log_info "Trying Android adb reload..."
-        # Send reload broadcast (works for React Native apps)
-        adb shell am broadcast -a com.facebook.react.ACTION_RELOAD > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            log_success "Reload command sent via adb broadcast"
-            return 0
-        fi
+    if [ -n "$qr_lines" ]; then
+        # Calculate width from first line
+        local width
+        width=$(echo "$qr_lines" | head -1 | wc -c)
+        width=$((width - 1))  # Remove newline
         
-        # Alternative: Send key event for 'r' (may work with some setups)
-        adb shell input text r > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            log_success "Reload command sent via adb input"
-            return 0
-        fi
+        # Print top border
+        printf "╔"
+        printf '═%.0s' $(seq 1 $((width + 2)))
+        printf "╗\n"
+        
+        # Print QR lines with side borders
+        echo "$qr_lines" | while IFS= read -r line; do
+            printf "║ %-${width}s ║\n" "$line"
+        done
+        
+        # Print bottom border
+        printf "╚"
+        printf '═%.0s' $(seq 1 $((width + 2)))
+        printf "╝\n"
     fi
-    
-    # Method 4: For iOS Simulator
-    if check_ios_simulator; then
-        log_info "Trying iOS Simulator reload..."
-        # Use xcrun to send reload command
-        xcrun simctl spawn booted open "exp://localhost:19000" > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            log_success "Reload command sent to iOS Simulator"
-            return 0
-        fi
-    fi
-    
-    # Method 5: Fallback - kill and restart expo (not ideal)
-    log_warning "Could not send reload command directly"
-    log_info "Restarting Expo as fallback..."
-    
-    # Kill existing expo processes
-    pkill -f "expo start" > /dev/null 2>&1 || true
-    sleep 2
-    
-    # Start expo again
-    start_expo
+
+    echo ""
+    log_info "Scan with Expo Go app"
 }
 
 # Main function
@@ -175,54 +179,41 @@ main() {
     echo "  Expo Auto-Reload Script"
     echo "=========================================="
     echo ""
-    
-    # Check if Expo is running
-    if check_expo_running; then
-        log_success "Expo is already running"
+
+    # Step 1: Ensure Expo is running (start if needed)
+    if ! ensure_expo_running; then
+        log_error "Could not start Expo"
+        log_info "Start Expo manually with: npm start"
+        exit 1
+    fi
+    log_success "Expo process is running"
+
+    # Step 2: Check Metro is ready
+    if ! check_metro_running; then
+        log_error "Metro bundler not ready on port $METRO_PORT"
+        log_info "Wait for Metro to start, then try again"
+        exit 1
+    fi
+    log_success "Metro bundler ready"
+
+    # Step 2.5: Display QR code if available
+    capture_expo_qr
+
+    # Step 3: Send reload
+    if send_reload; then
+        log_success "Reload sent successfully"
     else
-        log_warning "Expo is not running"
-        start_expo
+        log_error "Failed to send reload"
+        exit 1
     fi
-    
-    # Check for connected devices
-    local device_found=0
-    
-    if check_android_device; then
-        log_success "Android device detected"
-        device_found=1
-    fi
-    
-    if check_ios_simulator; then
-        log_success "iOS Simulator detected"
-        device_found=1
-    fi
-    
-    if check_expo_go_connection; then
-        log_success "Expo Go connection detected"
-        device_found=1
-    fi
-    
-    if [ $device_found -eq 0 ]; then
-        log_warning "No device detected"
-        log_info "Please ensure:"
-        log_info "  1. Your device is connected via USB (Android)"
-        log_info "  2. Expo Go app is open and connected"
-        log_info "  3. iOS Simulator is running (macOS only)"
-        echo ""
-        read -p "Continue anyway? (y/n): " -n 1 -r
-        echo ""
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            log_info "Aborted by user"
-            exit 0
-        fi
-    fi
-    
-    # Send reload command
-    send_reload_command
-    
+
     echo ""
+    if is_wsl && tmux ls 2>/dev/null; then
+        echo ""
+    fi
     echo "=========================================="
-    log_success "Reload complete!"
+    log_success "Done! Check your device."
+    log_info "Attach with: tmux attach -t expo"
     echo "=========================================="
 }
 
