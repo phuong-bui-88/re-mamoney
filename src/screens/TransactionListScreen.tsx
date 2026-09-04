@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, InteractionManager, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
@@ -27,33 +27,7 @@ export default function TransactionListScreen(): React.ReactElement {
     | undefined;
   const [selectedDayDate, setSelectedDayDate] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
-  const prevQueryRef = useRef('');
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    const wasEmpty = prevQueryRef.current.trim().length === 0;
-    const isNotEmpty = searchQuery.trim().length > 0;
-
-    if (isNotEmpty && wasEmpty) {
-      setIsSearching(true);
-      searchTimerRef.current = setTimeout(() => {
-        setIsSearching(false);
-        Keyboard.dismiss();
-        InteractionManager.runAfterInteractions(() => {
-          scrollRef.current?.scrollTo({ y: 0, animated: true });
-        });
-      }, 300);
-    }
-
-    if (!isNotEmpty && searchTimerRef.current) {
-      clearTimeout(searchTimerRef.current);
-      searchTimerRef.current = null;
-    }
-
-    prevQueryRef.current = searchQuery;
-  }, [searchQuery]);
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -109,25 +83,9 @@ export default function TransactionListScreen(): React.ReactElement {
     setSearchQuery(text);
   }, []);
 
-  const handleClearSearch = useCallback(() => {
-    handleSearchChange('');
-  }, [handleSearchChange]);
-
   const handleSearchFocus = useCallback(() => {
-    if (!isSearching && searchQuery.length > 0) {
-      setSearchQuery('');
-    }
-  }, [isSearching, searchQuery]);
-
-  const handleSubmitSearch = useCallback(() => {
-    if (searchQuery.trim().length > 0) {
-      setIsSearching(true);
-      setTimeout(() => {
-        setIsSearching(false);
-        scrollRef.current?.scrollTo({ y: 0, animated: true });
-      }, 300);
-    }
-  }, [searchQuery]);
+    setSearchQuery('');
+  }, []);
 
   const handleMonthChange = useCallback(
     (month: number) => {
@@ -266,22 +224,10 @@ export default function TransactionListScreen(): React.ReactElement {
           placeholderTextColor={C.textMuted}
           value={searchQuery}
           onChangeText={handleSearchChange}
-          onSubmitEditing={handleSubmitSearch}
           onFocus={handleSearchFocus}
           returnKeyType="search"
           testID="search-input"
         />
-        {isSearching ? (
-          <ActivityIndicator size="small" color={C.primary} testID="search-spinner" />
-        ) : searchQuery.length > 0 ? (
-          <TouchableOpacity
-            onPress={handleClearSearch}
-            activeOpacity={0.7}
-            testID="search-clear"
-          >
-            <Text style={styles.searchClearText}>✕</Text>
-          </TouchableOpacity>
-        ) : null}
       </View>
 
       <FloatingActionButton onPress={handleAddTransaction} bottom={66} />
@@ -325,11 +271,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-  },
-  searchClearText: {
-    color: C.textLight,
-    fontSize: 16,
-    paddingHorizontal: 4,
   },
   searchIcon: {
     fontSize: 14,

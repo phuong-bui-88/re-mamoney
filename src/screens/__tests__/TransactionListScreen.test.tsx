@@ -355,7 +355,7 @@ describe('TransactionListScreen', () => {
     expect(screen.getByText(/-30\.000/)).toBeTruthy();
   });
 
-  it('restores month total when search is cleared', () => {
+  it('restores month total when search is cleared via focus', () => {
     const txns = [
       {
         id: 't1',
@@ -393,10 +393,10 @@ describe('TransactionListScreen', () => {
       capturedCallback(txns);
     });
     fireEvent.changeText(screen.getByTestId('search-input'), 'banh trang cuon');
-    act(() => {
-      jest.advanceTimersByTime(300);
-    });
-    fireEvent.press(screen.getByTestId('search-clear'));
+
+    expect(screen.getByText(/Net total · "banh trang cuon":/)).toBeTruthy();
+
+    fireEvent(screen.getByTestId('search-input'), 'focus');
 
     expect(screen.getByText(/Net total · Jul 2026/)).toBeTruthy();
     expect(screen.getByText(/170\.000/)).toBeTruthy();
@@ -605,7 +605,7 @@ describe('TransactionListScreen', () => {
     expect(listProps.selectedDate).toEqual(new Date(2026, 6, 15));
   });
 
-  it('passes searchQuery to FilteredTransactionList while typing', () => {
+  it('passes typed searchQuery to FilteredTransactionList while typing', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
@@ -703,7 +703,7 @@ describe('TransactionListScreen', () => {
     expect(screen.queryByText(/-27\.000/)).toBeNull();
   });
 
-  it('returns to the full day view when search is cleared', () => {
+  it('returns to the full day view when search is cleared via focus', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
@@ -714,10 +714,10 @@ describe('TransactionListScreen', () => {
       calProps.onDayPress(10);
     });
     fireEvent.changeText(screen.getByTestId('search-input'), 'banh');
-    act(() => {
-      jest.advanceTimersByTime(300);
-    });
-    fireEvent.press(screen.getByTestId('search-clear'));
+
+    expect(screen.getByText(/Net total · 10\/07\/2026 · "banh":/)).toBeTruthy();
+
+    fireEvent(screen.getByTestId('search-input'), 'focus');
 
     calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
     expect(calProps.selectedDay).toBe(10);
@@ -866,117 +866,28 @@ describe('TransactionListScreen', () => {
     expect(scrollView.props.testID).toBe('transaction-list-scroll');
   });
 
-  it('shows search spinner while filtering on first keystroke', () => {
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    const { getByTestId, queryByTestId } = render(<TransactionListScreen />);
-
-    expect(queryByTestId('search-spinner')).toBeNull();
-
-    fireEvent.changeText(getByTestId('search-input'), 'banh');
-
-    expect(getByTestId('search-spinner')).toBeTruthy();
-  });
-
-  it('hides spinner after filtering completes', () => {
-    jest.useFakeTimers();
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    const { getByTestId, queryByTestId } = render(<TransactionListScreen />);
-
-    fireEvent.changeText(getByTestId('search-input'), 'banh');
-    expect(getByTestId('search-spinner')).toBeTruthy();
-
-    act(() => {
-      jest.advanceTimersByTime(300);
-    });
-
-    expect(queryByTestId('search-spinner')).toBeNull();
-    jest.useRealTimers();
-  });
-
-  it('dismisses keyboard when spinner hides', () => {
-    jest.useFakeTimers();
-    const Keyboard = require('react-native').Keyboard;
-    const dismissSpy = jest.spyOn(Keyboard, 'dismiss');
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    const { getByTestId } = render(<TransactionListScreen />);
-
-    fireEvent.changeText(getByTestId('search-input'), 'banh');
-
-    act(() => {
-      jest.advanceTimersByTime(300);
-    });
-
-    expect(dismissSpy).toHaveBeenCalledTimes(1);
-    dismissSpy.mockRestore();
-    jest.useRealTimers();
-  });
-
-  it('clears search text when input is focused after search completes', () => {
-    jest.useFakeTimers();
-    const Keyboard = require('react-native').Keyboard;
-    jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
+  it('clears search text on focus while keeping the active filter', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     const { getByTestId, getByText } = render(<TransactionListScreen />);
 
     fireEvent.changeText(getByTestId('search-input'), 'banh');
 
-    act(() => {
-      jest.advanceTimersByTime(300);
-    });
-
     expect(getByTestId('search-input').props.value).toBe('banh');
+    expect(getByText(/Net total · "banh":/)).toBeTruthy();
 
     fireEvent(getByTestId('search-input'), 'focus');
 
     expect(getByTestId('search-input').props.value).toBe('');
     expect(getByText(/Net total · Jul 2026:/)).toBeTruthy();
-
-    Keyboard.dismiss.mockRestore();
-    jest.useRealTimers();
   });
 
-  it('shows clear button when not searching and has text', () => {
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    const { getByTestId, queryByTestId } = render(<TransactionListScreen />);
-
-    fireEvent.changeText(getByTestId('search-input'), 'banh');
-
-    expect(queryByTestId('search-clear')).toBeNull();
-  });
-
-  it('triggers search on keyboard submit', () => {
-    jest.useFakeTimers();
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    const { getByTestId, queryByTestId } = render(<TransactionListScreen />);
-
-    fireEvent.changeText(getByTestId('search-input'), 'banh');
-    fireEvent(getByTestId('search-input'), 'submitEditing');
-
-    expect(getByTestId('search-spinner')).toBeTruthy();
-
-    act(() => {
-      jest.advanceTimersByTime(300);
-    });
-
-    expect(queryByTestId('search-spinner')).toBeNull();
-    jest.useRealTimers();
-  });
-
-  it('does not re-scroll on subsequent keystrokes', () => {
+  it('shows search input with placeholder', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     const { getByTestId } = render(<TransactionListScreen />);
 
-    fireEvent.changeText(getByTestId('search-input'), 'b');
-    fireEvent.changeText(getByTestId('search-input'), 'ba');
-    fireEvent.changeText(getByTestId('search-input'), 'ban');
-
-    expect(getByTestId('search-input')).toBeTruthy();
+    const input = getByTestId('search-input');
+    expect(input.props.placeholder).toBe('Search e.g. banh trang cuon');
   });
 });

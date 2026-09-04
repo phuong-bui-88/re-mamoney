@@ -25,11 +25,15 @@ npm run test:coverage     # With coverage
 
 ## Auto-Reload After Code Changes
 
-**When AI makes code changes:** Run `./scripts/reload-app.sh` to reload the app.
+**MANDATORY: After making ANY code changes (file edits, new files, refactoring), ALWAYS run:**
+
+```bash
+./scripts/reload-app.sh
+```
 
 This script:
 1. Checks if Expo is running (creates tmux session if not)
-2. Sends 'r' keystroke to reload the app
+2. Sends WebSocket reload command to Metro bundler
 3. Works on WSL2 with tmux
 
 **To attach to Expo session:** `tmux attach -t expo`
