@@ -20,7 +20,7 @@ import { parseTransactionMessage } from '@services/aiTransactionParser';
 import { parseLocalTransactions } from '@utils/localTransactionParser';
 import firebaseService from '@services/firebase';
 import { parseDate } from '@utils/dateParser';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { formatCurrency, formatDate } from '@utils/currency';
 import { CATEGORY_ICONS, CATEGORY_LABELS, CATEGORY_COLORS, FALLBACK_COLORS } from '@utils/categories';
 import { C } from '@theme/colors';

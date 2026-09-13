@@ -4,7 +4,7 @@ import Svg, { G, Rect, Line, Text as SvgText } from 'react-native-svg';
 import { C } from '@theme/index';
 import { useTransactionStore } from '@store/index';
 import { getMonthlyTotals, formatCurrency } from '@utils/currency';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
 
 const MONTHS_SHORT = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 

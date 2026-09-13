@@ -23,7 +23,7 @@ import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
 } from '@utils/categories';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { C } from '@theme/index';
 
 const LABEL_WIDTH = 90;

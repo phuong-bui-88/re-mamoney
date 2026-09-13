@@ -134,43 +134,105 @@ send_reload() {
     "
 }
 
-# Capture and display Expo QR code from tmux pane
+# Wait until Expo prints the QR code in the tmux pane
+wait_for_qr() {
+    if ! is_wsl || ! tmux has-session -t expo 2>/dev/null; then
+        return 0
+    fi
+
+    local max_wait=30
+    local waited=0
+    while [ $waited -lt $max_wait ]; do
+        if tmux capture-pane -t expo -pS - 2>/dev/null | grep -q "Scan the QR code"; then
+            log_success "QR code found in tmux pane"
+            return 0
+        fi
+        sleep 1
+        waited=$((waited + 1))
+    done
+
+    log_warning "QR code not printed yet (tunnel may still be starting)"
+    return 0
+}
+
+# Capture and display Expo QR code from tmux pane (incl. scrollback history)
 capture_expo_qr() {
     if ! is_wsl || ! tmux has-session -t expo 2>/dev/null; then
         return 0
     fi
 
-    log_info "Expo QR code:"
-    echo ""
+    local pane_content end_line qr_lines="" width qr_bytes
+    pane_content=$(tmux capture-pane -t expo -pS -)
 
-    # Capture pane content and extract QR code lines (only lines with block chars + spaces)
-    local qr_lines
-    qr_lines=$(tmux capture-pane -t expo -p | grep -E '^[ ▄█▀]+$' | head -25)
-    
-    if [ -n "$qr_lines" ]; then
-        # Calculate width from first line
-        local width
-        width=$(echo "$qr_lines" | head -1 | wc -c)
-        width=$((width - 1))  # Remove newline
-        
-        # Print top border
-        printf "╔"
-        printf '═%.0s' $(seq 1 $((width + 2)))
-        printf "╗\n"
-        
-        # Print QR lines with side borders
-        echo "$qr_lines" | while IFS= read -r line; do
-            printf "║ %-${width}s ║\n" "$line"
-        done
-        
-        # Print bottom border
-        printf "╚"
-        printf '═%.0s' $(seq 1 $((width + 2)))
-        printf "╝\n"
+    # Last "Scan the QR code" marker - the QR block ends right before it
+    end_line=$(printf '%s\n' "$pane_content" | grep -n "Scan the QR code" | tail -1 | cut -d: -f1)
+
+    # Extract the last contiguous run of block-character lines before the marker
+    if [ -n "$end_line" ]; then
+        qr_lines=$(printf '%s\n' "$pane_content" | grep -E '^[ ▄█▀]+$' -n | awk -F: -v end="$end_line" '
+            $1 + 0 < end + 0 {
+                n = $1 + 0
+                c = substr($0, length($1) + 2)
+                if (n == prev + 1) { blk = blk "\n" c } else { blk = c }
+                prev = n
+                last = blk
+            }
+            END { if (last != "") print last }
+        ')
     fi
 
-    echo ""
-    log_info "Scan with Expo Go app"
+    if [ -n "$qr_lines" ]; then
+        width=$(printf '%s\n' "$qr_lines" | awk '{ if (length > m) m = length } END { print m + 0 }')
+        qr_bytes=$(printf '%s' "$qr_lines" | wc -c)
+        local inner=$((width + 2))
+
+        echo ""
+        log_success "EXPO STATUS (QR ${width} cols, ${qr_bytes} bytes)"
+        printf "╔"
+        printf '═%.0s' $(seq 1 "$inner")
+        printf "╗\n"
+        printf '%s\n' "$qr_lines" | while IFS= read -r line; do
+            printf "║ %-*s ║\n" "$width" "$line"
+        done
+        printf "╚"
+        printf '═%.0s' $(seq 1 "$inner")
+        printf "╝\n"
+        log_info "Scan with Expo Go (QR above)"
+        echo ""
+    else
+        log_warning "QR code not found in tmux pane yet"
+    fi
+}
+
+# Capture and display Tunnel status from tmux pane (incl. scrollback history)
+capture_tunnel_status() {
+    if ! is_wsl || ! tmux has-session -t expo 2>/dev/null; then
+        return 0
+    fi
+
+    local pane_content
+    pane_content=$(tmux capture-pane -t expo -pS -)
+
+    # Look for "Tunnel ready" or tunnel URL
+    local tunnel_status
+    tunnel_status=$(printf '%s\n' "$pane_content" | grep -i "tunnel ready" | tail -1)
+
+    local tunnel_url
+    tunnel_url=$(printf '%s\n' "$pane_content" | grep -oE 'exp://[a-zA-Z0-9.-]+(:[0-9]+)?' | tail -1)
+
+    if [ -n "$tunnel_status" ] || [ -n "$tunnel_url" ]; then
+        echo ""
+        log_success "TUNNEL STATUS"
+        echo "------------------------------------------"
+        if [ -n "$tunnel_status" ]; then
+            echo "  $tunnel_status"
+        fi
+        if [ -n "$tunnel_url" ]; then
+            echo "  URL: $tunnel_url"
+        fi
+        echo "------------------------------------------"
+        echo ""
+    fi
 }
 
 # Main function
@@ -196,6 +258,12 @@ main() {
     fi
     log_success "Metro bundler ready"
 
+    # Step 2.4: Wait for the QR code (tunnel starts after Metro)
+    wait_for_qr
+
+    # Step 2.6: Display Tunnel status
+    capture_tunnel_status
+
     # Step 2.5: Display QR code if available
     capture_expo_qr
 
@@ -208,11 +276,12 @@ main() {
     fi
 
     echo ""
-    if is_wsl && tmux ls 2>/dev/null; then
-        echo ""
-    fi
     echo "=========================================="
-    log_success "Done! Check your device."
+    log_success "Done! App reloaded."
+    log_info "Tunnel is active - scan QR or use URL above"
+    if is_wsl; then
+        tmux ls 2>/dev/null || true
+    fi
     log_info "Attach with: tmux attach -t expo"
     echo "=========================================="
 }

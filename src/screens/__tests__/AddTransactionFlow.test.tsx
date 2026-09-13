@@ -10,6 +10,7 @@ jest.mock('@react-navigation/native', () => ({
     getParent: () => ({ navigate: jest.fn() }),
   }),
   useRoute: () => ({ params: {} }),
+  useFocusEffect: jest.fn(),
 }));
 
 jest.mock('@components/index', () => ({
@@ -17,6 +18,7 @@ jest.mock('@components/index', () => ({
   SegmentedControl: jest.fn(() => null),
   FilteredTransactionList: jest.requireActual('../../components/FilteredTransactionList').default,
   FloatingActionButton: jest.fn(() => null),
+  ScrollToTopButton: jest.fn(() => null),
 }));
 
 beforeEach(() => {

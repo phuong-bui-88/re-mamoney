@@ -9,7 +9,7 @@ import CategoryBreakdownRow from './CategoryBreakdownRow';
 import FilteredTransactionList from './FilteredTransactionList';
 import { CATEGORY_LABELS, CATEGORY_ICONS, CATEGORY_COLORS, FALLBACK_COLORS } from '@utils/categories';
 import { formatCurrency } from '@utils/currency';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { C } from '@theme/index';
 
 const segments = ['Expense', 'Income'];

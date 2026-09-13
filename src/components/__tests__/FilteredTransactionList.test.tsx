@@ -352,9 +352,9 @@ describe('FilteredTransactionList', () => {
       const rows = UNSAFE_getAllByType(TransactionRow);
       expect(rows).toHaveLength(3);
       const byId = (id: string) => rows.find((r: any) => r.props.transaction.id === id);
-      expect(byId('gi1').props.insideGroup).toBe(true);
-      expect(byId('gi2').props.insideGroup).toBe(true);
-      expect(byId('gi3').props.insideGroup).toBe(false);
+      expect(byId('gi1')!.props.insideGroup).toBe(true);
+      expect(byId('gi2')!.props.insideGroup).toBe(true);
+      expect(byId('gi3')!.props.insideGroup).toBe(false);
       rows.forEach((r: any) => expect(r.props.onPress).toBe(onTransactionPress));
     });
 
