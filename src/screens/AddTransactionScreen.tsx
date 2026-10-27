@@ -12,7 +12,7 @@ import {
   Platform,
   Animated,
 } from 'react-native';
-import Swipeable from 'react-native-gesture-handler/Swipeable';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { useTransactionStore, useAuthStore } from '@store/index';
@@ -282,9 +282,7 @@ export default function AddTransactionScreen(): React.ReactElement {
     const amountColor =
       item.type === 'income' ? transItemStyles.incomeColor : transItemStyles.expenseColor;
 
-    const renderLeftActions = (
-      _progress: Animated.AnimatedInterpolation<number>,
-    ) => (
+    const renderLeftActions = () => (
       <Animated.View style={styles.deleteBackground} />
     );
 
@@ -363,12 +361,12 @@ export default function AddTransactionScreen(): React.ReactElement {
 
     return (
       <View key={item.id}>
-        <Swipeable
+        <ReanimatedSwipeable
           renderLeftActions={renderLeftActions}
-          onSwipeableLeftOpen={() => handleDelete(item.id)}
+          onSwipeableOpen={() => handleDelete(item.id)}
         >
           {rowContent}
-        </Swipeable>
+        </ReanimatedSwipeable>
       </View>
     );
   };

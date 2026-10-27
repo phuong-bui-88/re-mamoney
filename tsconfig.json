@@ -50,6 +50,10 @@
     },
     "resolveJsonModule": true,
     "allowJs": true,
+    "customConditions": [
+      "react-native",
+      "react-native-legacy-deep-imports"
+    ],
     "types": [
       "jest",
       "node",

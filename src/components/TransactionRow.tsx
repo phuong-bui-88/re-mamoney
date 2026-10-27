@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
-import Swipeable from 'react-native-gesture-handler/Swipeable';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import type { Transaction } from '@/types';
 import { formatCurrency, formatDate } from '@utils/currency';
@@ -23,19 +24,17 @@ interface TransactionRowProps {
   insideGroup?: boolean;
 }
 
-export default function TransactionRow({ transaction, onDelete, onPress, insideGroup }: TransactionRowProps): React.ReactElement {
-  const renderLeftActions = (
-    progress: Animated.AnimatedInterpolation<number>,
-  ) => {
-    const opacity = progress.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 1],
-    });
+function DeleteAction({ progress }: { progress: SharedValue<number> }) {
+  const style = useAnimatedStyle(() => ({
+    opacity: progress.value,
+  }));
+  return <Animated.View style={[styles.deleteBackground, style]} />;
+}
 
-    return (
-      <Animated.View style={[styles.deleteBackground, { opacity }]} />
-    );
-  };
+export default function TransactionRow({ transaction, onDelete, onPress, insideGroup }: TransactionRowProps): React.ReactElement {
+  const renderLeftActions = (progress: SharedValue<number>) => (
+    <DeleteAction progress={progress} />
+  );
 
   const catIcon = CATEGORY_ICONS[transaction.category] || 'ellipsis-horizontal-outline';
   let catColor = CATEGORY_COLORS[transaction.category];
@@ -72,12 +71,12 @@ export default function TransactionRow({ transaction, onDelete, onPress, insideG
 
   if (onDelete) {
     return (
-      <Swipeable
+      <ReanimatedSwipeable
         renderLeftActions={renderLeftActions}
-        onSwipeableLeftOpen={() => onDelete(transaction.id)}
+        onSwipeableOpen={() => onDelete(transaction.id)}
       >
         {row}
-      </Swipeable>
+      </ReanimatedSwipeable>
     );
   }
 

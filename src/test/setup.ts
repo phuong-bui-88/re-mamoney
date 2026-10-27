@@ -34,9 +34,32 @@ jest.mock('react-native-gesture-handler', () => ({
   Directions: {},
 }));
 
-jest.mock('react-native-gesture-handler/Swipeable', () => {
+jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
   const MockSwipeable = ({ children }: { children: React.ReactNode }) => children;
   return MockSwipeable;
+});
+
+// Mock react-native-reanimated (native module)
+jest.mock('react-native-reanimated', () => {
+  const mock = {
+    useSharedValue: (init: unknown) => ({ value: init }),
+    useAnimatedStyle: (fn: unknown) => (typeof fn === 'function' ? fn() : {}),
+    withTiming: (v: unknown) => v,
+    withSpring: (v: unknown) => v,
+    withDecay: (v: unknown) => v,
+    withSequence: (v: unknown) => v,
+    runOnJS: (fn: unknown) => fn,
+    runOnUI: (fn: unknown) => fn,
+    createAnimatedComponent: (Component: unknown) => Component,
+    Easing: { linear: jest.fn(), ease: jest.fn(), quad: jest.fn(), cubic: jest.fn() },
+    interpolate: jest.fn(),
+    Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
+    FadeIn: jest.fn(),
+    FadeOut: jest.fn(),
+    Layout: jest.fn(),
+    default: {},
+  };
+  return mock;
 });
 
 // Mock missing native modules

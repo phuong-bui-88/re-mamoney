@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react-native';
 import TransactionRow from '@components/TransactionRow';
 import type { Transaction } from '@/types';
 
-jest.mock('react-native-gesture-handler/Swipeable', () => {
+jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
   const MockSwipeable = ({ children }: { children: React.ReactNode }) => children;
   return MockSwipeable;
 });

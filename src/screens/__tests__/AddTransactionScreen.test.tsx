@@ -7,11 +7,11 @@ import firebaseService from '@services/firebase';
 import * as Clipboard from 'expo-clipboard';
 
 const mockSwipeCalls: Array<((id: string) => void) | null> = [];
-jest.mock('react-native-gesture-handler/Swipeable', () => {
+jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
   const React = require('react');
-  return ({ children, onSwipeableLeftOpen }: any) => {
+  return ({ children, onSwipeableOpen }: any) => {
     React.useEffect(() => {
-      mockSwipeCalls.push(onSwipeableLeftOpen || null);
+      mockSwipeCalls.push(onSwipeableOpen || null);
       return () => {
         mockSwipeCalls.length = 0;
       };
