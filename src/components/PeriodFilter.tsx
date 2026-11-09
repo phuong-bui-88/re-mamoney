@@ -32,8 +32,11 @@ export default function PeriodFilter({ month, year, onMonthChange, onYearChange 
   }
 
   const isFirstScroll = useRef(true);
+  const isUserScrollRef = useRef(false);
 
   useEffect(() => {
+    // Scrolls started here must not write their position back as a new month.
+    isUserScrollRef.current = false;
     const targetX = month * ITEM_WIDTH;
     if (isFirstScroll.current) {
       scrollRef.current?.scrollTo({ x: targetX, animated: false });
@@ -43,7 +46,13 @@ export default function PeriodFilter({ month, year, onMonthChange, onYearChange 
     }
   }, [month]);
 
+  const onScrollBeginDrag = useCallback(() => {
+    isUserScrollRef.current = true;
+  }, []);
+
   const onScrollEnd = useCallback((e: { nativeEvent: { contentOffset: { x: number } } }) => {
+    if (!isUserScrollRef.current) return;
+    isUserScrollRef.current = false;
     const snappedIndex = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
     const clamped = Math.min(11, Math.max(0, snappedIndex));
     if (clamped !== monthRef.current) {
@@ -60,6 +69,7 @@ export default function PeriodFilter({ month, year, onMonthChange, onYearChange 
         snapToInterval={ITEM_WIDTH}
         decelerationRate="fast"
         contentContainerStyle={styles.listContent}
+        onScrollBeginDrag={onScrollBeginDrag}
         onMomentumScrollEnd={onScrollEnd}
         testID="month-scroll"
       >

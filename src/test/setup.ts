@@ -30,6 +30,24 @@ jest.mock('react-native-gesture-handler', () => ({
   Swipeable: ({ children }: { children: React.ReactNode }) => children,
   gestureHandlerRootHOC: (Component: React.ComponentType) => Component,
   GestureHandlerRootView: ({ children }: { children: React.ReactNode }) => children,
+  GestureDetector: ({ children }: { children: React.ReactNode }) => children,
+  // Chainable builder: every callback is kept in `handlers` so tests can drive the gesture.
+  Gesture: {
+    Pan: jest.fn(() => {
+      const handlers: Record<string, unknown> = {};
+      const gesture: Record<string, unknown> = { handlers };
+      ['runOnJS', 'activeOffsetX', 'failOffsetY'].forEach((name) => {
+        gesture[name] = () => gesture;
+      });
+      ['onStart', 'onUpdate', 'onEnd'].forEach((name) => {
+        gesture[name] = (callback: unknown) => {
+          handlers[name] = callback;
+          return gesture;
+        };
+      });
+      return gesture;
+    }),
+  },
   State: {},
   Directions: {},
 }));
@@ -41,8 +59,15 @@ jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
 
 // Mock react-native-reanimated (native module)
 jest.mock('react-native-reanimated', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { useRef } = require('react');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { View } = require('react-native');
   const mock = {
-    useSharedValue: (init: unknown) => ({ value: init }),
+    View,
+    cancelAnimation: jest.fn(),
+    // Shared values keep their identity across renders, as they do in the real library.
+    useSharedValue: (init: unknown) => useRef({ value: init }).current,
     useAnimatedStyle: (fn: unknown) => (typeof fn === 'function' ? fn() : {}),
     withTiming: (v: unknown) => v,
     withSpring: (v: unknown) => v,

@@ -76,16 +76,52 @@ describe('PeriodFilter', () => {
     const onMonthChange = jest.fn();
     render(<PeriodFilter {...defaultProps} month={3} onMonthChange={onMonthChange} />);
     const scroll = screen.getByTestId('month-scroll');
+    fireEvent(scroll, 'onScrollBeginDrag');
     fireEvent(scroll, 'onMomentumScrollEnd', {
       nativeEvent: { contentOffset: { x: 6 * 55 } },
     });
     expect(onMonthChange).toHaveBeenCalledWith(6);
   });
 
+  it('ignores the end of a scroll the selector started itself', () => {
+    const onMonthChange = jest.fn();
+    render(<PeriodFilter {...defaultProps} month={9} onMonthChange={onMonthChange} />);
+    fireEvent(screen.getByTestId('month-scroll'), 'onMomentumScrollEnd', {
+      nativeEvent: { contentOffset: { x: 8 * 55 } },
+    });
+    expect(onMonthChange).not.toHaveBeenCalled();
+  });
+
+  it('changes the month only once for one swipe', () => {
+    const onMonthChange = jest.fn();
+    render(<PeriodFilter {...defaultProps} month={3} onMonthChange={onMonthChange} />);
+    const scroll = screen.getByTestId('month-scroll');
+    const scrollEnd = { nativeEvent: { contentOffset: { x: 6 * 55 } } };
+    fireEvent(scroll, 'onScrollBeginDrag');
+    fireEvent(scroll, 'onMomentumScrollEnd', scrollEnd);
+    fireEvent(scroll, 'onMomentumScrollEnd', scrollEnd);
+    expect(onMonthChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not write back an old month when the month changes during a swipe', () => {
+    const onMonthChange = jest.fn();
+    const { rerender } = render(
+      <PeriodFilter {...defaultProps} month={8} onMonthChange={onMonthChange} />
+    );
+    const scroll = screen.getByTestId('month-scroll');
+    fireEvent(scroll, 'onScrollBeginDrag');
+    rerender(<PeriodFilter {...defaultProps} month={9} onMonthChange={onMonthChange} />);
+    fireEvent(scroll, 'onMomentumScrollEnd', {
+      nativeEvent: { contentOffset: { x: 8 * 55 } },
+    });
+    expect(onMonthChange).not.toHaveBeenCalled();
+  });
+
   it('does not call onMonthChange when momentum scroll ends at same index', () => {
     const onMonthChange = jest.fn();
     render(<PeriodFilter {...defaultProps} month={6} onMonthChange={onMonthChange} />);
     const scroll = screen.getByTestId('month-scroll');
+    fireEvent(scroll, 'onScrollBeginDrag');
     fireEvent(scroll, 'onMomentumScrollEnd', {
       nativeEvent: { contentOffset: { x: 6 * 55 } },
     });
