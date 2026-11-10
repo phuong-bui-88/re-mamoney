@@ -1,29 +1,15 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { C } from '@theme/index';
 
-const MONTHS_SHORT = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-];
-
-const ITEM_WIDTH = 55;
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const SIDE_PADDING = (SCREEN_WIDTH - ITEM_WIDTH) / 2;
-
 interface PeriodFilterProps {
-  month: number;
   year: number;
-  onMonthChange: (month: number) => void;
   onYearChange: (year: number) => void;
 }
 
-export default function PeriodFilter({ month, year, onMonthChange, onYearChange }: PeriodFilterProps): React.ReactElement {
+export default function PeriodFilter({ year, onYearChange }: PeriodFilterProps): React.ReactElement {
   const [yearOpen, setYearOpen] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
-  const monthRef = useRef(month);
-  monthRef.current = month;
 
   const currentYear = new Date().getFullYear();
   const years: number[] = [];
@@ -31,67 +17,8 @@ export default function PeriodFilter({ month, year, onMonthChange, onYearChange 
     years.push(y);
   }
 
-  const isFirstScroll = useRef(true);
-  const isUserScrollRef = useRef(false);
-
-  useEffect(() => {
-    // Scrolls started here must not write their position back as a new month.
-    isUserScrollRef.current = false;
-    const targetX = month * ITEM_WIDTH;
-    if (isFirstScroll.current) {
-      scrollRef.current?.scrollTo({ x: targetX, animated: false });
-      isFirstScroll.current = false;
-    } else {
-      scrollRef.current?.scrollTo({ x: targetX, animated: true });
-    }
-  }, [month]);
-
-  const onScrollBeginDrag = useCallback(() => {
-    isUserScrollRef.current = true;
-  }, []);
-
-  const onScrollEnd = useCallback((e: { nativeEvent: { contentOffset: { x: number } } }) => {
-    if (!isUserScrollRef.current) return;
-    isUserScrollRef.current = false;
-    const snappedIndex = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
-    const clamped = Math.min(11, Math.max(0, snappedIndex));
-    if (clamped !== monthRef.current) {
-      onMonthChange(clamped);
-    }
-  }, [onMonthChange]);
-
   return (
     <View style={styles.container}>
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={ITEM_WIDTH}
-        decelerationRate="fast"
-        contentContainerStyle={styles.listContent}
-        onScrollBeginDrag={onScrollBeginDrag}
-        onMomentumScrollEnd={onScrollEnd}
-        testID="month-scroll"
-      >
-        {MONTHS_SHORT.map((label, i) => {
-          const isActive = i === monthRef.current;
-          return (
-            <View key={label} style={styles.itemWrapper}>
-              <TouchableOpacity
-                style={[styles.item, isActive && styles.itemActive]}
-                onPress={() => onMonthChange(i)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.itemText, isActive && styles.itemTextActive]}>
-                  {label}
-                </Text>
-                {isActive && <Text style={styles.indicator}>•</Text>}
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-      </ScrollView>
-
       <TouchableOpacity style={styles.yearBtn} onPress={() => setYearOpen(true)} activeOpacity={0.7}>
         <Text style={styles.yearText}>{String(year)}</Text>
         <Ionicons name="chevron-down" size={14} color={C.textMedium} />
@@ -124,37 +51,9 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     paddingHorizontal: 16,
     paddingVertical: 12,
-  },
-  indicator: {
-    color: C.primary,
-    fontSize: 8,
-    lineHeight: 6,
-    marginTop: 2,
-  },
-  item: {
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  itemActive: {},
-  itemText: {
-    color: C.textMuted,
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  itemTextActive: {
-    color: C.primary,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  itemWrapper: {
-    alignItems: 'center',
-    width: ITEM_WIDTH,
-  },
-  listContent: {
-    alignItems: 'center',
-    paddingHorizontal: SIDE_PADDING,
   },
   overlayBase: {
     alignItems: 'center',
@@ -202,7 +101,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 4,
-    marginLeft: 8,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },

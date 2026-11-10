@@ -75,12 +75,7 @@ export default function HomeScreen(): React.ReactElement {
   return (
     <View style={styles.container}>
       <ScrollView ref={scrollRef} style={styles.scroll} showsVerticalScrollIndicator={false}>
-        <PeriodFilter
-          month={selectedMonth}
-          year={selectedYear}
-          onMonthChange={setSelectedMonth}
-          onYearChange={setSelectedYear}
-        />
+        <PeriodFilter year={selectedYear} onYearChange={setSelectedYear} />
 
         <MonthlyChart onMonthSelect={setSelectedMonth} onInfoPress={handleMonthlyInfo} />
 

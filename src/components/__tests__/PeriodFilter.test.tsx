@@ -4,9 +4,7 @@ import PeriodFilter from '@components/PeriodFilter';
 
 describe('PeriodFilter', () => {
   const defaultProps = {
-    month: 6,
     year: 2026,
-    onMonthChange: jest.fn(),
     onYearChange: jest.fn(),
   };
 
@@ -14,118 +12,19 @@ describe('PeriodFilter', () => {
     jest.clearAllMocks();
   });
 
-  it('renders all 12 month items', () => {
-    render(<PeriodFilter {...defaultProps} />);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    months.forEach((m) => {
-      expect(screen.getByText(m)).toBeTruthy();
-    });
-  });
-
   it('renders the current year', () => {
     render(<PeriodFilter {...defaultProps} />);
     expect(screen.getByText('2026')).toBeTruthy();
   });
 
-  it('shows indicator dot on active month', () => {
-    render(<PeriodFilter {...defaultProps} month={6} />);
-    const dots = screen.getAllByText('•');
-    expect(dots.length).toBe(1);
-  });
-
-  it('active month has larger font weight', () => {
-    render(<PeriodFilter {...defaultProps} month={6} />);
-    const jul = screen.getByText('Jul');
-    expect(jul.props.style).toEqual(
-      expect.arrayContaining([expect.objectContaining({ fontWeight: '700' })])
+  it('does not render the month list', () => {
+    render(<PeriodFilter {...defaultProps} />);
+    ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].forEach(
+      (month) => {
+        expect(screen.queryByText(month)).toBeNull();
+      }
     );
-  });
-
-  it('calls onMonthChange with correct index when a pill is pressed', () => {
-    const onMonthChange = jest.fn();
-    render(<PeriodFilter {...defaultProps} onMonthChange={onMonthChange} />);
-    fireEvent.press(screen.getByText('Jul'));
-    expect(onMonthChange).toHaveBeenCalledWith(6);
-  });
-
-  it('calls onMonthChange with index 0 for January', () => {
-    const onMonthChange = jest.fn();
-    render(<PeriodFilter {...defaultProps} onMonthChange={onMonthChange} />);
-    fireEvent.press(screen.getByText('Jan'));
-    expect(onMonthChange).toHaveBeenCalledWith(0);
-  });
-
-  it('calls onMonthChange with index 11 for December', () => {
-    const onMonthChange = jest.fn();
-    render(<PeriodFilter {...defaultProps} onMonthChange={onMonthChange} />);
-    fireEvent.press(screen.getByText('Dec'));
-    expect(onMonthChange).toHaveBeenCalledWith(11);
-  });
-
-  it('does not crash with month 0 (January boundary)', () => {
-    render(<PeriodFilter {...defaultProps} month={0} />);
-    expect(screen.getByText('Jan')).toBeTruthy();
-  });
-
-  it('does not crash with month 11 (December boundary)', () => {
-    render(<PeriodFilter {...defaultProps} month={11} />);
-    expect(screen.getByText('Dec')).toBeTruthy();
-  });
-
-  it('calls onMonthChange when momentum scroll ends at new index', () => {
-    const onMonthChange = jest.fn();
-    render(<PeriodFilter {...defaultProps} month={3} onMonthChange={onMonthChange} />);
-    const scroll = screen.getByTestId('month-scroll');
-    fireEvent(scroll, 'onScrollBeginDrag');
-    fireEvent(scroll, 'onMomentumScrollEnd', {
-      nativeEvent: { contentOffset: { x: 6 * 55 } },
-    });
-    expect(onMonthChange).toHaveBeenCalledWith(6);
-  });
-
-  it('ignores the end of a scroll the selector started itself', () => {
-    const onMonthChange = jest.fn();
-    render(<PeriodFilter {...defaultProps} month={9} onMonthChange={onMonthChange} />);
-    fireEvent(screen.getByTestId('month-scroll'), 'onMomentumScrollEnd', {
-      nativeEvent: { contentOffset: { x: 8 * 55 } },
-    });
-    expect(onMonthChange).not.toHaveBeenCalled();
-  });
-
-  it('changes the month only once for one swipe', () => {
-    const onMonthChange = jest.fn();
-    render(<PeriodFilter {...defaultProps} month={3} onMonthChange={onMonthChange} />);
-    const scroll = screen.getByTestId('month-scroll');
-    const scrollEnd = { nativeEvent: { contentOffset: { x: 6 * 55 } } };
-    fireEvent(scroll, 'onScrollBeginDrag');
-    fireEvent(scroll, 'onMomentumScrollEnd', scrollEnd);
-    fireEvent(scroll, 'onMomentumScrollEnd', scrollEnd);
-    expect(onMonthChange).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not write back an old month when the month changes during a swipe', () => {
-    const onMonthChange = jest.fn();
-    const { rerender } = render(
-      <PeriodFilter {...defaultProps} month={8} onMonthChange={onMonthChange} />
-    );
-    const scroll = screen.getByTestId('month-scroll');
-    fireEvent(scroll, 'onScrollBeginDrag');
-    rerender(<PeriodFilter {...defaultProps} month={9} onMonthChange={onMonthChange} />);
-    fireEvent(scroll, 'onMomentumScrollEnd', {
-      nativeEvent: { contentOffset: { x: 8 * 55 } },
-    });
-    expect(onMonthChange).not.toHaveBeenCalled();
-  });
-
-  it('does not call onMonthChange when momentum scroll ends at same index', () => {
-    const onMonthChange = jest.fn();
-    render(<PeriodFilter {...defaultProps} month={6} onMonthChange={onMonthChange} />);
-    const scroll = screen.getByTestId('month-scroll');
-    fireEvent(scroll, 'onScrollBeginDrag');
-    fireEvent(scroll, 'onMomentumScrollEnd', {
-      nativeEvent: { contentOffset: { x: 6 * 55 } },
-    });
-    expect(onMonthChange).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('month-scroll')).toBeNull();
   });
 
   it('calls onYearChange when a year is selected from the modal', () => {
