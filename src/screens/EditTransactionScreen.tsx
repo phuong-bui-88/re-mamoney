@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,12 @@ import {
   ScrollView,
   Switch,
   Modal,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTransactionStore } from '@store/index';
 import { formatCurrency, formatDate } from '@utils/currency';
 import { parseDate } from '@utils/dateParser';
@@ -32,6 +34,8 @@ const LABEL_WIDTH = 90;
 export default function EditTransactionScreen(): React.ReactElement | null {
   const route = useRoute();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const savingRef = useRef(false);
   const { transactionId } = route.params as { transactionId: string };
   const transaction = useTransactionStore((s) => s.transactions.find((t) => t.id === transactionId));
 
@@ -144,6 +148,7 @@ export default function EditTransactionScreen(): React.ReactElement | null {
   const preview = formatCurrency(computedAmount);
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     const trimmedDesc = description.trim();
     if (!trimmedDesc) {
       Alert.alert('Validation', 'Description is required');
@@ -164,6 +169,8 @@ export default function EditTransactionScreen(): React.ReactElement | null {
       return;
     }
 
+    savingRef.current = true;
+    Keyboard.dismiss();
     setIsSaving(true);
     try {
       await useTransactionStore.getState().updateTransaction(transaction.id, {
@@ -176,6 +183,7 @@ export default function EditTransactionScreen(): React.ReactElement | null {
     } catch {
       Alert.alert('Error', 'Failed to update transaction');
     } finally {
+      savingRef.current = false;
       setIsSaving(false);
     }
   };
@@ -183,12 +191,22 @@ export default function EditTransactionScreen(): React.ReactElement | null {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior="padding"
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+          accessibilityLabel="Go back"
+        >
+          <Ionicons name="chevron-back" size={24} color={C.textDark} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Transaction</Text>
+      </View>
       <ScrollView
+        nestedScrollEnabled
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 + insets.bottom }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.fieldRow}>
@@ -431,20 +449,21 @@ export default function EditTransactionScreen(): React.ReactElement | null {
             </View>
           </TouchableOpacity>
         </Modal>
-      </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={isSaving}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.saveButtonText}>
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.saveRow}>
+          <TouchableOpacity
+            style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+            onPressIn={handleSave}
+              onPress={handleSave}
+            disabled={isSaving}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.saveButtonText}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -460,6 +479,9 @@ const styles = StyleSheet.create({
   amountRow: {
     alignItems: 'center',
     flexDirection: 'row',
+  },
+  backButton: {
+    padding: 4,
   },
   calendarCancelBtn: {
     paddingHorizontal: 16,
@@ -638,12 +660,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 20,
   },
-  footer: {
+  header: {
+    alignItems: 'center',
     backgroundColor: C.white,
-    borderTopColor: C.border,
-    borderTopWidth: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    borderBottomColor: C.border,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    paddingBottom: 12,
+    paddingHorizontal: 12,
+  },
+  headerTitle: {
+    color: C.textDark,
+    fontSize: 18,
+    fontWeight: '700',
   },
   input: {
     backgroundColor: C.white,
@@ -724,6 +754,9 @@ const styles = StyleSheet.create({
     color: C.white,
     fontSize: 16,
     fontWeight: '700',
+  },
+  saveRow: {
+    marginTop: 8,
   },
   scroll: {
     flex: 1,

@@ -20,6 +20,10 @@ jest.mock('@react-navigation/native', () => ({
   }),
 }));
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 24, bottom: 16, left: 0, right: 0 }),
+}));
+
 jest.mock('@utils/currency', () => ({
   formatCurrency: jest.fn((v: number) => `${v}`),
   formatDate: jest.fn(() => '01/07/2026'),
@@ -81,6 +85,22 @@ describe('EditTransactionScreen', () => {
     expect(screen.getByText('Food')).toBeTruthy();
   });
 
+  it('renders in-screen header, all five field labels and the save button', () => {
+    render(<EditTransactionScreen />);
+
+    expect(screen.getByText('Edit Transaction')).toBeTruthy();
+    ['Description:', 'Amount:', 'Type:', 'Category:', 'Date:'].forEach((l) =>
+      expect(screen.getByText(l)).toBeTruthy(),
+    );
+    expect(screen.getByText('Save Changes')).toBeTruthy();
+  });
+
+  it('back button in header navigates back', () => {
+    render(<EditTransactionScreen />);
+    fireEvent.press(screen.getByLabelText('Go back'));
+    expect(mockGoBack).toHaveBeenCalled();
+  });
+
   it('goes back gracefully if transactionId not found in store', () => {
     useTransactionStore.setState({
       allTransactions: [],
@@ -108,6 +128,29 @@ describe('EditTransactionScreen', () => {
         }),
       );
     });
+  });
+
+  it('saves on a single pressIn (first tap while keyboard is open)', async () => {
+    render(<EditTransactionScreen />);
+
+    fireEvent(screen.getByText('Save Changes'), 'pressIn');
+
+    await waitFor(() => {
+      expect(firebaseService.updateTransaction).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('saves only once when pressIn and press fire for one tap', async () => {
+    render(<EditTransactionScreen />);
+
+    const saveButton = screen.getByText('Save Changes');
+    fireEvent(saveButton, 'pressIn');
+    fireEvent.press(saveButton);
+
+    await waitFor(() => {
+      expect(mockGoBack).toHaveBeenCalled();
+    });
+    expect(firebaseService.updateTransaction).toHaveBeenCalledTimes(1);
   });
 
   it('navigates back after successful save', async () => {

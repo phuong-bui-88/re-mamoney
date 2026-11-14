@@ -141,7 +141,7 @@ export default function App(): React.ReactElement {
             <Stack.Screen
               name="EditTransaction"
               component={EditTransactionScreen}
-              options={{ title: 'Edit Transaction' }}
+              options={{ headerShown: false }}
             />
           </>
         ) : (
