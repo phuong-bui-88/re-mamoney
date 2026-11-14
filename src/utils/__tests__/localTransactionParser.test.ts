@@ -181,4 +181,50 @@ describe('parseLocalTransactions', () => {
     expect(result[0].amount).toBe(80000);
     expect(result[1].amount).toBe(120000);
   });
+
+  describe('bare numbers and million units', () => {
+    it('parses a bare number without suffix', () => {
+      const result = parseLocalTransactions('Di hoc 150000');
+      expect(result).toHaveLength(1);
+      expect(result[0].description).toBe('Di hoc');
+      expect(result[0].amount).toBe(150000);
+    });
+
+    it('parses a bare 8-digit number as millions', () => {
+      const result = parseLocalTransactions('An sang 15000000');
+      expect(result).toHaveLength(1);
+      expect(result[0].amount).toBe(15000000);
+    });
+
+    it.each([
+      ['Luong 15 trieu', 15000000],
+      ['Luong 15tr', 15000000],
+      ['Luong 15 triệu', 15000000],
+      ['Xe 1.5tr', 1500000],
+    ])('parses million unit: %s', (input, expected) => {
+      const result = parseLocalTransactions(input);
+      expect(result).toHaveLength(1);
+      expect(result[0].amount).toBe(expected);
+    });
+
+    it.each([
+      ['Di hoc 150.000', 150000],
+      ['Nha 1.500.000', 1500000],
+    ])('parses dotted thousands: %s', (input, expected) => {
+      const result = parseLocalTransactions(input);
+      expect(result).toHaveLength(1);
+      expect(result[0].amount).toBe(expected);
+    });
+
+    it('parses mixed bare, k and tr items', () => {
+      const result = parseLocalTransactions('Coffee 30k, Di hoc 150000, Ao 2tr');
+      expect(result.map((r) => r.amount)).toEqual([30000, 150000, 2000000]);
+    });
+
+    it('ignores small bare numbers in the description', () => {
+      const result = parseLocalTransactions('Lunch 2 people 50k');
+      expect(result).toHaveLength(1);
+      expect(result[0].amount).toBe(50000);
+    });
+  });
 });

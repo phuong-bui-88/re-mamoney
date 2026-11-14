@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react-native';
+import { render, screen, act } from '@testing-library/react-native';
 import TransactionListScreen from '@screens/TransactionListScreen';
 import { useAuthStore, useTransactionStore } from '@store/index';
 import firebaseService from '@services/firebase';
@@ -31,6 +31,7 @@ jest.mock('@components/index', () => ({
   FilteredTransactionList: jest.fn(() => null),
   FloatingActionButton: jest.fn(() => null),
   ScrollToTopButton: jest.fn(() => null),
+  DayTransactionsModal: jest.fn(() => null),
 }));
 
 beforeEach(() => {
@@ -212,47 +213,33 @@ describe('TransactionListScreen', () => {
     expect(firebaseService.subscribeToTransactions).toHaveBeenCalledTimes(2);
   });
 
-  it('renders all child components', () => {
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-
+  it('renders calendar and day popup, without floating add / scroll-to-top buttons', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
 
-    expect(FilteredTransactionList).toHaveBeenCalled();
-    const lastCall = (FilteredTransactionList as jest.Mock).mock.calls;
-    const callArg = lastCall[lastCall.length - 1][0];
-    expect(callArg.filterMode).toBe('month');
+    const mocks = jest.requireMock('@components/index');
+    expect(mocks.MonthCalendar).toHaveBeenCalled();
+    expect(mocks.FloatingActionButton).not.toHaveBeenCalled();
+    expect(mocks.ScrollToTopButton).not.toHaveBeenCalled();
+    expect(mocks.DayTransactionsModal).toHaveBeenCalled();
   });
 
-  it('passes onTransactionPress to FilteredTransactionList', () => {
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-
+  it('does not render the inline transaction list', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
 
-    const lastCall = (FilteredTransactionList as jest.Mock).mock.calls;
-    const callArg = lastCall[lastCall.length - 1][0];
-    expect(typeof callArg.onTransactionPress).toBe('function');
+    expect(jest.requireMock('@components/index').FilteredTransactionList).not.toHaveBeenCalled();
   });
 
-  it('navigates to EditTransaction when onTransactionPress is called', () => {
-    const { __mockNavigate: mockNavigate } = require('@react-navigation/native');
-
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-
+  it('does not render a search input', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
 
-    const lastCall = (FilteredTransactionList as jest.Mock).mock.calls;
-    const callArg = lastCall[lastCall.length - 1][0];
-    const mockTransaction = { id: 'tx-99', type: 'expense', amount: 30000 };
-
-    callArg.onTransactionPress(mockTransaction);
-
-    expect(mockNavigate).toHaveBeenCalledWith('EditTransaction', { transactionId: 'tx-99' });
+    expect(screen.queryByTestId('search-input')).toBeNull();
+    expect(screen.queryByPlaceholderText(/Search/)).toBeNull();
   });
 
   it('shows month net total by default', () => {
@@ -312,96 +299,6 @@ describe('TransactionListScreen', () => {
     expect(joined.match(/₫/g)).toHaveLength(1);
   });
 
-  it('shows search net total when a query is typed', () => {
-    const txns = [
-      {
-        id: 't1',
-        userId: 'u',
-        type: 'expense',
-        amount: 30000,
-        category: 'food',
-        description: 'Bánh tráng cuốn',
-        date: new Date(2026, 6, 10, 12),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: 't2',
-        userId: 'u',
-        type: 'expense',
-        amount: 20000,
-        category: 'food',
-        description: 'Coffee',
-        date: new Date(2026, 6, 15, 8),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ];
-    let capturedCallback: (txs: typeof txns) => void = () => {};
-    (firebaseService.subscribeToTransactions as jest.Mock).mockImplementation(
-      (_filter: unknown, cb: (txs: typeof txns) => void) => {
-        capturedCallback = cb;
-        return jest.fn();
-      }
-    );
-
-    render(<TransactionListScreen />);
-    act(() => {
-      capturedCallback(txns);
-    });
-    fireEvent.changeText(screen.getByTestId('search-input'), 'banh trang cuon');
-
-    expect(screen.getByText(/Net total · "banh trang cuon":/)).toBeTruthy();
-    expect(screen.getByText(/-30\.000/)).toBeTruthy();
-  });
-
-  it('restores month total when search is cleared via focus', () => {
-    const txns = [
-      {
-        id: 't1',
-        userId: 'u',
-        type: 'expense',
-        amount: 30000,
-        category: 'food',
-        description: 'Bánh tráng cuốn',
-        date: new Date(2026, 6, 10, 12),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: 't2',
-        userId: 'u',
-        type: 'income',
-        amount: 200000,
-        category: 'salary',
-        description: 'Pay',
-        date: new Date(2026, 6, 15, 9),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ];
-    let capturedCallback: (txs: typeof txns) => void = () => {};
-    (firebaseService.subscribeToTransactions as jest.Mock).mockImplementation(
-      (_filter: unknown, cb: (txs: typeof txns) => void) => {
-        capturedCallback = cb;
-        return jest.fn();
-      }
-    );
-
-    render(<TransactionListScreen />);
-    act(() => {
-      capturedCallback(txns);
-    });
-    fireEvent.changeText(screen.getByTestId('search-input'), 'banh trang cuon');
-
-    expect(screen.getByText(/Net total · "banh trang cuon":/)).toBeTruthy();
-
-    fireEvent(screen.getByTestId('search-input'), 'focus');
-
-    expect(screen.getByText(/Net total · Jul 2026/)).toBeTruthy();
-    expect(screen.getByText(/170\.000/)).toBeTruthy();
-  });
-
   it('renders net total section inside a card container', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
@@ -411,17 +308,6 @@ describe('TransactionListScreen', () => {
     expect(summaryLabel).toBeTruthy();
   });
 
-  it('renders search bar with placeholder and no filter buttons', () => {
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    render(<TransactionListScreen />);
-
-    const input = screen.getByTestId('search-input');
-    expect(input.props.placeholder).toBe('Search e.g. banh trang cuon');
-    expect(screen.queryByText('This Month')).toBeNull();
-    expect(screen.queryByText('Today')).toBeNull();
-  });
-
   it('does not render any divider elements', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
@@ -429,38 +315,6 @@ describe('TransactionListScreen', () => {
     const tree = JSON.stringify(toJSON());
 
     expect(tree).not.toMatch(/summaryDivider/);
-  });
-
-  it('shows zero net total when nothing matches the query', () => {
-    const txns = [
-      {
-        id: 't1',
-        userId: 'u',
-        type: 'expense',
-        amount: 50000,
-        category: 'food',
-        description: 'Coffee',
-        date: new Date(2026, 6, 15, 8),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ];
-    let capturedCallback: (txs: typeof txns) => void = () => {};
-    (firebaseService.subscribeToTransactions as jest.Mock).mockImplementation(
-      (_filter: unknown, cb: (txs: typeof txns) => void) => {
-        capturedCallback = cb;
-        return jest.fn();
-      }
-    );
-
-    render(<TransactionListScreen />);
-    act(() => {
-      capturedCallback(txns);
-    });
-    fireEvent.changeText(screen.getByTestId('search-input'), 'banh trang cuon');
-
-    expect(screen.getByText(/Net total · "banh trang cuon":/)).toBeTruthy();
-    expect(screen.getByText(/0 ₫/)).toBeTruthy();
   });
 
   it('passes month, year and day-press handler to MonthCalendar', () => {
@@ -476,7 +330,12 @@ describe('TransactionListScreen', () => {
     expect(typeof lastCall.onDayPress).toBe('function');
   });
 
-  it('filters list and net total to the tapped calendar day', () => {
+  const lastProps = (name: string) => {
+    const mock = jest.requireMock('@components/index')[name];
+    return mock.mock.calls[mock.mock.calls.length - 1][0];
+  };
+
+  it('opens the day popup with the tapped date and keeps the month net total', () => {
     const txns = [
       {
         id: 't1',
@@ -514,47 +373,72 @@ describe('TransactionListScreen', () => {
       capturedCallback(txns);
     });
 
-    const MonthCalendar = jest.requireMock('@components/index').MonthCalendar;
-    const calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
+    expect(lastProps('DayTransactionsModal').date).toBeNull();
+
     act(() => {
-      calProps.onDayPress(10);
+      lastProps('MonthCalendar').onDayPress(10);
     });
 
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-    const listProps =
-      FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
-    expect(listProps.selectedDate).toEqual(new Date(2026, 6, 10));
-    expect(screen.getByText(/Net total · 10\/07\/2026/)).toBeTruthy();
-    expect(screen.getByText(/-30\.000/)).toBeTruthy();
+    expect(lastProps('DayTransactionsModal').date).toEqual(new Date(2026, 6, 10));
+    expect(lastProps('MonthCalendar').selectedDay).toBe(10);
+
+    expect(screen.getByText(/Net total · Jul 2026/)).toBeTruthy();
+    expect(screen.getByText(/\+70\.000/)).toBeTruthy();
   });
 
-  it('deselects the day when tapping the active day again', () => {
+  it('closes the popup and clears the highlight when onClose is called', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
 
-    const MonthCalendar = jest.requireMock('@components/index').MonthCalendar;
-    let calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
     act(() => {
-      calProps.onDayPress(10);
+      lastProps('MonthCalendar').onDayPress(10);
     });
-    calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
-    expect(calProps.selectedDay).toBe(10);
+    expect(lastProps('DayTransactionsModal').date).toEqual(new Date(2026, 6, 10));
 
+    act(() => {
+      lastProps('DayTransactionsModal').onClose();
+    });
+
+    expect(lastProps('DayTransactionsModal').date).toBeNull();
+    expect(lastProps('MonthCalendar').selectedDay).toBeNull();
+  });
+
+  it('closes the popup when the active day is tapped again', () => {
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+
+    act(() => {
+      lastProps('MonthCalendar').onDayPress(10);
+    });
     // The real calendar converts a re-tap of the active day into onDayPress(null)
     act(() => {
-      calProps.onDayPress(null);
+      lastProps('MonthCalendar').onDayPress(null);
     });
-    calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
-    expect(calProps.selectedDay).toBeNull();
 
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-    const listProps =
-      FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
-    expect(listProps.selectedDate).toBeNull();
+    expect(lastProps('DayTransactionsModal').date).toBeNull();
+    expect(lastProps('MonthCalendar').selectedDay).toBeNull();
   });
 
-  it('keeps the day selected while typing a search query', () => {
+  it('closes the popup and navigates to EditTransaction when a popup row is pressed', () => {
+    const { __mockNavigate: mockNavigate } = require('@react-navigation/native');
+    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
+
+    render(<TransactionListScreen />);
+
+    act(() => {
+      lastProps('MonthCalendar').onDayPress(10);
+    });
+    act(() => {
+      lastProps('DayTransactionsModal').onTransactionPress({ id: 'tx-9' });
+    });
+
+    expect(mockNavigate).toHaveBeenCalledWith('EditTransaction', { transactionId: 'tx-9' });
+    expect(lastProps('DayTransactionsModal').date).toBeNull();
+  });
+
+  it('closes the day popup when month changed via calendar picker', () => {
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
@@ -564,185 +448,6 @@ describe('TransactionListScreen', () => {
     act(() => {
       calProps.onDayPress(10);
     });
-    fireEvent.changeText(screen.getByTestId('search-input'), 'banh');
-
-    calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
-    expect(calProps.selectedDay).toBe(10);
-
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-    const listProps =
-      FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
-    expect(listProps.searchQuery).toBe('banh');
-    expect(listProps.selectedDate).toEqual(new Date(2026, 6, 10));
-    expect(listProps.filterMode).toBe('day');
-  });
-
-  it('clears search query when a new day is tapped on the calendar', () => {
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    render(<TransactionListScreen />);
-
-    const MonthCalendar = jest.requireMock('@components/index').MonthCalendar;
-    let calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
-    act(() => {
-      calProps.onDayPress(10);
-    });
-    fireEvent.changeText(screen.getByTestId('search-input'), 'banh');
-
-    expect(screen.getByTestId('search-input').props.value).toBe('banh');
-
-    calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
-    act(() => {
-      calProps.onDayPress(15);
-    });
-
-    expect(screen.getByTestId('search-input').props.value).toBe('');
-
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-    const listProps =
-      FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
-    expect(listProps.searchQuery).toBe('');
-    expect(listProps.selectedDate).toEqual(new Date(2026, 6, 15));
-  });
-
-  it('passes typed searchQuery to FilteredTransactionList while typing', () => {
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    render(<TransactionListScreen />);
-
-    fireEvent.changeText(screen.getByTestId('search-input'), 'banh trang cuon');
-
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-    const listProps =
-      FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
-    expect(listProps.searchQuery).toBe('banh trang cuon');
-  });
-
-  it('clears search text when tapping a calendar day', () => {
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    render(<TransactionListScreen />);
-
-    fireEvent.changeText(screen.getByTestId('search-input'), 'banh trang cuon');
-
-    const MonthCalendar = jest.requireMock('@components/index').MonthCalendar;
-    let calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
-    act(() => {
-      calProps.onDayPress(10);
-    });
-
-    calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
-    expect(calProps.selectedDay).toBe(10);
-
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-    const listProps =
-      FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
-    expect(listProps.searchQuery).toBe('');
-    expect(listProps.selectedDate).toEqual(new Date(2026, 6, 10));
-  });
-
-  it('filters net total to matching transactions inside the selected day', () => {
-    const txns = [
-      {
-        id: 'c1',
-        userId: 'u',
-        type: 'expense',
-        amount: 15000,
-        category: 'food',
-        description: 'Chè mè đen',
-        date: new Date(2026, 6, 10, 9),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: 'k1',
-        userId: 'u',
-        type: 'expense',
-        amount: 16000,
-        category: 'food',
-        description: 'Kẹo',
-        date: new Date(2026, 6, 10, 10),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: 'c2',
-        userId: 'u',
-        type: 'expense',
-        amount: 12000,
-        category: 'food',
-        description: 'Chè chuối',
-        date: new Date(2026, 6, 20, 9),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ];
-    let capturedCallback: (txs: typeof txns) => void = () => {};
-    (firebaseService.subscribeToTransactions as jest.Mock).mockImplementation(
-      (_filter: unknown, cb: (txs: typeof txns) => void) => {
-        capturedCallback = cb;
-        return jest.fn();
-      }
-    );
-
-    render(<TransactionListScreen />);
-    act(() => {
-      capturedCallback(txns);
-    });
-
-    const MonthCalendar = jest.requireMock('@components/index').MonthCalendar;
-    const calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
-    act(() => {
-      calProps.onDayPress(10);
-    });
-    fireEvent.changeText(screen.getByTestId('search-input'), 'che');
-
-    expect(screen.getByText(/Net total · 10\/07\/2026 · "che":/)).toBeTruthy();
-    expect(screen.getByText(/-15\.000/)).toBeTruthy();
-    expect(screen.queryByText(/-31\.000/)).toBeNull();
-    expect(screen.queryByText(/-27\.000/)).toBeNull();
-  });
-
-  it('returns to the full day view when search is cleared via focus', () => {
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    render(<TransactionListScreen />);
-
-    const MonthCalendar = jest.requireMock('@components/index').MonthCalendar;
-    let calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
-    act(() => {
-      calProps.onDayPress(10);
-    });
-    fireEvent.changeText(screen.getByTestId('search-input'), 'banh');
-
-    expect(screen.getByText(/Net total · 10\/07\/2026 · "banh":/)).toBeTruthy();
-
-    fireEvent(screen.getByTestId('search-input'), 'focus');
-
-    calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
-    expect(calProps.selectedDay).toBe(10);
-
-    expect(screen.getByText(/Net total · 10\/07\/2026:/)).toBeTruthy();
-
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-    const listProps =
-      FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
-    expect(listProps.searchQuery).toBe('');
-    expect(listProps.selectedDate).toEqual(new Date(2026, 6, 10));
-  });
-
-  it('clears the search box and day selection when month changed via calendar picker', () => {
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    render(<TransactionListScreen />);
-
-    const MonthCalendar = jest.requireMock('@components/index').MonthCalendar;
-    let calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
-    act(() => {
-      calProps.onDayPress(10);
-    });
-    fireEvent.changeText(screen.getByTestId('search-input'), 'banh trang cuon');
-
     calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
     act(() => {
       calProps.onMonthChange(7);
@@ -751,15 +456,14 @@ describe('TransactionListScreen', () => {
     calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
     expect(calProps.month).toBe(7);
     expect(calProps.selectedDay).toBeNull();
-
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-    const listProps =
-      FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
-    expect(listProps.searchQuery).toBe('');
+    expect(lastProps('DayTransactionsModal').date).toBeNull();
   });
 
   it('clears selected day when screen gains focus', () => {
-    const { __triggerFocus: triggerFocus, __resetFocusCallback } = require('@react-navigation/native');
+    const {
+      __triggerFocus: triggerFocus,
+      __resetFocusCallback,
+    } = require('@react-navigation/native');
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
@@ -782,7 +486,10 @@ describe('TransactionListScreen', () => {
   });
 
   it('clears day selection on re-focus after navigating away', () => {
-    const { __triggerFocus: triggerFocus, __resetFocusCallback } = require('@react-navigation/native');
+    const {
+      __triggerFocus: triggerFocus,
+      __resetFocusCallback,
+    } = require('@react-navigation/native');
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
@@ -802,92 +509,5 @@ describe('TransactionListScreen', () => {
 
     calProps = MonthCalendar.mock.calls[MonthCalendar.mock.calls.length - 1][0];
     expect(calProps.selectedDay).toBeNull();
-  });
-
-  it('passes bottom={66} to FloatingActionButton so it sits above the search bar', () => {
-    const FloatingActionButton = jest.requireMock('@components/index').FloatingActionButton;
-
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    render(<TransactionListScreen />);
-
-    const lastCall = FloatingActionButton.mock.calls[FloatingActionButton.mock.calls.length - 1][0];
-    expect(lastCall.bottom).toBe(66);
-  });
-
-  it('clears search query on focus as well', () => {
-    const { __triggerFocus: triggerFocus, __resetFocusCallback } = require('@react-navigation/native');
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    render(<TransactionListScreen />);
-    __resetFocusCallback();
-
-    fireEvent.changeText(screen.getByTestId('search-input'), 'test query');
-
-    act(() => {
-      triggerFocus();
-    });
-
-    const FilteredTransactionList = jest.requireMock('@components/index').FilteredTransactionList;
-    const listProps =
-      FilteredTransactionList.mock.calls[FilteredTransactionList.mock.calls.length - 1][0];
-    expect(listProps.searchQuery).toBe('');
-  });
-
-  it('renders ScrollToTopButton', () => {
-    const ScrollToTopButton = jest.requireMock('@components/index').ScrollToTopButton;
-
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    render(<TransactionListScreen />);
-
-    expect(ScrollToTopButton).toHaveBeenCalled();
-  });
-
-  it('passes onPress to ScrollToTopButton that scrolls to top', () => {
-    const ScrollToTopButton = jest.requireMock('@components/index').ScrollToTopButton;
-
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    render(<TransactionListScreen />);
-
-    const lastCall = ScrollToTopButton.mock.calls[ScrollToTopButton.mock.calls.length - 1][0];
-    expect(typeof lastCall.onPress).toBe('function');
-  });
-
-  it('scrolls to top when search transitions from empty to non-empty', () => {
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    const { getByTestId } = render(<TransactionListScreen />);
-    const scrollView = getByTestId('transaction-list-scroll');
-
-    fireEvent.changeText(getByTestId('search-input'), 'banh');
-
-    expect(scrollView.props.testID).toBe('transaction-list-scroll');
-  });
-
-  it('clears search text on focus while keeping the active filter', () => {
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    const { getByTestId, getByText } = render(<TransactionListScreen />);
-
-    fireEvent.changeText(getByTestId('search-input'), 'banh');
-
-    expect(getByTestId('search-input').props.value).toBe('banh');
-    expect(getByText(/Net total · "banh":/)).toBeTruthy();
-
-    fireEvent(getByTestId('search-input'), 'focus');
-
-    expect(getByTestId('search-input').props.value).toBe('');
-    expect(getByText(/Net total · Jul 2026:/)).toBeTruthy();
-  });
-
-  it('shows search input with placeholder', () => {
-    (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
-
-    const { getByTestId } = render(<TransactionListScreen />);
-
-    const input = getByTestId('search-input');
-    expect(input.props.placeholder).toBe('Search e.g. banh trang cuon');
   });
 });

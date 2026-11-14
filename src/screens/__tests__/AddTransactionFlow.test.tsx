@@ -19,6 +19,7 @@ jest.mock('@components/index', () => ({
   FilteredTransactionList: jest.requireActual('../../components/FilteredTransactionList').default,
   FloatingActionButton: jest.fn(() => null),
   ScrollToTopButton: jest.fn(() => null),
+  DayTransactionsModal: jest.fn(() => null),
 }));
 
 beforeEach(() => {
@@ -51,7 +52,7 @@ beforeEach(() => {
 });
 
 describe('AddTransactionFlow', () => {
-  it('creates an expense transaction and displays it in the transaction list', async () => {
+  it('creates an expense transaction and includes it in the month net total', async () => {
     const newTransaction = {
       id: 'tx-1',
       userId: 'test-user',
@@ -86,7 +87,6 @@ describe('AddTransactionFlow', () => {
 
     render(<TransactionListScreen />);
 
-    expect(screen.getByText('food')).toBeTruthy();
-    expect(screen.getByText('Lunch')).toBeTruthy();
+    expect(screen.getByText(/-50\.000/)).toBeTruthy();
   });
 });

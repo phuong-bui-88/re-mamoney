@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Switch,
   Modal,
   KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
@@ -33,7 +34,6 @@ export default function EditTransactionScreen(): React.ReactElement | null {
   const navigation = useNavigation();
   const { transactionId } = route.params as { transactionId: string };
   const transaction = useTransactionStore((s) => s.transactions.find((t) => t.id === transactionId));
-  const amountRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (!transaction) {
@@ -41,27 +41,27 @@ export default function EditTransactionScreen(): React.ReactElement | null {
     }
   }, [transaction, navigation]);
 
-  if (!transaction) return null;
-
-  const initialMultiply = transaction.amount % 1000 === 0;
+  const initialAmount = transaction?.amount ?? 0;
+  const initialDate = transaction?.date ?? new Date();
+  const initialMultiply = initialAmount > 0 && initialAmount % 1000 === 0;
   const initialInput = initialMultiply
-    ? (transaction.amount / 1000).toString()
-    : transaction.amount.toString();
+    ? (initialAmount / 1000).toString()
+    : initialAmount.toString();
 
-  const [description, setDescription] = useState(transaction.description);
+  const [description, setDescription] = useState(transaction?.description ?? '');
   const [amountInput, setAmountInput] = useState(initialInput);
   const [multiplyBy1000, setMultiplyBy1000] = useState(initialMultiply);
-  const [selectedCategory, setSelectedCategory] = useState(transaction.category);
-  const [dateInput, setDateInput] = useState(formatDate(transaction.date));
+  const [selectedCategory, setSelectedCategory] = useState(transaction?.category ?? 'other');
+  const [dateInput, setDateInput] = useState(formatDate(initialDate));
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [dateModalOpen, setDateModalOpen] = useState(false);
   const [calendarDate, setCalendarDate] = useState(() => {
-    const d = transaction.date;
+    const d = initialDate;
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   });
-  const [viewMonth, setViewMonth] = useState(transaction.date.getMonth());
-  const [viewYear, setViewYear] = useState(transaction.date.getFullYear());
+  const [viewMonth, setViewMonth] = useState(initialDate.getMonth());
+  const [viewYear, setViewYear] = useState(initialDate.getFullYear());
 
   const MONTH_NAMES = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -125,12 +125,12 @@ export default function EditTransactionScreen(): React.ReactElement | null {
     setDateModalOpen(false);
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      amountRef.current?.focus();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
+  const computedAmount = useMemo(() => {
+    const num = parseInt(amountInput.replace(/[.,\s]/g, ''), 10) || 0;
+    return multiplyBy1000 ? num * 1000 : num;
+  }, [amountInput, multiplyBy1000]);
+
+  if (!transaction) return null;
 
   const isExpense = transaction.type === 'expense';
   const categoryKeys = isExpense ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
@@ -140,11 +140,6 @@ export default function EditTransactionScreen(): React.ReactElement | null {
     icon: CATEGORY_ICONS[key] || 'ellipsis-horizontal-outline',
     color: CATEGORY_COLORS[key] || FALLBACK_COLORS[0],
   }));
-
-  const computedAmount = useMemo(() => {
-    const num = parseInt(amountInput.replace(/[.,\s]/g, ''), 10) || 0;
-    return multiplyBy1000 ? num * 1000 : num;
-  }, [amountInput, multiplyBy1000]);
 
   const preview = formatCurrency(computedAmount);
 
@@ -189,7 +184,7 @@ export default function EditTransactionScreen(): React.ReactElement | null {
     <KeyboardAvoidingView
       style={styles.container}
       behavior="padding"
-      keyboardVerticalOffset={90}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <ScrollView
         style={styles.scroll}
@@ -212,7 +207,6 @@ export default function EditTransactionScreen(): React.ReactElement | null {
           <View style={styles.amountCol}>
             <View style={styles.amountRow}>
               <TextInput
-                ref={amountRef}
                 style={[styles.input, styles.amountInput]}
                 value={amountInput}
                 onChangeText={setAmountInput}
@@ -736,7 +730,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 24,
   },
   typeBadge: {
     alignItems: 'center',

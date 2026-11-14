@@ -1,14 +1,28 @@
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
-import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTransactionStore } from '@store/index';
 import { useAuthStore } from '@store/index';
 import firebaseService from '@services/firebase';
 import type { Transaction } from '@/types';
-import { MonthCalendar, FilteredTransactionList, FloatingActionButton, ScrollToTopButton } from '@components/index';
-import { getMonthStart, getMonthEnd, formatCurrency, formatDate } from '@utils/currency';
-import { matchesSearch } from '@utils/search';
+import { MonthCalendar, DayTransactionsModal } from '@components/index';
+import { getMonthStart, getMonthEnd, formatCurrency } from '@utils/currency';
 import { C } from '@theme/index';
+
+const MONTH_NAMES = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 export default function TransactionListScreen(): React.ReactElement {
   const { selectedUser } = useAuthStore();
@@ -21,13 +35,7 @@ export default function TransactionListScreen(): React.ReactElement {
     allTransactions,
   } = useTransactionStore();
   const navigation = useNavigation();
-  const route = useRoute();
-  const routeParams = route.params as
-    | { category?: string; type?: 'income' | 'expense' }
-    | undefined;
-  const [selectedDayDate, setSelectedDayDate] = useState<Date | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const scrollRef = useRef<ScrollView>(null);
+  const [popupDate, setPopupDate] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -52,59 +60,46 @@ export default function TransactionListScreen(): React.ReactElement {
     useTransactionStore.getState().setPeriod(startDate, endDate);
   }, [selectedUser, selectedMonth, selectedYear]);
 
-  const handleAddTransaction = useCallback(() => {
-    navigation.getParent()?.navigate('AddTransaction' as never);
-  }, [navigation]);
-
-  const clearDaySelection = useCallback(() => {
-    setSelectedDayDate(null);
-    setSearchQuery('');
+  const closePopup = useCallback(() => {
+    setPopupDate(null);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      clearDaySelection();
-    }, [clearDaySelection])
+      closePopup();
+    }, [closePopup])
   );
 
   const handleDayPress = useCallback(
     (day: number | null) => {
       if (day === null) {
-        clearDaySelection();
+        setPopupDate(null);
         return;
       }
-      setSearchQuery('');
-      setSelectedDayDate(new Date(selectedYear, selectedMonth, day));
+      setPopupDate(new Date(selectedYear, selectedMonth, day));
     },
-    [selectedMonth, selectedYear, clearDaySelection]
+    [selectedMonth, selectedYear]
   );
-
-  const handleSearchChange = useCallback((text: string) => {
-    setSearchQuery(text);
-  }, []);
-
-  const handleSearchFocus = useCallback(() => {
-    setSearchQuery('');
-  }, []);
 
   const handleMonthChange = useCallback(
     (month: number) => {
       setSelectedMonth(month);
-      clearDaySelection();
+      closePopup();
     },
-    [setSelectedMonth, clearDaySelection]
+    [setSelectedMonth, closePopup]
   );
 
   const handleYearChange = useCallback(
     (year: number) => {
       setSelectedYear(year);
-      clearDaySelection();
+      closePopup();
     },
-    [setSelectedYear, clearDaySelection]
+    [setSelectedYear, closePopup]
   );
 
-  const handleTransactionPress = useCallback(
+  const handlePopupTransactionPress = useCallback(
     (transaction: Transaction) => {
+      setPopupDate(null);
       (navigation.getParent() as any)?.navigate('EditTransaction', {
         transactionId: transaction.id,
       });
@@ -112,78 +107,18 @@ export default function TransactionListScreen(): React.ReactElement {
     [navigation]
   );
 
-  const trimmedQuery = searchQuery.trim();
-  const filterMode: 'month' | 'day' | 'search' = selectedDayDate
-    ? 'day'
-    : trimmedQuery
-      ? 'search'
-      : 'month';
+  const netTotal = useMemo(
+    () => transactions.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0),
+    [transactions]
+  );
 
-  const netTotal = useMemo(() => {
-    let list = transactions;
-    if (selectedDayDate) {
-      const startOfDay = new Date(selectedDayDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(selectedDayDate);
-      endOfDay.setHours(23, 59, 59, 999);
-      list = list.filter((t) => t.date >= startOfDay && t.date <= endOfDay);
-    }
-    if (trimmedQuery) {
-      list = list.filter((t) => matchesSearch(t, searchQuery));
-    }
-    return list.reduce((sum, t) => {
-      return sum + (t.type === 'income' ? t.amount : -t.amount);
-    }, 0);
-  }, [transactions, selectedDayDate, searchQuery, trimmedQuery]);
-
-  const matchingDays = useMemo(() => {
-    if (!trimmedQuery) return [];
-    const days = new Set<number>();
-    allTransactions.forEach((t) => {
-      const d = new Date(t.date);
-      if (d.getMonth() === selectedMonth && d.getFullYear() === selectedYear) {
-        if (matchesSearch(t, searchQuery)) {
-          days.add(d.getDate());
-        }
-      }
-    });
-    return Array.from(days);
-  }, [trimmedQuery, allTransactions, selectedMonth, selectedYear, searchQuery]);
-
-  const monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  const summaryLabel = selectedDayDate
-    ? trimmedQuery
-      ? `Net total · ${formatDate(selectedDayDate)} · "${trimmedQuery}":`
-      : `Net total · ${formatDate(selectedDayDate)}:`
-    : trimmedQuery
-      ? `Net total · "${trimmedQuery}":`
-      : `Net total · ${monthNames[selectedMonth]} ${selectedYear}:`;
+  const summaryLabel = `Net total · ${MONTH_NAMES[selectedMonth]} ${selectedYear}:`;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior="padding"
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
+    <View style={styles.container}>
       <ScrollView
-        ref={scrollRef}
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
         testID="transaction-list-scroll"
       >
         <MonthCalendar
@@ -192,9 +127,8 @@ export default function TransactionListScreen(): React.ReactElement {
           transactions={allTransactions}
           onMonthChange={handleMonthChange}
           onYearChange={handleYearChange}
-          selectedDay={selectedDayDate ? selectedDayDate.getDate() : null}
+          selectedDay={popupDate ? popupDate.getDate() : null}
           onDayPress={handleDayPress}
-          matchingDays={matchingDays}
         />
 
         <View style={styles.netTotalCard}>
@@ -206,33 +140,14 @@ export default function TransactionListScreen(): React.ReactElement {
             </Text>
           </View>
         </View>
-
-        <FilteredTransactionList
-          category={routeParams?.category}
-          filterMode={filterMode}
-          selectedDate={selectedDayDate}
-          searchQuery={searchQuery}
-          onTransactionPress={handleTransactionPress}
-        />
       </ScrollView>
 
-      <View style={styles.searchBar}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search e.g. banh trang cuon"
-          placeholderTextColor={C.textMuted}
-          value={searchQuery}
-          onChangeText={handleSearchChange}
-          onFocus={handleSearchFocus}
-          returnKeyType="search"
-          testID="search-input"
-        />
-      </View>
-
-      <FloatingActionButton onPress={handleAddTransaction} bottom={66} />
-      <ScrollToTopButton onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })} />
-    </KeyboardAvoidingView>
+      <DayTransactionsModal
+        date={popupDate}
+        onClose={closePopup}
+        onTransactionPress={handlePopupTransactionPress}
+      />
+    </View>
   );
 }
 
@@ -249,45 +164,28 @@ const styles = StyleSheet.create({
   },
   netTotalCard: {
     backgroundColor: C.cardBg,
-    borderRadius: 16,
-    elevation: 3,
+    borderColor: C.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    elevation: 2,
+    marginBottom: 24,
     marginHorizontal: 16,
     marginVertical: 8,
-    padding: 29,
+    padding: 20,
     shadowColor: C.textDark,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
   },
   scroll: {
     flex: 1,
   },
-  searchBar: {
-    alignItems: 'center',
-    backgroundColor: C.grayLight,
-    borderRadius: 10,
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginBottom: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  searchIcon: {
-    fontSize: 14,
-    marginRight: 8,
-  },
-  searchInput: {
-    color: C.textDark,
-    flex: 1,
-    fontSize: 14,
-    padding: 0,
-  },
   summaryAmount: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '800',
   },
   summaryLabel: {
-    color: C.textMedium,
+    color: C.textLight,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -295,6 +193,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
   },
 });

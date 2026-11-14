@@ -22,4 +22,5 @@ export const C = {
   income: '#4CAF50',
   incomeLight: '#E8F5E9',
   chartLabel: '#666',
+  overlay: 'rgba(0,0,0,0.4)',
 };

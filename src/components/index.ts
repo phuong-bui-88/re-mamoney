@@ -9,3 +9,4 @@ export { default as TransactionRow } from './TransactionRow';
 export { default as FilteredTransactionList } from './FilteredTransactionList';
 export { default as CategoryBreakdownRow } from './CategoryBreakdownRow';
 export { default as MonthlyChart } from './MonthlyChart';
+export { default as DayTransactionsModal } from './DayTransactionsModal';
