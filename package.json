@@ -20,8 +20,7 @@
     "build:web": "expo export --platform web",
     "eject": "expo eject",
     "reload": "./scripts/reload-app.sh",
-    "reload:tunnel": "npx expo start --tunnel && ./scripts/reload-app.sh",
-    "postinstall": "node scripts/patch-expo-manifest.js"
+    "reload:tunnel": "npx expo start --tunnel && ./scripts/reload-app.sh"
   },
   "dependencies": {
     "@babel/runtime": "^7.29.7",
