@@ -36,4 +36,38 @@ describe('PeriodFilter', () => {
     fireEvent.press(year2025[0]);
     expect(onYearChange).toHaveBeenCalledWith(2025);
   });
+
+  describe('chart mode toggle', () => {
+    it('is hidden when onChartModeToggle is not provided', () => {
+      render(<PeriodFilter {...defaultProps} />);
+      expect(screen.queryByTestId('chart-mode-toggle')).toBeNull();
+    });
+
+    it('calls onChartModeToggle when pressed', () => {
+      const onChartModeToggle = jest.fn();
+      render(<PeriodFilter {...defaultProps} onChartModeToggle={onChartModeToggle} />);
+      fireEvent.press(screen.getByTestId('chart-mode-toggle'));
+      expect(onChartModeToggle).toHaveBeenCalledTimes(1);
+    });
+
+    it('offers the line chart while bars are shown', () => {
+      render(<PeriodFilter {...defaultProps} chartMode="bar" onChartModeToggle={jest.fn()} />);
+      expect(screen.getByLabelText('Show line chart')).toBeTruthy();
+    });
+
+    it('offers the bar chart while the line is shown', () => {
+      render(<PeriodFilter {...defaultProps} chartMode="line" onChartModeToggle={jest.fn()} />);
+      expect(screen.getByLabelText('Show bar chart')).toBeTruthy();
+    });
+
+    it('keeps the year picker working next to the toggle', () => {
+      const onYearChange = jest.fn();
+      render(
+        <PeriodFilter {...defaultProps} onYearChange={onYearChange} onChartModeToggle={jest.fn()} />
+      );
+      fireEvent.press(screen.getByText('2026'));
+      fireEvent.press(screen.getAllByText('2025')[0]);
+      expect(onYearChange).toHaveBeenCalledWith(2025);
+    });
+  });
 });

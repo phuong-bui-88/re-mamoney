@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { C } from '@theme/index';
@@ -11,15 +11,25 @@ import {
   StatisticsCard,
   FloatingActionButton,
   MonthlyChart,
+  MonthlyLineChart,
 } from '@components/index';
+import type { ChartMode } from '@components/PeriodFilter';
 import { getMonthStart, getMonthEnd } from '@utils/currency';
 
 export default function HomeScreen(): React.ReactElement {
   const scrollRef = useRef<ScrollView>(null);
   const categoryChartY = useRef(0);
   const { selectedUser } = useAuthStore();
-  const { selectedMonth, selectedYear, totalIncome, totalExpense, setSelectedMonth, setSelectedYear } = useTransactionStore();
+  const {
+    selectedMonth,
+    selectedYear,
+    totalIncome,
+    totalExpense,
+    setSelectedMonth,
+    setSelectedYear,
+  } = useTransactionStore();
   const navigation = useNavigation();
+  const [chartMode, setChartMode] = useState<ChartMode>('bar');
 
   const netChange = totalIncome - totalExpense;
 
@@ -34,7 +44,7 @@ export default function HomeScreen(): React.ReactElement {
       { userId: selectedUser.id },
       (transactions) => {
         useTransactionStore.getState().setAllTransactions(transactions);
-      },
+      }
     );
     return unsubscribe;
   }, [selectedUser]);
@@ -61,23 +71,36 @@ export default function HomeScreen(): React.ReactElement {
   const handleInfo = useCallback(() => {
     Alert.alert(
       'Net Change',
-      'Net Change is the difference between your total income and total expenses for the selected period.',
+      'Net Change is the difference between your total income and total expenses for the selected period.'
     );
+  }, []);
+
+  const handleChartModeToggle = useCallback(() => {
+    setChartMode((mode) => (mode === 'bar' ? 'line' : 'bar'));
   }, []);
 
   const handleMonthlyInfo = useCallback(() => {
     Alert.alert(
       'Monthly Net',
-      'Net amount per month is calculated as income minus expenses for that month in the selected year.',
+      'Net amount per month is calculated as income minus expenses for that month in the selected year.'
     );
   }, []);
 
   return (
     <View style={styles.container}>
       <ScrollView ref={scrollRef} style={styles.scroll} showsVerticalScrollIndicator={false}>
-        <PeriodFilter year={selectedYear} onYearChange={setSelectedYear} />
+        <PeriodFilter
+          year={selectedYear}
+          onYearChange={setSelectedYear}
+          chartMode={chartMode}
+          onChartModeToggle={handleChartModeToggle}
+        />
 
-        <MonthlyChart onMonthSelect={setSelectedMonth} onInfoPress={handleMonthlyInfo} />
+        {chartMode === 'bar' ? (
+          <MonthlyChart onMonthSelect={setSelectedMonth} onInfoPress={handleMonthlyInfo} />
+        ) : (
+          <MonthlyLineChart onMonthSelect={setSelectedMonth} onInfoPress={handleMonthlyInfo} />
+        )}
 
         <StatisticsCard
           netChange={netChange}

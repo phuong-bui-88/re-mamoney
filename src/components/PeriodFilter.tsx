@@ -3,12 +3,21 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'rea
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { C } from '@theme/index';
 
+export type ChartMode = 'bar' | 'line';
+
 interface PeriodFilterProps {
   year: number;
   onYearChange: (year: number) => void;
+  chartMode?: ChartMode;
+  onChartModeToggle?: () => void;
 }
 
-export default function PeriodFilter({ year, onYearChange }: PeriodFilterProps): React.ReactElement {
+export default function PeriodFilter({
+  year,
+  onYearChange,
+  chartMode = 'bar',
+  onChartModeToggle,
+}: PeriodFilterProps): React.ReactElement {
   const [yearOpen, setYearOpen] = useState(false);
 
   const currentYear = new Date().getFullYear();
@@ -19,13 +28,37 @@ export default function PeriodFilter({ year, onYearChange }: PeriodFilterProps):
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.yearBtn} onPress={() => setYearOpen(true)} activeOpacity={0.7}>
+      {onChartModeToggle && (
+        <TouchableOpacity
+          style={[styles.toggleBtn, chartMode === 'line' && styles.toggleBtnActive]}
+          onPress={onChartModeToggle}
+          activeOpacity={0.7}
+          testID="chart-mode-toggle"
+          accessibilityRole="button"
+          accessibilityLabel={chartMode === 'bar' ? 'Show line chart' : 'Show bar chart'}
+        >
+          <Ionicons
+            name={chartMode === 'bar' ? 'analytics-outline' : 'bar-chart-outline'}
+            size={16}
+            color={chartMode === 'line' ? C.primary : C.textMedium}
+          />
+        </TouchableOpacity>
+      )}
+      <TouchableOpacity
+        style={styles.yearBtn}
+        onPress={() => setYearOpen(true)}
+        activeOpacity={0.7}
+      >
         <Text style={styles.yearText}>{String(year)}</Text>
         <Ionicons name="chevron-down" size={14} color={C.textMedium} />
       </TouchableOpacity>
 
       <Modal visible={yearOpen} transparent animationType="fade">
-        <TouchableOpacity style={styles.overlayBase} onPress={() => setYearOpen(false)} activeOpacity={1}>
+        <TouchableOpacity
+          style={styles.overlayBase}
+          onPress={() => setYearOpen(false)}
+          activeOpacity={1}
+        >
           <View style={styles.pickerContainer}>
             <Text style={styles.pickerTitle}>Select Year</Text>
             <ScrollView>
@@ -33,9 +66,14 @@ export default function PeriodFilter({ year, onYearChange }: PeriodFilterProps):
                 <TouchableOpacity
                   key={y}
                   style={[styles.pickerItem, y === year && styles.pickerItemActive]}
-                  onPress={() => { onYearChange(y); setYearOpen(false); }}
+                  onPress={() => {
+                    onYearChange(y);
+                    setYearOpen(false);
+                  }}
                 >
-                  <Text style={[styles.pickerItemText, y === year && styles.pickerItemTextActive]}>{String(y)}</Text>
+                  <Text style={[styles.pickerItemText, y === year && styles.pickerItemTextActive]}>
+                    {String(y)}
+                  </Text>
                   {y === year && <Ionicons name="checkmark" size={20} color={C.primary} />}
                 </TouchableOpacity>
               ))}
@@ -51,6 +89,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 8,
     justifyContent: 'flex-end',
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -92,6 +131,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
     textAlign: 'center',
+  },
+  toggleBtn: {
+    alignItems: 'center',
+    backgroundColor: C.white,
+    borderColor: C.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  toggleBtnActive: {
+    backgroundColor: C.primaryLight,
+    borderColor: C.primary,
   },
   yearBtn: {
     alignItems: 'center',

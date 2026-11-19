@@ -69,6 +69,7 @@ jest.mock('react-native-reanimated', () => {
     // Shared values keep their identity across renders, as they do in the real library.
     useSharedValue: (init: unknown) => useRef({ value: init }).current,
     useAnimatedStyle: (fn: unknown) => (typeof fn === 'function' ? fn() : {}),
+    useAnimatedProps: (fn: unknown) => (typeof fn === 'function' ? fn() : {}),
     withTiming: (v: unknown) => v,
     withSpring: (v: unknown) => v,
     withDecay: (v: unknown) => v,
@@ -76,7 +77,13 @@ jest.mock('react-native-reanimated', () => {
     runOnJS: (fn: unknown) => fn,
     runOnUI: (fn: unknown) => fn,
     createAnimatedComponent: (Component: unknown) => Component,
-    Easing: { linear: jest.fn(), ease: jest.fn(), quad: jest.fn(), cubic: jest.fn() },
+    Easing: {
+      linear: jest.fn(),
+      ease: jest.fn(),
+      quad: jest.fn(),
+      cubic: jest.fn(),
+      out: jest.fn((f: unknown) => f),
+    },
     interpolate: jest.fn(),
     Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
     FadeIn: jest.fn(),
