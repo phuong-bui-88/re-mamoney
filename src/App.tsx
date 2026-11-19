@@ -2,6 +2,7 @@ import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useFonts } from 'expo-font';
 import AddTransactionScreen from '@screens/AddTransactionScreen';
 import AskScreen from '@screens/AskScreen';
 import EditTransactionScreen from '@screens/EditTransactionScreen';
@@ -81,6 +82,12 @@ function HomeTabNavigator() {
 export default function App(): React.ReactElement {
   const { user, setUser, setSelectedUser, setSavedAccounts } = useAuthStore();
   const [isInitializing, setIsInitializing] = useState(true);
+  // Load the icon font explicitly: on web, Expo's dynamic font loading is unavailable,
+  // so without this every Ionicons glyph renders as an empty box.
+  const [fontsLoaded] = useFonts({
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    Ionicons: require('@react-native-vector-icons/ionicons/fonts/Ionicons.ttf'),
+  });
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -114,7 +121,7 @@ export default function App(): React.ReactElement {
     initializeApp();
   }, [setUser, setSelectedUser, setSavedAccounts]);
 
-  if (isInitializing) {
+  if (isInitializing || !fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#00BFA5" />

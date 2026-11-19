@@ -6,10 +6,12 @@ module.exports = {
   transform: {
     '^.+\\.(ts|tsx)$': 'ts-jest',
     '^.+\\.(js|jsx)$': 'babel-jest',
-    '^.+\\.(bmp|gif|jpg|jpeg|mp4|png|psd|svg|webp)$':
+    '^.+\\.(bmp|gif|jpg|jpeg|mp4|png|psd|svg|webp|ttf|otf)$':
       '@react-native/jest-preset/jest/assetFileTransformer.js',
   },
   moduleNameMapper: {
+    // Font files (e.g. Ionicons.ttf loaded via expo-font) live in node_modules that are not transformed.
+    '\\.(ttf|otf)$': '<rootDir>/src/test/fontStub.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@screens/(.*)$': '<rootDir>/src/screens/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',

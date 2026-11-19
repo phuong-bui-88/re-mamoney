@@ -141,3 +141,10 @@ jest.mock('expo-clipboard', () => ({
 // Suppress console errors in tests
 global.console.error = jest.fn();
 global.console.warn = jest.fn();
+
+// expo-font ships ESM and needs native/DOM font APIs; report fonts as loaded in tests.
+jest.mock('expo-font', () => ({
+  useFonts: () => [true, null],
+  loadAsync: jest.fn(() => Promise.resolve()),
+  isLoaded: () => true,
+}));
