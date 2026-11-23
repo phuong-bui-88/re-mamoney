@@ -46,6 +46,14 @@ describe('DayTransactionsModal', () => {
     expect(screen.queryByTestId('day-transactions-modal')).toBeNull();
   });
 
+  it('anchors the card to the top of the screen', () => {
+    render(<DayTransactionsModal date={new Date(2026, 6, 10)} onClose={jest.fn()} />);
+    const overlayStyle = StyleSheet.flatten(
+      screen.getByTestId('day-modal-overlay').props.style
+    );
+    expect(overlayStyle.justifyContent).toBe('flex-start');
+  });
+
   it('shows the formatted date as the title', () => {
     render(<DayTransactionsModal date={new Date(2026, 6, 10)} onClose={jest.fn()} />);
 
@@ -132,12 +140,13 @@ describe('DayTransactionsModal', () => {
       expect(screen.queryByTestId('day-modal-input')).toBeNull();
     });
 
-    it('shows input and moves card to top when add is pressed', () => {
+    it('shows input while the card stays at the top', () => {
       open();
       expect(screen.getByTestId('day-modal-input')).toBeTruthy();
-      expect(screen.getByTestId('day-modal-overlay').props.style).toEqual(
-        expect.arrayContaining([expect.objectContaining({ justifyContent: 'flex-start' })])
+      const overlayStyle = StyleSheet.flatten(
+        screen.getByTestId('day-modal-overlay').props.style
       );
+      expect(overlayStyle.justifyContent).toBe('flex-start');
     });
 
     it('paste fills the input from clipboard', async () => {

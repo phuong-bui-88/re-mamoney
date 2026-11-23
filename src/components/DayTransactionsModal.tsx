@@ -125,7 +125,7 @@ export default function DayTransactionsModal({
     <Modal visible={date !== null} transparent animationType="fade" onRequestClose={onClose}>
       <GestureHandlerRootView style={styles.root}>
         <Pressable
-          style={[styles.overlay, adding && styles.overlayTop]}
+          style={styles.overlay}
           onPress={onClose}
           testID="day-modal-overlay"
         >
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   input: {
     color: C.textDark,
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     maxHeight: 100,
     minHeight: 36,
     paddingHorizontal: 8,
@@ -326,11 +326,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: C.overlay,
     flex: 1,
-    justifyContent: 'center',
-    padding: 16,
-  },
-  overlayTop: {
     justifyContent: 'flex-start',
+    padding: 16,
     paddingTop: 48,
   },
   root: {

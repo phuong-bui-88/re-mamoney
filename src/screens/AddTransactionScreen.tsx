@@ -401,10 +401,12 @@ export default function AddTransactionScreen(): React.ReactElement {
       behavior="padding"
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
+      <View style={styles.body}>
       <ScrollView
         ref={scrollRef}
         style={styles.scrollArea}
         keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContent}
       >
         {segments.map(renderSegment)}
 
@@ -455,11 +457,18 @@ export default function AddTransactionScreen(): React.ReactElement {
           </TouchableOpacity>
         </View>
       </View>
+      </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  body: {
+    alignSelf: 'center',
+    flex: 1,
+    maxWidth: 680,
+    width: '100%',
+  },
   container: {
     backgroundColor: C.bg,
     flex: 1,
@@ -528,6 +537,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 12,
     paddingTop: 8,
+  },
+  scrollContent: {
+    paddingBottom: 8,
   },
   sendButton: {
     backgroundColor: C.blue,
