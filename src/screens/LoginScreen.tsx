@@ -4,7 +4,7 @@ import { useAuthStore } from '@store/index';
 import { getDeviceId } from '@utils/device';
 import { saveDeviceUser, getDeviceUsers } from '@services/deviceUsers';
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     backgroundColor: '#2196F3',

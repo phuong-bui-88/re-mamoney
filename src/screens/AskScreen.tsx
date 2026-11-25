@@ -114,7 +114,7 @@ export default function AskScreen(): React.ReactElement {
   );
 }
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   assistantMessage: {
     backgroundColor: C.assistantBg,
     marginRight: 50,
@@ -169,6 +169,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     flex: 1,
+    fontSize: 16,
     marginRight: 10,
     padding: 12,
   },

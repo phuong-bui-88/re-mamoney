@@ -241,7 +241,7 @@ export default function DayTransactionsModal({
   );
 }
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   card: {
     backgroundColor: C.bg,
     borderRadius: 16,

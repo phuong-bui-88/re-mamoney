@@ -468,7 +468,7 @@ export default function EditTransactionScreen(): React.ReactElement | null {
   );
 }
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   amountCol: {
     flex: 1,
   },
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     color: C.textDark,
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },

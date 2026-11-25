@@ -471,11 +471,10 @@ export default function AddTransactionScreen(): React.ReactElement {
   );
 }
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   body: {
     alignSelf: 'center',
     flex: 1,
-    maxWidth: 680,
     width: '100%',
   },
   container: {
@@ -487,6 +486,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     flex: 1,
+    fontSize: 16,
     marginRight: 10,
     maxHeight: 100,
     paddingHorizontal: 14,
