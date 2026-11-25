@@ -11,25 +11,19 @@ describe('ScrollToTopButton', () => {
   it('renders with absolute positioning', () => {
     const { toJSON } = render(<ScrollToTopButton onPress={() => {}} />);
     const tree = JSON.parse(JSON.stringify(toJSON()));
-    expect(tree.props.style).toEqual(
-      expect.objectContaining({ position: 'absolute' })
-    );
+    expect(tree.props.style).toEqual(expect.objectContaining({ position: 'absolute' }));
   });
 
   it('positions above the FAB with bottom: 134', () => {
     const { toJSON } = render(<ScrollToTopButton onPress={() => {}} />);
     const tree = JSON.parse(JSON.stringify(toJSON()));
-    expect(tree.props.style).toEqual(
-      expect.objectContaining({ bottom: 134 })
-    );
+    expect(tree.props.style).toEqual(expect.objectContaining({ bottom: 134 }));
   });
 
   it('uses 44x44 size', () => {
     const { toJSON } = render(<ScrollToTopButton onPress={() => {}} />);
     const tree = JSON.parse(JSON.stringify(toJSON()));
-    expect(tree.props.style).toEqual(
-      expect.objectContaining({ width: 44, height: 44 })
-    );
+    expect(tree.props.style).toEqual(expect.objectContaining({ width: 44, height: 44 }));
   });
 
   it('renders chevron-up icon', () => {

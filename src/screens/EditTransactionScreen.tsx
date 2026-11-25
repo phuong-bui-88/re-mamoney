@@ -37,7 +37,9 @@ export default function EditTransactionScreen(): React.ReactElement | null {
   const insets = useSafeAreaInsets();
   const savingRef = useRef(false);
   const { transactionId } = route.params as { transactionId: string };
-  const transaction = useTransactionStore((s) => s.transactions.find((t) => t.id === transactionId));
+  const transaction = useTransactionStore((s) =>
+    s.transactions.find((t) => t.id === transactionId)
+  );
 
   useEffect(() => {
     if (!transaction) {
@@ -68,8 +70,18 @@ export default function EditTransactionScreen(): React.ReactElement | null {
   const [viewYear, setViewYear] = useState(initialDate.getFullYear());
 
   const MONTH_NAMES = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
   const DAY_LABELS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
@@ -259,12 +271,7 @@ export default function EditTransactionScreen(): React.ReactElement | null {
               size={14}
               color={isExpense ? C.expense : C.income}
             />
-            <Text
-              style={[
-                styles.typeBadgeText,
-                { color: isExpense ? C.expense : C.income },
-              ]}
-            >
+            <Text style={[styles.typeBadgeText, { color: isExpense ? C.expense : C.income }]}>
               {isExpense ? 'Expense' : 'Income'}
             </Text>
           </View>
@@ -305,10 +312,7 @@ export default function EditTransactionScreen(): React.ReactElement | null {
                   return (
                     <TouchableOpacity
                       key={key}
-                      style={[
-                        styles.pickerItem,
-                        isSelected && styles.pickerItemActive,
-                      ]}
+                      style={[styles.pickerItem, isSelected && styles.pickerItemActive]}
                       onPress={() => {
                         setSelectedCategory(key);
                         setCategoryOpen(false);
@@ -318,9 +322,7 @@ export default function EditTransactionScreen(): React.ReactElement | null {
                         <Ionicons name={icon as any} size={18} color={color} />
                         <Text style={styles.pickerItemText}>{label}</Text>
                       </View>
-                      {isSelected && (
-                        <Ionicons name="checkmark" size={20} color={C.primary} />
-                      )}
+                      {isSelected && <Ionicons name="checkmark" size={20} color={C.primary} />}
                     </TouchableOpacity>
                   );
                 })}
@@ -454,13 +456,11 @@ export default function EditTransactionScreen(): React.ReactElement | null {
           <TouchableOpacity
             style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
             onPressIn={handleSave}
-              onPress={handleSave}
+            onPress={handleSave}
             disabled={isSaving}
             activeOpacity={0.8}
           >
-            <Text style={styles.saveButtonText}>
-              {isSaving ? 'Saving...' : 'Save Changes'}
-            </Text>
+            <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save Changes'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

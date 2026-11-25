@@ -7,7 +7,7 @@ import * as deviceUsersService from '@services/deviceUsers';
 function filterByPeriod(
   transactions: Transaction[],
   start?: Date | null,
-  end?: Date | null,
+  end?: Date | null
 ): Transaction[] {
   if (!start && !end) return [];
   let filtered = [...transactions];
@@ -154,7 +154,9 @@ interface TransactionStore {
   setPeriod: (start: Date, end: Date) => void;
   setTransactions: (transactions: Transaction[]) => void;
   setFilter: (filter: TransactionFilter) => void;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  addTransaction: (
+    transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<void>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   loadTransactions: (filter: TransactionFilter) => Promise<void>;
@@ -211,7 +213,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     try {
       const newTransaction = await firebaseService.addTransaction(transaction);
       const { allTransactions } = get();
-      const merged = allTransactions.filter(t => t.id !== newTransaction.id);
+      const merged = allTransactions.filter((t) => t.id !== newTransaction.id);
       get().setAllTransactions([...merged, newTransaction]);
       set({ isLoading: false });
     } catch (error) {

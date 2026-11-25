@@ -21,14 +21,13 @@ describe('parseTransactionMessage', () => {
     expect(result.followUpQuestion).toContain('token');
   });
 
-  it('should include today\'s date in the AI system prompt', async () => {
+  it("should include today's date in the AI system prompt", async () => {
     mockedAxios.post.mockResolvedValue({
       data: {
         choices: [
           {
             message: {
-              content:
-                'TRANSACTION: Lunch | 50000 | food | expense | 01-07-2026',
+              content: 'TRANSACTION: Lunch | 50000 | food | expense | 01-07-2026',
             },
           },
         ],
@@ -37,9 +36,10 @@ describe('parseTransactionMessage', () => {
 
     await parseTransactionMessage('Lunch 50k');
 
-    const body = mockedAxios.post.mock
-      .calls[0][1] as { messages: Array<{ role: string; content: string }> };
-    const systemMsg = body.messages.find(m => m.role === 'system')!.content;
+    const body = mockedAxios.post.mock.calls[0][1] as {
+      messages: Array<{ role: string; content: string }>;
+    };
+    const systemMsg = body.messages.find((m) => m.role === 'system')!.content;
 
     const today = new Date();
     const day = String(today.getDate()).padStart(2, '0');
@@ -58,8 +58,7 @@ describe('parseTransactionMessage', () => {
         choices: [
           {
             message: {
-              content:
-                'TRANSACTION: Coffee | 30000 | food | expense | 01-07-2026',
+              content: 'TRANSACTION: Coffee | 30000 | food | expense | 01-07-2026',
             },
           },
         ],
@@ -103,8 +102,7 @@ describe('parseTransactionMessage', () => {
         choices: [
           {
             message: {
-              content:
-                'TRANSACTION: Salary | 20000000 | salary | income | 01-07-2026',
+              content: 'TRANSACTION: Salary | 20000000 | salary | income | 01-07-2026',
             },
           },
         ],

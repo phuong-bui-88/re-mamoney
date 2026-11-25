@@ -90,7 +90,7 @@ describe('EditTransactionScreen', () => {
 
     expect(screen.getByText('Edit Transaction')).toBeTruthy();
     ['Description:', 'Amount:', 'Type:', 'Category:', 'Date:'].forEach((l) =>
-      expect(screen.getByText(l)).toBeTruthy(),
+      expect(screen.getByText(l)).toBeTruthy()
     );
     expect(screen.getByText('Save Changes')).toBeTruthy();
   });
@@ -125,7 +125,7 @@ describe('EditTransactionScreen', () => {
           description: 'Lunch',
           amount: 50000,
           category: 'food',
-        }),
+        })
       );
     });
   });

@@ -14,8 +14,9 @@ import firebaseService from '@services/firebase';
 import * as deviceUsersService from '@services/deviceUsers';
 import { getDeviceId } from '@utils/device';
 import { useAuthStore } from '@store/index';
+import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const C = { white: '#fff' };
@@ -35,6 +36,15 @@ const styles = StyleSheet.create({
   },
 });
 
+function AddTransactionHeaderLeft(): React.ReactElement {
+  const navigation = useNavigation();
+  return (
+    <TouchableOpacity onPress={() => navigation.navigate('Dashboard' as never)}>
+      <Ionicons name="chevron-back" size={24} color="#00BFA5" />
+    </TouchableOpacity>
+  );
+}
+
 function HomeTabNavigator() {
   return (
     <Tab.Navigator
@@ -48,7 +58,9 @@ function HomeTabNavigator() {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -56,7 +68,9 @@ function HomeTabNavigator() {
         component={TransactionListScreen}
         options={{
           tabBarLabel: 'Transactions',
-          tabBarIcon: ({ color, size }) => <Ionicons name="list-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="list-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -64,7 +78,9 @@ function HomeTabNavigator() {
         component={AskScreen}
         options={{
           tabBarLabel: 'Ask AI',
-          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-ellipses-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbubble-ellipses-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -72,7 +88,19 @@ function HomeTabNavigator() {
         component={SettingsScreen}
         options={{
           tabBarLabel: 'Settings',
-          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="AddTransaction"
+        component={AddTransactionScreen}
+        options={{
+          headerShown: true,
+          title: 'Add Transaction',
+          headerLeft: () => <AddTransactionHeaderLeft />,
+          tabBarButton: () => null,
         }}
       />
     </Tab.Navigator>
@@ -133,33 +161,24 @@ export default function App(): React.ReactElement {
     <GestureHandlerRootView style={styles.gestureRoot}>
       <NavigationContainer>
         <Stack.Navigator>
-        {user ? (
-          <>
-            <Stack.Screen
-              name="Main"
-              component={HomeTabNavigator}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="AddTransaction"
-              component={AddTransactionScreen}
-              options={{ title: 'Add Transaction' }}
-            />
-            <Stack.Screen
-              name="EditTransaction"
-              component={EditTransactionScreen}
-              options={{ headerShown: false }}
-            />
-          </>
-        ) : (
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false }}
-          />
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+          {user ? (
+            <>
+              <Stack.Screen
+                name="Main"
+                component={HomeTabNavigator}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="EditTransaction"
+                component={EditTransactionScreen}
+                options={{ headerShown: false }}
+              />
+            </>
+          ) : (
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
     </GestureHandlerRootView>
   );
 }

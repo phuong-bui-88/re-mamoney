@@ -35,7 +35,7 @@ jest.mock('@react-navigation/native-stack', () => {
     React.createElement(
       View,
       { testID: `stack-screen-${name}` },
-      Component ? React.createElement(Component) : children ?? null,
+      Component ? React.createElement(Component) : (children ?? null)
     );
   return { createNativeStackNavigator: () => ({ Navigator, Screen }) };
 });
@@ -55,7 +55,7 @@ jest.mock('@react-navigation/bottom-tabs', () => {
     React.createElement(
       View,
       { testID: `tab-screen-${name}` },
-      Component ? React.createElement(Component) : null,
+      Component ? React.createElement(Component) : null
     );
   return { createBottomTabNavigator: () => ({ Navigator, Screen }) };
 });
@@ -155,8 +155,8 @@ describe('App (native-stack migration)', () => {
     const errorSpy = jest.spyOn(console, 'error');
     render(<App />);
     await waitFor(() => expect(screen.getByTestId('login-screen')).toBeTruthy());
-    const interactionErrors = errorSpy.mock.calls.filter(
-      (args) => String(args[0]).includes('InteractionManager'),
+    const interactionErrors = errorSpy.mock.calls.filter((args) =>
+      String(args[0]).includes('InteractionManager')
     );
     expect(interactionErrors).toHaveLength(0);
   });

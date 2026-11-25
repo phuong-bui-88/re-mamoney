@@ -34,7 +34,11 @@ jest.mock('react-native-svg', () => {
     },
     G: function GMock({ onPress, children }: { onPress?: () => void; children?: React.ReactNode }) {
       if (onPress) {
-        return React.createElement(TouchableOpacity, { onPress, accessibilityRole: 'button' }, children);
+        return React.createElement(
+          TouchableOpacity,
+          { onPress, accessibilityRole: 'button' },
+          children
+        );
       }
       return React.createElement(View, null, children);
     },
@@ -52,7 +56,11 @@ jest.mock('react-native-svg', () => {
       height?: number;
     }) {
       if (onPress) {
-        return React.createElement(TouchableOpacity, { onPress, accessibilityRole: 'button' }, children);
+        return React.createElement(
+          TouchableOpacity,
+          { onPress, accessibilityRole: 'button' },
+          children
+        );
       }
       return React.createElement(View, { testID: 'chart-bar', x, width, height }, children);
     },
@@ -124,7 +132,7 @@ describe('MonthlyChart', () => {
             amount: 100000 * (month + 1),
             type: 'income',
             date: new Date(2026, month, 15),
-          }),
+          })
         ),
       });
     };
@@ -196,9 +204,7 @@ describe('MonthlyChart', () => {
   it('calls onMonthSelect when a bar is tapped', () => {
     const onSelect = jest.fn();
     useTransactionStore.setState({
-      allTransactions: [
-        mockTransaction({ id: '1', amount: 50000, date: new Date('2026-05-15') }),
-      ],
+      allTransactions: [mockTransaction({ id: '1', amount: 50000, date: new Date('2026-05-15') })],
     });
     render(<MonthlyChart onMonthSelect={onSelect} />);
     const bars = screen.getAllByRole('button');
@@ -208,9 +214,7 @@ describe('MonthlyChart', () => {
 
   it('tapping the same bar toggles the active state', () => {
     useTransactionStore.setState({
-      allTransactions: [
-        mockTransaction({ id: '1', amount: 50000, date: new Date('2026-05-15') }),
-      ],
+      allTransactions: [mockTransaction({ id: '1', amount: 50000, date: new Date('2026-05-15') })],
     });
     render(<MonthlyChart />);
     const bars = screen.getAllByRole('button');
@@ -222,9 +226,7 @@ describe('MonthlyChart', () => {
 
   it('shows correct amount for expense (negative net)', () => {
     useTransactionStore.setState({
-      allTransactions: [
-        mockTransaction({ id: '1', amount: 80000, date: new Date('2026-05-15') }),
-      ],
+      allTransactions: [mockTransaction({ id: '1', amount: 80000, date: new Date('2026-05-15') })],
     });
     render(<MonthlyChart />);
     const bars = screen.getAllByRole('button');
@@ -242,9 +244,7 @@ describe('MonthlyChart', () => {
   it('does not call onMonthSelect when toggling the same bar off', () => {
     const onSelect = jest.fn();
     useTransactionStore.setState({
-      allTransactions: [
-        mockTransaction({ id: '1', amount: 50000, date: new Date('2026-05-15') }),
-      ],
+      allTransactions: [mockTransaction({ id: '1', amount: 50000, date: new Date('2026-05-15') })],
     });
     render(<MonthlyChart onMonthSelect={onSelect} />);
     const bars = screen.getAllByRole('button');
@@ -258,9 +258,7 @@ describe('MonthlyChart', () => {
 
   it('shows only the amount above a tapped bar', () => {
     useTransactionStore.setState({
-      allTransactions: [
-        mockTransaction({ id: '1', amount: 50000, date: new Date('2026-05-15') }),
-      ],
+      allTransactions: [mockTransaction({ id: '1', amount: 50000, date: new Date('2026-05-15') })],
     });
     render(<MonthlyChart />);
     fireEvent.press(screen.getAllByRole('button')[4]);
@@ -425,7 +423,12 @@ describe('MonthlyChart', () => {
       const seedSmallAndLargeMonths = (): void => {
         useTransactionStore.setState({
           allTransactions: [
-            mockTransaction({ id: '1', amount: 100000, type: 'income', date: new Date(2026, 6, 15) }),
+            mockTransaction({
+              id: '1',
+              amount: 100000,
+              type: 'income',
+              date: new Date(2026, 6, 15),
+            }),
             mockTransaction({
               id: '2',
               amount: 1000000,
@@ -455,7 +458,12 @@ describe('MonthlyChart', () => {
       it('keeps columns just off screen inside the plot', () => {
         useTransactionStore.setState({
           allTransactions: [
-            mockTransaction({ id: '1', amount: 100000, type: 'income', date: new Date(2026, 6, 15) }),
+            mockTransaction({
+              id: '1',
+              amount: 100000,
+              type: 'income',
+              date: new Date(2026, 6, 15),
+            }),
             mockTransaction({
               id: '2',
               amount: 1000000,
@@ -474,7 +482,12 @@ describe('MonthlyChart', () => {
       it('shows a readable scale when the months on screen are empty', () => {
         useTransactionStore.setState({
           allTransactions: [
-            mockTransaction({ id: '1', amount: 100000, type: 'income', date: new Date(2026, 0, 15) }),
+            mockTransaction({
+              id: '1',
+              amount: 100000,
+              type: 'income',
+              date: new Date(2026, 0, 15),
+            }),
           ],
         });
         render(<MonthlyChart />);

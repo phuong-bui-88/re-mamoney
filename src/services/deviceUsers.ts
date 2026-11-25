@@ -33,7 +33,7 @@ export async function saveDeviceUser(
   deviceId: string,
   userId: string,
   email: string,
-  displayName?: string,
+  displayName?: string
 ): Promise<void> {
   await docRef(deviceId, userId).set({
     deviceId,
@@ -45,10 +45,7 @@ export async function saveDeviceUser(
 }
 
 export async function getDeviceUsers(deviceId: string): Promise<DeviceUser[]> {
-  const snapshot = await getDb()
-    .collection('deviceUsers')
-    .where('deviceId', '==', deviceId)
-    .get();
+  const snapshot = await getDb().collection('deviceUsers').where('deviceId', '==', deviceId).get();
   return snapshot.docs.map((doc) => {
     const data = doc.data();
     return {
@@ -61,20 +58,15 @@ export async function getDeviceUsers(deviceId: string): Promise<DeviceUser[]> {
   });
 }
 
-export async function removeDeviceUser(
-  deviceId: string,
-  userId: string,
-): Promise<void> {
+export async function removeDeviceUser(deviceId: string, userId: string): Promise<void> {
   await docRef(deviceId, userId).delete();
 }
 
 export function subscribeToDeviceUsers(
   deviceId: string,
-  callback: (users: DeviceUser[]) => void,
+  callback: (users: DeviceUser[]) => void
 ): () => void {
-  const query = getDb()
-    .collection('deviceUsers')
-    .where('deviceId', '==', deviceId);
+  const query = getDb().collection('deviceUsers').where('deviceId', '==', deviceId);
   return query.onSnapshot((snapshot) => {
     const users = snapshot.docs.map((doc) => {
       const data = doc.data();

@@ -94,7 +94,9 @@ class FirebaseService {
     });
   }
 
-  async addTransaction(transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>): Promise<Transaction> {
+  async addTransaction(
+    transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<Transaction> {
     const docRef = await firestore.collection('transactions').add({
       ...transaction,
       date: firebase.firestore.Timestamp.fromDate(transaction.date),
@@ -111,11 +113,14 @@ class FirebaseService {
   }
 
   async updateTransaction(id: string, updates: Partial<Transaction>): Promise<void> {
-    await firestore.collection('transactions').doc(id).update({
-      ...updates,
-      date: updates.date ? firebase.firestore.Timestamp.fromDate(updates.date) : undefined,
-      updatedAt: firebase.firestore.Timestamp.now(),
-    });
+    await firestore
+      .collection('transactions')
+      .doc(id)
+      .update({
+        ...updates,
+        date: updates.date ? firebase.firestore.Timestamp.fromDate(updates.date) : undefined,
+        updatedAt: firebase.firestore.Timestamp.now(),
+      });
   }
 
   async deleteTransaction(id: string): Promise<void> {

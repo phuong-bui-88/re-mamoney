@@ -175,9 +175,7 @@ describe('AddTransactionScreen - keyboard re-focus', () => {
       followUpQuestion: null,
     });
 
-    (firebaseService.addTransaction as jest.Mock).mockRejectedValue(
-      new Error('Network error'),
-    );
+    (firebaseService.addTransaction as jest.Mock).mockRejectedValue(new Error('Network error'));
 
     render(<AddTransactionScreen />);
     const input = screen.getByPlaceholderText('What did you spend?');
@@ -212,19 +210,37 @@ describe('AddTransactionScreen - feed sort order', () => {
 
   it('same-date items appear in createdAt order (oldest first)', () => {
     const txA = {
-      id: 'tx-a', userId: 'test-user', type: 'expense' as const,
-      amount: 10000, category: 'food', description: 'First',
-      date: new Date(today), createdAt: new Date(2026, 6, 14, 10, 0), updatedAt: new Date(),
+      id: 'tx-a',
+      userId: 'test-user',
+      type: 'expense' as const,
+      amount: 10000,
+      category: 'food',
+      description: 'First',
+      date: new Date(today),
+      createdAt: new Date(2026, 6, 14, 10, 0),
+      updatedAt: new Date(),
     };
     const txB = {
-      id: 'tx-b', userId: 'test-user', type: 'expense' as const,
-      amount: 20000, category: 'food', description: 'Second',
-      date: new Date(today), createdAt: new Date(2026, 6, 14, 10, 5), updatedAt: new Date(),
+      id: 'tx-b',
+      userId: 'test-user',
+      type: 'expense' as const,
+      amount: 20000,
+      category: 'food',
+      description: 'Second',
+      date: new Date(today),
+      createdAt: new Date(2026, 6, 14, 10, 5),
+      updatedAt: new Date(),
     };
     const txC = {
-      id: 'tx-c', userId: 'test-user', type: 'expense' as const,
-      amount: 30000, category: 'food', description: 'Third',
-      date: new Date(today), createdAt: new Date(2026, 6, 14, 10, 10), updatedAt: new Date(),
+      id: 'tx-c',
+      userId: 'test-user',
+      type: 'expense' as const,
+      amount: 30000,
+      category: 'food',
+      description: 'Third',
+      date: new Date(today),
+      createdAt: new Date(2026, 6, 14, 10, 10),
+      updatedAt: new Date(),
     };
 
     useTransactionStore.setState({
@@ -246,19 +262,37 @@ describe('AddTransactionScreen - feed sort order', () => {
     yesterday.setDate(yesterday.getDate() - 1);
 
     const txOld = {
-      id: 'tx-old', userId: 'test-user', type: 'expense' as const,
-      amount: 10000, category: 'food', description: 'Yesterday',
-      date: new Date(yesterday), createdAt: new Date(2026, 6, 13, 10, 10), updatedAt: new Date(),
+      id: 'tx-old',
+      userId: 'test-user',
+      type: 'expense' as const,
+      amount: 10000,
+      category: 'food',
+      description: 'Yesterday',
+      date: new Date(yesterday),
+      createdAt: new Date(2026, 6, 13, 10, 10),
+      updatedAt: new Date(),
     };
     const txNew1 = {
-      id: 'tx-new1', userId: 'test-user', type: 'expense' as const,
-      amount: 20000, category: 'food', description: 'Today-First',
-      date: new Date(today), createdAt: new Date(2026, 6, 14, 10, 0), updatedAt: new Date(),
+      id: 'tx-new1',
+      userId: 'test-user',
+      type: 'expense' as const,
+      amount: 20000,
+      category: 'food',
+      description: 'Today-First',
+      date: new Date(today),
+      createdAt: new Date(2026, 6, 14, 10, 0),
+      updatedAt: new Date(),
     };
     const txNew2 = {
-      id: 'tx-new2', userId: 'test-user', type: 'expense' as const,
-      amount: 30000, category: 'food', description: 'Today-Second',
-      date: new Date(today), createdAt: new Date(2026, 6, 14, 10, 5), updatedAt: new Date(),
+      id: 'tx-new2',
+      userId: 'test-user',
+      type: 'expense' as const,
+      amount: 30000,
+      category: 'food',
+      description: 'Today-Second',
+      date: new Date(today),
+      createdAt: new Date(2026, 6, 14, 10, 5),
+      updatedAt: new Date(),
     };
 
     useTransactionStore.setState({
@@ -344,10 +378,30 @@ describe('AddTransactionScreen - tap to edit', () => {
 
     useTransactionStore.setState({
       allTransactions: [
-        { id: 'tx-edit-1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 'tx-edit-1',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'Coffee',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ],
       transactions: [
-        { id: 'tx-edit-1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 'tx-edit-1',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'Coffee',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ],
     });
 
@@ -370,8 +424,12 @@ describe('AddTransactionScreen - tap to edit', () => {
     render(<AddTransactionScreen />);
     const input = screen.getByPlaceholderText('What did you spend?');
 
-    await act(async () => { fireEvent.changeText(input, 'blah blah'); });
-    await act(async () => { fireEvent.press(screen.getByText('Send')); });
+    await act(async () => {
+      fireEvent.changeText(input, 'blah blah');
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText('Send'));
+    });
 
     await waitFor(() => {
       expect(screen.getByText(/Could you clarify/)).toBeTruthy();
@@ -391,12 +449,52 @@ describe('AddTransactionScreen - swipe to delete', () => {
 
     useTransactionStore.setState({
       allTransactions: [
-        { id: 'tx-s1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'SwipeMe', date: today, createdAt: new Date(), updatedAt: new Date() },
-        { id: 'tx-s2', userId: 'test-user', type: 'expense', amount: 50000, category: 'food', description: 'SwipeMeToo', date: today, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 'tx-s1',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'SwipeMe',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'tx-s2',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 50000,
+          category: 'food',
+          description: 'SwipeMeToo',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ],
       transactions: [
-        { id: 'tx-s1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'SwipeMe', date: today, createdAt: new Date(), updatedAt: new Date() },
-        { id: 'tx-s2', userId: 'test-user', type: 'expense', amount: 50000, category: 'food', description: 'SwipeMeToo', date: today, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 'tx-s1',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'SwipeMe',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'tx-s2',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 50000,
+          category: 'food',
+          description: 'SwipeMeToo',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ],
     });
 
@@ -420,12 +518,52 @@ describe('AddTransactionScreen - swipe to delete', () => {
       periodStart: today,
       periodEnd: endOfDay,
       allTransactions: [
-        { id: 'tx-d1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'ToDelete', date: today, createdAt: new Date(), updatedAt: new Date() },
-        { id: 'tx-d2', userId: 'test-user', type: 'expense', amount: 50000, category: 'food', description: 'KeepMe', date: today, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 'tx-d1',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'ToDelete',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'tx-d2',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 50000,
+          category: 'food',
+          description: 'KeepMe',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ],
       transactions: [
-        { id: 'tx-d1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'ToDelete', date: today, createdAt: new Date(), updatedAt: new Date() },
-        { id: 'tx-d2', userId: 'test-user', type: 'expense', amount: 50000, category: 'food', description: 'KeepMe', date: today, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 'tx-d1',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'ToDelete',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'tx-d2',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 50000,
+          category: 'food',
+          description: 'KeepMe',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ],
     });
 
@@ -447,12 +585,30 @@ describe('AddTransactionScreen - swipe to delete', () => {
     today.setHours(0, 0, 0, 0);
     useTransactionStore.setState({
       allTransactions: [
-        { id: 'tx-l1', userId: 'test-user', type: 'expense', amount: 10000, category: 'food',
-          description: 'LeftSwipe', date: today, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 'tx-l1',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 10000,
+          category: 'food',
+          description: 'LeftSwipe',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ],
       transactions: [
-        { id: 'tx-l1', userId: 'test-user', type: 'expense', amount: 10000, category: 'food',
-          description: 'LeftSwipe', date: today, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 'tx-l1',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 10000,
+          category: 'food',
+          description: 'LeftSwipe',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ],
     });
     render(<AddTransactionScreen />);
@@ -470,10 +626,32 @@ describe('AddTransactionScreen - raw lines panel', () => {
     const userText = 'Coffee 30k\nTea 15k\nSnack 10k';
     useTransactionStore.setState({
       allTransactions: [
-        { id: 'tx-rl1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl1',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'Coffee',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
       transactions: [
-        { id: 'tx-rl1', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl1',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'Coffee',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
     });
 
@@ -485,13 +663,36 @@ describe('AddTransactionScreen - raw lines panel', () => {
   });
 
   it('limits raw lines to 5 when more than 5 lines', () => {
-    const userText = 'Line1 10k\nLine2 20k\nLine3 30k\nLine4 40k\nLine5 50k\nLine6 60k\nLine7 70k\nLine8 80k';
+    const userText =
+      'Line1 10k\nLine2 20k\nLine3 30k\nLine4 40k\nLine5 50k\nLine6 60k\nLine7 70k\nLine8 80k';
     useTransactionStore.setState({
       allTransactions: [
-        { id: 'tx-rl2', userId: 'test-user', type: 'expense', amount: 10000, category: 'food', description: 'Line1', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl2',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 10000,
+          category: 'food',
+          description: 'Line1',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
       transactions: [
-        { id: 'tx-rl2', userId: 'test-user', type: 'expense', amount: 10000, category: 'food', description: 'Line1', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl2',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 10000,
+          category: 'food',
+          description: 'Line1',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
     });
 
@@ -511,10 +712,32 @@ describe('AddTransactionScreen - raw lines panel', () => {
     const userText = 'Hủ tiếu 25k\nCơm 60k\nKẹo 16k';
     useTransactionStore.setState({
       allTransactions: [
-        { id: 'tx-rl3', userId: 'test-user', type: 'expense', amount: 60000, category: 'food', description: 'Cơm', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl3',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 60000,
+          category: 'food',
+          description: 'Cơm',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
       transactions: [
-        { id: 'tx-rl3', userId: 'test-user', type: 'expense', amount: 60000, category: 'food', description: 'Cơm', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl3',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 60000,
+          category: 'food',
+          description: 'Cơm',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
     });
 
@@ -523,8 +746,7 @@ describe('AddTransactionScreen - raw lines panel', () => {
     const LINES = ['Hủ tiếu 25k', 'Cơm 60k', 'Kẹo 16k'];
     const rawNodes = screen.root.findAll(
       (node: any) =>
-        typeof node.children?.join('') === 'string' &&
-        LINES.includes(node.children.join('')),
+        typeof node.children?.join('') === 'string' && LINES.includes(node.children.join(''))
     );
     expect(rawNodes).toHaveLength(3);
 
@@ -545,10 +767,32 @@ describe('AddTransactionScreen - raw lines panel', () => {
     const userText = 'Coffee 30k';
     useTransactionStore.setState({
       allTransactions: [
-        { id: 'tx-rl4', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl4',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'Coffee',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
       transactions: [
-        { id: 'tx-rl4', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'Coffee', date: today, createdAt: new Date(), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl4',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'Coffee',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
     });
 
@@ -561,10 +805,30 @@ describe('AddTransactionScreen - raw lines panel', () => {
   it('does not show raw lines panel when userText is missing', () => {
     useTransactionStore.setState({
       allTransactions: [
-        { id: 'tx-rl5', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'NoText', date: today, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 'tx-rl5',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'NoText',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ],
       transactions: [
-        { id: 'tx-rl5', userId: 'test-user', type: 'expense', amount: 30000, category: 'food', description: 'NoText', date: today, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 'tx-rl5',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'NoText',
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ],
     });
 
@@ -578,12 +842,56 @@ describe('AddTransactionScreen - raw lines panel', () => {
     const userText = 'Hủ tiếu 25k\nHủ tiếu 25k\nĐổ xăng 50k';
     useTransactionStore.setState({
       allTransactions: [
-        { id: 'tx-rl7a', userId: 'test-user', type: 'expense', amount: 25000, category: 'food', description: 'Hủ tiếu', date: today, createdAt: new Date(2026, 6, 27, 10, 0), updatedAt: new Date(), userText },
-        { id: 'tx-rl7b', userId: 'test-user', type: 'expense', amount: 25000, category: 'food', description: 'Hủ tiếu', date: today, createdAt: new Date(2026, 6, 27, 10, 1), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl7a',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 25000,
+          category: 'food',
+          description: 'Hủ tiếu',
+          date: today,
+          createdAt: new Date(2026, 6, 27, 10, 0),
+          updatedAt: new Date(),
+          userText,
+        },
+        {
+          id: 'tx-rl7b',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 25000,
+          category: 'food',
+          description: 'Hủ tiếu',
+          date: today,
+          createdAt: new Date(2026, 6, 27, 10, 1),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
       transactions: [
-        { id: 'tx-rl7a', userId: 'test-user', type: 'expense', amount: 25000, category: 'food', description: 'Hủ tiếu', date: today, createdAt: new Date(2026, 6, 27, 10, 0), updatedAt: new Date(), userText },
-        { id: 'tx-rl7b', userId: 'test-user', type: 'expense', amount: 25000, category: 'food', description: 'Hủ tiếu', date: today, createdAt: new Date(2026, 6, 27, 10, 1), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl7a',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 25000,
+          category: 'food',
+          description: 'Hủ tiếu',
+          date: today,
+          createdAt: new Date(2026, 6, 27, 10, 0),
+          updatedAt: new Date(),
+          userText,
+        },
+        {
+          id: 'tx-rl7b',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 25000,
+          category: 'food',
+          description: 'Hủ tiếu',
+          date: today,
+          createdAt: new Date(2026, 6, 27, 10, 1),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
     });
 
@@ -592,8 +900,7 @@ describe('AddTransactionScreen - raw lines panel', () => {
     const LINES = ['Hủ tiếu 25k', 'Đổ xăng 50k'];
     const rawLineNodes = screen.root.findAll(
       (node: any) =>
-        typeof node.children?.join('') === 'string' &&
-        LINES.includes(node.children.join('')),
+        typeof node.children?.join('') === 'string' && LINES.includes(node.children.join(''))
     );
     const texts = rawLineNodes.map((n: any) => n.children.join(''));
 
@@ -607,21 +914,68 @@ describe('AddTransactionScreen - raw lines panel', () => {
       );
     };
     const highlighted: number[] = [];
-    rawLineNodes.forEach((n: any, i: number) => { if (isMatch(n)) highlighted.push(i); });
+    rawLineNodes.forEach((n: any, i: number) => {
+      if (isMatch(n)) highlighted.push(i);
+    });
     expect(highlighted).toEqual([0, 4]);
     expect(highlighted.map((i: number) => texts[i])).toEqual(['Hủ tiếu 25k', 'Hủ tiếu 25k']);
   });
 
   it('jumps to page [4-7] for cards matching lines 5-6 (8-line paste)', () => {
-    const userText = 'Line0 10k\nLine1 20k\nLine2 30k\nLine3 40k\nLine4 50k\nLine5 60k\nLine6 70k\nLine7 80k';
+    const userText =
+      'Line0 10k\nLine1 20k\nLine2 30k\nLine3 40k\nLine4 50k\nLine5 60k\nLine6 70k\nLine7 80k';
     useTransactionStore.setState({
       allTransactions: [
-        { id: 'tx-rl6a', userId: 'test-user', type: 'expense', amount: 60000, category: 'food', description: 'Line5', date: today, createdAt: new Date(2026, 6, 27, 10, 0), updatedAt: new Date(), userText },
-        { id: 'tx-rl6b', userId: 'test-user', type: 'expense', amount: 70000, category: 'food', description: 'Line6', date: today, createdAt: new Date(2026, 6, 27, 10, 1), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl6a',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 60000,
+          category: 'food',
+          description: 'Line5',
+          date: today,
+          createdAt: new Date(2026, 6, 27, 10, 0),
+          updatedAt: new Date(),
+          userText,
+        },
+        {
+          id: 'tx-rl6b',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 70000,
+          category: 'food',
+          description: 'Line6',
+          date: today,
+          createdAt: new Date(2026, 6, 27, 10, 1),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
       transactions: [
-        { id: 'tx-rl6a', userId: 'test-user', type: 'expense', amount: 60000, category: 'food', description: 'Line5', date: today, createdAt: new Date(2026, 6, 27, 10, 0), updatedAt: new Date(), userText },
-        { id: 'tx-rl6b', userId: 'test-user', type: 'expense', amount: 70000, category: 'food', description: 'Line6', date: today, createdAt: new Date(2026, 6, 27, 10, 1), updatedAt: new Date(), userText },
+        {
+          id: 'tx-rl6a',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 60000,
+          category: 'food',
+          description: 'Line5',
+          date: today,
+          createdAt: new Date(2026, 6, 27, 10, 0),
+          updatedAt: new Date(),
+          userText,
+        },
+        {
+          id: 'tx-rl6b',
+          userId: 'test-user',
+          type: 'expense',
+          amount: 70000,
+          category: 'food',
+          description: 'Line6',
+          date: today,
+          createdAt: new Date(2026, 6, 27, 10, 1),
+          updatedAt: new Date(),
+          userText,
+        },
       ],
     });
 
@@ -630,8 +984,7 @@ describe('AddTransactionScreen - raw lines panel', () => {
     const LINES = ['Line4 50k', 'Line5 60k', 'Line6 70k', 'Line7 80k'];
     const rawNodes = screen.root.findAll(
       (node: any) =>
-        typeof node.children?.join('') === 'string' &&
-        LINES.includes(node.children.join('')),
+        typeof node.children?.join('') === 'string' && LINES.includes(node.children.join(''))
     );
     const texts = rawNodes.map((n: any) => n.children.join(''));
 
@@ -652,7 +1005,9 @@ describe('AddTransactionScreen - raw lines panel', () => {
       );
     };
     const highlighted: number[] = [];
-    rawNodes.forEach((n: any, i: number) => { if (isMatch(n)) highlighted.push(i); });
+    rawNodes.forEach((n: any, i: number) => {
+      if (isMatch(n)) highlighted.push(i);
+    });
     expect(highlighted).toEqual([1, 6]);
     expect(rawNodes[1].children.join('')).toBe('Line5 60k');
     expect(rawNodes[6].children.join('')).toBe('Line6 70k');
@@ -685,11 +1040,16 @@ describe('AddTransactionScreen - raw lines panel', () => {
 
     render(<AddTransactionScreen />);
 
-    const LINES = ['Hủ tiếu 25k', 'Đổ xăng 50k', 'Đổi bình nước 50 K', 'Đặt xe 40 K', 'Bánh tráng trộn 20k'];
+    const LINES = [
+      'Hủ tiếu 25k',
+      'Đổ xăng 50k',
+      'Đổi bình nước 50 K',
+      'Đặt xe 40 K',
+      'Bánh tráng trộn 20k',
+    ];
     const rawLineNodes = screen.root.findAll(
       (node: any) =>
-        typeof node.children?.join('') === 'string' &&
-        LINES.includes(node.children.join('')),
+        typeof node.children?.join('') === 'string' && LINES.includes(node.children.join(''))
     );
 
     const texts = rawLineNodes.map((n: any) => n.children.join(''));
@@ -711,16 +1071,28 @@ describe('AddTransactionScreen - raw lines panel', () => {
       );
     };
     const highlighted: number[] = [];
-    rawLineNodes.forEach((n: any, i: number) => { if (isMatch(n)) highlighted.push(i); });
+    rawLineNodes.forEach((n: any, i: number) => {
+      if (isMatch(n)) highlighted.push(i);
+    });
     expect(highlighted).toEqual([0, 6, 12, 18, 24, 26]);
     expect(isMatch(rawLineNodes[rawLineNodes.length - 1])).toBe(true);
   });
 
   it('13-line paste: 13 cards page through [0-4]/[4-8]/[8-12], each highlights its own line', () => {
     const pasteLines = [
-      'Hủ tiếu 25k', 'Chè mè đen 15k', 'Hủ tiếu 25k', 'Hủ tiếu 25 K', 'Bánh mì 30 K',
-      'Hủ tiếu 25 K', 'Cơm 60k', 'Cơm sườn 30k', 'Kẹo 16k', 'Dầu gió 20k',
-      'Khoai lang 20k', 'Hủ tiếu 25 K', 'Bánh bèo 15k',
+      'Hủ tiếu 25k',
+      'Chè mè đen 15k',
+      'Hủ tiếu 25k',
+      'Hủ tiếu 25 K',
+      'Bánh mì 30 K',
+      'Hủ tiếu 25 K',
+      'Cơm 60k',
+      'Cơm sườn 30k',
+      'Kẹo 16k',
+      'Dầu gió 20k',
+      'Khoai lang 20k',
+      'Hủ tiếu 25 K',
+      'Bánh bèo 15k',
     ];
     const userText = pasteLines.join('\n');
 
@@ -756,14 +1128,21 @@ describe('AddTransactionScreen - raw lines panel', () => {
     render(<AddTransactionScreen />);
 
     const DISTINCT_LINES = [
-      'Hủ tiếu 25k', 'Chè mè đen 15k', 'Hủ tiếu 25 K', 'Bánh mì 30 K',
-      'Cơm 60k', 'Cơm sườn 30k', 'Kẹo 16k', 'Dầu gió 20k',
-      'Khoai lang 20k', 'Bánh bèo 15k',
+      'Hủ tiếu 25k',
+      'Chè mè đen 15k',
+      'Hủ tiếu 25 K',
+      'Bánh mì 30 K',
+      'Cơm 60k',
+      'Cơm sườn 30k',
+      'Kẹo 16k',
+      'Dầu gió 20k',
+      'Khoai lang 20k',
+      'Bánh bèo 15k',
     ];
     const rawLineNodes = screen.root.findAll(
       (node: any) =>
         typeof node.children?.join('') === 'string' &&
-        DISTINCT_LINES.includes(node.children.join('')),
+        DISTINCT_LINES.includes(node.children.join(''))
     );
     const texts = rawLineNodes.map((n: any) => n.children.join(''));
 
@@ -789,7 +1168,9 @@ describe('AddTransactionScreen - raw lines panel', () => {
       );
     };
     const highlighted: number[] = [];
-    rawLineNodes.forEach((n: any, i: number) => { if (isMatch(n)) highlighted.push(i); });
+    rawLineNodes.forEach((n: any, i: number) => {
+      if (isMatch(n)) highlighted.push(i);
+    });
 
     expect(highlighted).toEqual([0, 6, 12, 18, 24, 26, 32, 38, 44, 46, 52, 58, 64]);
 
@@ -807,7 +1188,7 @@ describe('AddTransactionScreen - grouped multi-input feed', () => {
     description: string,
     amount: number,
     userText: string,
-    createdAt = new Date(2026, 6, 27, 10, 0),
+    createdAt = new Date(2026, 6, 27, 10, 0)
   ) => ({
     id,
     userId: 'test-user',

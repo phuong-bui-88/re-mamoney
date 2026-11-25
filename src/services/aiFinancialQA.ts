@@ -3,7 +3,7 @@ import { aiConfig } from './aiConfig';
 
 export async function askFinancialQuestion(
   question: string,
-  transactionsSummary: string,
+  transactionsSummary: string
 ): Promise<string> {
   const token = aiConfig.getToken();
   if (!token) {
@@ -39,7 +39,7 @@ If you cannot answer from the data, say so honestly.`,
           Authorization: `Bearer ${token}`,
         },
         timeout: 30000,
-      },
+      }
     );
 
     return (

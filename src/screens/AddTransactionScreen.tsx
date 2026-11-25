@@ -22,7 +22,12 @@ import firebaseService from '@services/firebase';
 import { parseDate } from '@utils/dateParser';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { formatCurrency, formatDate } from '@utils/currency';
-import { CATEGORY_ICONS, CATEGORY_LABELS, CATEGORY_COLORS, FALLBACK_COLORS } from '@utils/categories';
+import {
+  CATEGORY_ICONS,
+  CATEGORY_LABELS,
+  CATEGORY_COLORS,
+  FALLBACK_COLORS,
+} from '@utils/categories';
 import { C } from '@theme/colors';
 import { transItemStyles } from '@styles/index';
 import { getCardWindow, findMatchingLineIndices, RawLinesWindow } from '@utils/rawLinesWindow';
@@ -66,7 +71,10 @@ export default function AddTransactionScreen(): React.ReactElement {
 
     const items: FeedItem[] = [...allTransactions]
       .filter((tx) => tx.date >= threeDaysAgo)
-      .sort((a, b) => a.date.getTime() - b.date.getTime() || a.createdAt.getTime() - b.createdAt.getTime())
+      .sort(
+        (a, b) =>
+          a.date.getTime() - b.date.getTime() || a.createdAt.getTime() - b.createdAt.getTime()
+      )
       .map((tx) => ({
         id: tx.id,
         kind: 'stored' as const,
@@ -105,7 +113,7 @@ export default function AddTransactionScreen(): React.ReactElement {
         (tx) =>
           tx.date.getDate() === now.getDate() &&
           tx.date.getMonth() === now.getMonth() &&
-          tx.date.getFullYear() === now.getFullYear(),
+          tx.date.getFullYear() === now.getFullYear()
       )
       .reduce((sum, tx) => {
         return tx.type === 'expense' ? sum + tx.amount : sum - tx.amount;
@@ -169,7 +177,7 @@ export default function AddTransactionScreen(): React.ReactElement {
         });
       }
     },
-    [navigation],
+    [navigation]
   );
 
   const handleDelete = useCallback((id: string) => {
@@ -190,7 +198,14 @@ export default function AddTransactionScreen(): React.ReactElement {
 
     try {
       const localTx = parseLocalTransactions(text);
-      let txsToSave: Array<{ type: 'income' | 'expense'; amount: number; category: string; description: string; date: Date; userText: string }> = [];
+      let txsToSave: Array<{
+        type: 'income' | 'expense';
+        amount: number;
+        category: string;
+        description: string;
+        date: Date;
+        userText: string;
+      }> = [];
 
       if (localTx.length > 0) {
         txsToSave = localTx.map((tx) => ({
@@ -282,80 +297,74 @@ export default function AddTransactionScreen(): React.ReactElement {
     const amountColor =
       item.type === 'income' ? transItemStyles.incomeColor : transItemStyles.expenseColor;
 
-    const renderLeftActions = () => (
-      <Animated.View style={styles.deleteBackground} />
-    );
+    const renderLeftActions = () => <Animated.View style={styles.deleteBackground} />;
 
     const rowContent = (
-      <TouchableOpacity
-        onPress={() => handleTransactionPress(item)}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity onPress={() => handleTransactionPress(item)} activeOpacity={0.7}>
         <View style={transItemStyles.itemBubble}>
           <View style={transItemStyles.itemRow}>
-          <View style={transItemStyles.itemLeft}>
-            <View style={transItemStyles.itemHeader}>
-              <View style={[transItemStyles.itemIconBg, { backgroundColor: catColor }]}>
-                <Ionicons name={icon as any} size={16} color="#fff" />
-              </View>
-              <View style={transItemStyles.itemInfo}>
-                <Text style={transItemStyles.itemDescription}>
-                  {item.description}
-                </Text>
-                <Text style={transItemStyles.itemMeta}>
-                  {label}
-                  {' | '}
-                  {item.date ? formatDate(item.date) : ''}
-                </Text>
-              </View>
-            </View>
-            <Text style={[transItemStyles.itemAmount, amountColor]}>
-              {sign}
-              {formatCurrency(item.amount || 0)}
-            </Text>
-          </View>
-
-          {item.userText && (() => {
-            const allLines = item.userText.split('\n').filter((l: string) => l.trim());
-            if (allLines.length <= 1) {
-              return (
-                <>
-                  <View style={transItemStyles.itemDivider} />
-                  <View style={transItemStyles.itemRight}>
-                    <Text style={transItemStyles.userText}>{item.userText}</Text>
-                  </View>
-                </>
-              );
-            }
-
-            const matchIdx = matchIndices[item.id] ?? -1;
-            const window = windows[item.id];
-
-            return (
-              <>
-                <View style={transItemStyles.itemDivider} />
-                <View style={transItemStyles.rawLinesPanel}>
-                  {window.lines.map((line: string, idx: number) => {
-                    const globalIdx = window.start + idx;
-                    const isMatch = globalIdx === matchIdx;
-                    return (
-                      <Text
-                        key={idx}
-                        style={[
-                          transItemStyles.rawLine,
-                          isMatch && transItemStyles.rawLineMatch,
-                        ]}
-                      >
-                        {line}
-                      </Text>
-                    );
-                  })}
+            <View style={transItemStyles.itemLeft}>
+              <View style={transItemStyles.itemHeader}>
+                <View style={[transItemStyles.itemIconBg, { backgroundColor: catColor }]}>
+                  <Ionicons name={icon as any} size={16} color="#fff" />
                 </View>
-              </>
-            );
-          })()}
+                <View style={transItemStyles.itemInfo}>
+                  <Text style={transItemStyles.itemDescription}>{item.description}</Text>
+                  <Text style={transItemStyles.itemMeta}>
+                    {label}
+                    {' | '}
+                    {item.date ? formatDate(item.date) : ''}
+                  </Text>
+                </View>
+              </View>
+              <Text style={[transItemStyles.itemAmount, amountColor]}>
+                {sign}
+                {formatCurrency(item.amount || 0)}
+              </Text>
+            </View>
+
+            {item.userText &&
+              (() => {
+                const allLines = item.userText.split('\n').filter((l: string) => l.trim());
+                if (allLines.length <= 1) {
+                  return (
+                    <>
+                      <View style={transItemStyles.itemDivider} />
+                      <View style={transItemStyles.itemRight}>
+                        <Text style={transItemStyles.userText}>{item.userText}</Text>
+                      </View>
+                    </>
+                  );
+                }
+
+                const matchIdx = matchIndices[item.id] ?? -1;
+                const window = windows[item.id];
+
+                return (
+                  <>
+                    <View style={transItemStyles.itemDivider} />
+                    <View style={transItemStyles.rawLinesPanel}>
+                      {window.lines.map((line: string, idx: number) => {
+                        const globalIdx = window.start + idx;
+                        const isMatch = globalIdx === matchIdx;
+                        return (
+                          <Text
+                            key={idx}
+                            style={[
+                              transItemStyles.rawLine,
+                              isMatch && transItemStyles.rawLineMatch,
+                            ]}
+                          >
+                            {line}
+                          </Text>
+                        );
+                      })}
+                    </View>
+                  </>
+                );
+              })()}
+          </View>
         </View>
-      </View>
       </TouchableOpacity>
     );
 
@@ -402,61 +411,61 @@ export default function AddTransactionScreen(): React.ReactElement {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <View style={styles.body}>
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scrollArea}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.scrollContent}
-      >
-        {segments.map(renderSegment)}
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scrollArea}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
+        >
+          {segments.map(renderSegment)}
 
-        {isLoading && (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator size="small" color={C.blue} />
-            <Text style={styles.loadingText}>Saving...</Text>
-          </View>
-        )}
-      </ScrollView>
-
-      <View style={styles.inputContainer}>
-        <View style={styles.todayRow}>
-          <Text style={[styles.todayText, todaySpent > 0 ? styles.todayRed : styles.todayGreen]}>
-            Spent today: {formatCurrency(todaySpent)}
-          </Text>
-          {!inputText.trim() && !isLoading && (
-            <TouchableOpacity
-              onPress={handlePaste}
-              style={styles.pasteButton}
-              accessibilityLabel="Paste from clipboard"
-            >
-              <Ionicons name="clipboard-outline" size={18} color={C.textLight} />
-            </TouchableOpacity>
+          {isLoading && (
+            <View style={styles.loadingRow}>
+              <ActivityIndicator size="small" color={C.blue} />
+              <Text style={styles.loadingText}>Saving...</Text>
+            </View>
           )}
+        </ScrollView>
+
+        <View style={styles.inputContainer}>
+          <View style={styles.todayRow}>
+            <Text style={[styles.todayText, todaySpent > 0 ? styles.todayRed : styles.todayGreen]}>
+              Spent today: {formatCurrency(todaySpent)}
+            </Text>
+            {!inputText.trim() && !isLoading && (
+              <TouchableOpacity
+                onPress={handlePaste}
+                style={styles.pasteButton}
+                accessibilityLabel="Paste from clipboard"
+              >
+                <Ionicons name="clipboard-outline" size={18} color={C.textLight} />
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={styles.inputRow}>
+            <TextInput
+              ref={inputRef}
+              style={styles.input}
+              placeholder="What did you spend?"
+              placeholderTextColor={C.textLight}
+              value={inputText}
+              onChangeText={setInputText}
+              editable={!isLoading}
+              multiline
+              autoFocus
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
+              ]}
+              onPress={handleSend}
+              disabled={!inputText.trim() || isLoading}
+            >
+              <Text style={styles.sendButtonText}>Send</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.inputRow}>
-          <TextInput
-            ref={inputRef}
-            style={styles.input}
-            placeholder="What did you spend?"
-            placeholderTextColor={C.textLight}
-            value={inputText}
-            onChangeText={setInputText}
-            editable={!isLoading}
-            multiline
-            autoFocus
-          />
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
-            ]}
-            onPress={handleSend}
-            disabled={!inputText.trim() || isLoading}
-          >
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
       </View>
     </KeyboardAvoidingView>
   );

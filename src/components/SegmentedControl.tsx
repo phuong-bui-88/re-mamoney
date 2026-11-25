@@ -8,7 +8,11 @@ interface SegmentedControlProps {
   onSelect: (index: number) => void;
 }
 
-export default function SegmentedControl({ segments, selected, onSelect }: SegmentedControlProps): React.ReactElement {
+export default function SegmentedControl({
+  segments,
+  selected,
+  onSelect,
+}: SegmentedControlProps): React.ReactElement {
   return (
     <View style={styles.container}>
       {segments.map((segment, index) => {
@@ -20,7 +24,9 @@ export default function SegmentedControl({ segments, selected, onSelect }: Segme
             onPress={() => onSelect(index)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>{segment}</Text>
+            <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>
+              {segment}
+            </Text>
           </TouchableOpacity>
         );
       })}

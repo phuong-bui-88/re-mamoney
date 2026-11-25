@@ -30,7 +30,7 @@ jest.mock('../FilteredTransactionList', () => {
     return React.createElement(
       View,
       { testID: 'FilteredTransactionList' },
-      React.createElement(Text, null, `filterMode: ${filterMode}, category: ${category}`),
+      React.createElement(Text, null, `filterMode: ${filterMode}, category: ${category}`)
     );
   };
 });
@@ -207,7 +207,9 @@ describe('CategoryChart', () => {
 
     const legendItems = screen.getAllByText(/.*/);
     const foodIdx = legendItems.findIndex((el) => el.props.children === CATEGORY_LABELS.food);
-    const transportIdx = legendItems.findIndex((el) => el.props.children === CATEGORY_LABELS.transport);
+    const transportIdx = legendItems.findIndex(
+      (el) => el.props.children === CATEGORY_LABELS.transport
+    );
     expect(foodIdx).toBeLessThan(transportIdx);
   });
 
@@ -422,9 +424,7 @@ describe('CategoryChart', () => {
 
     it('passes correct filterMode and category to FilteredTransactionList', () => {
       useTransactionStore.setState({
-        transactions: [
-          mockTransaction({ id: '1', category: 'food', amount: 50000 }),
-        ],
+        transactions: [mockTransaction({ id: '1', category: 'food', amount: 50000 })],
       });
       render(<CategoryChart />);
 
@@ -435,9 +435,7 @@ describe('CategoryChart', () => {
 
     it('shows arrow-back icon when a category is selected', () => {
       useTransactionStore.setState({
-        transactions: [
-          mockTransaction({ id: '1', category: 'food', amount: 50000 }),
-        ],
+        transactions: [mockTransaction({ id: '1', category: 'food', amount: 50000 })],
       });
       render(<CategoryChart />);
 

@@ -1,7 +1,9 @@
 import { useTransactionStore } from '@store/index';
 import firebaseService from '@services/firebase';
 
-const mockTransaction = (overrides: Partial<ReturnType<typeof useTransactionStore.getState>['allTransactions'][0]> = {}) => ({
+const mockTransaction = (
+  overrides: Partial<ReturnType<typeof useTransactionStore.getState>['allTransactions'][0]> = {}
+) => ({
   id: 'tx-1',
   userId: 'user-1',
   type: 'expense' as const,
@@ -138,7 +140,7 @@ describe('useTransactionStore', () => {
   describe('addTransaction', () => {
     it('adds new transaction to the store', async () => {
       (firebaseService.addTransaction as jest.Mock).mockResolvedValue(
-        mockTransaction({ id: 'new-id' }),
+        mockTransaction({ id: 'new-id' })
       );
 
       const store = useTransactionStore.getState();

@@ -19,10 +19,7 @@ function formatTransactionsForQA(): string {
   return transactions
     .slice(-30)
     .map((t) => {
-      const date =
-        t.date instanceof Date
-          ? t.date.toLocaleDateString('en-GB')
-          : 'unknown';
+      const date = t.date instanceof Date ? t.date.toLocaleDateString('en-GB') : 'unknown';
       return `${date} | ${t.description} | ${t.amount} | ${t.category} | ${t.type}`;
     })
     .join('\n');
@@ -33,12 +30,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   isLoading: false,
 
   subscribe: (userId: string) => {
-    const unsubscribe = firebaseService.subscribeToChatMessages(
-      userId,
-      (msgs) => {
-        set({ messages: msgs });
-      },
-    );
+    const unsubscribe = firebaseService.subscribeToChatMessages(userId, (msgs) => {
+      set({ messages: msgs });
+    });
     return unsubscribe;
   },
 

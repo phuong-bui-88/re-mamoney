@@ -7,13 +7,15 @@ jest.mock('@react-navigation/native', () => {
   const mockNavigate = jest.fn();
   return {
     useNavigation: () => ({
+      navigate: mockNavigate,
       getParent: () => ({ navigate: mockNavigate }),
     }),
     __mockNavigate: mockNavigate,
   };
 });
 
-const mockNavigate = (jest.requireMock('@react-navigation/native') as { __mockNavigate: jest.Mock }).__mockNavigate;
+const mockNavigate = (jest.requireMock('@react-navigation/native') as { __mockNavigate: jest.Mock })
+  .__mockNavigate;
 
 jest.mock('@services/deviceUsers', () => ({
   removeDeviceUser: jest.fn(),

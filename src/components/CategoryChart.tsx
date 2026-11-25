@@ -7,7 +7,12 @@ import type { Transaction } from '@/types';
 import SegmentedControl from './SegmentedControl';
 import CategoryBreakdownRow from './CategoryBreakdownRow';
 import FilteredTransactionList from './FilteredTransactionList';
-import { CATEGORY_LABELS, CATEGORY_ICONS, CATEGORY_COLORS, FALLBACK_COLORS } from '@utils/categories';
+import {
+  CATEGORY_LABELS,
+  CATEGORY_ICONS,
+  CATEGORY_COLORS,
+  FALLBACK_COLORS,
+} from '@utils/categories';
 import { formatCurrency } from '@utils/currency';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { C } from '@theme/index';
@@ -57,9 +62,11 @@ export default function CategoryChart(): React.ReactElement {
 
   const handleTransactionPress = useCallback(
     (transaction: Transaction) => {
-      (navigation.getParent() as any)?.navigate('EditTransaction', { transactionId: transaction.id });
+      (navigation.getParent() as any)?.navigate('EditTransaction', {
+        transactionId: transaction.id,
+      });
     },
-    [navigation],
+    [navigation]
   );
 
   const categories = useMemo<CategoryEntry[]>(() => {
@@ -85,10 +92,7 @@ export default function CategoryChart(): React.ReactElement {
     });
   }, [transactions, type]);
 
-  const total = useMemo(
-    () => categories.reduce((sum, item) => sum + item.amount, 0),
-    [categories],
-  );
+  const total = useMemo(() => categories.reduce((sum, item) => sum + item.amount, 0), [categories]);
 
   const screenWidth = Dimensions.get('window').width;
   const chartSize = Math.min(screenWidth - 80, 280);
@@ -99,10 +103,7 @@ export default function CategoryChart(): React.ReactElement {
     setSelectedCategory(key);
   };
 
-  const ratios = useMemo(
-    () => categories.map((c) => c.amount / total),
-    [categories, total],
-  );
+  const ratios = useMemo(() => categories.map((c) => c.amount / total), [categories, total]);
 
   const iconPositions = useMemo(() => {
     if (categories.length === 0) return [];
@@ -126,14 +127,26 @@ export default function CategoryChart(): React.ReactElement {
         if (arcDeg < MIN_ARC_DEGREES) return null;
         const midDeg = startDeg + arcDeg / 2;
         const pos = polarToCartesian(cx, cy, ICON_OUTER_RADIUS, midDeg);
-        return { key: cat.key, icon: cat.icon, color: cat.color, pct: ratios[i] * 100, x: pos.x, y: pos.y };
+        return {
+          key: cat.key,
+          icon: cat.icon,
+          color: cat.color,
+          pct: ratios[i] * 100,
+          x: pos.x,
+          y: pos.y,
+        };
       })
-      .filter(Boolean) as { key: string; icon: string; color: string; pct: number; x: number; y: number }[];
+      .filter(Boolean) as {
+      key: string;
+      icon: string;
+      color: string;
+      pct: number;
+      x: number;
+      y: number;
+    }[];
   }, [categories, ratios, cx, cy]);
 
-  const centerEntry = selectedCategory
-    ? categories.find((c) => c.key === selectedCategory)
-    : null;
+  const centerEntry = selectedCategory ? categories.find((c) => c.key === selectedCategory) : null;
 
   return (
     <View style={styles.card}>
@@ -153,119 +166,128 @@ export default function CategoryChart(): React.ReactElement {
           <View style={styles.donutContainer}>
             <TouchableOpacity activeOpacity={1} onPress={() => setSelectedCategory(null)}>
               <View style={{ width: chartSize, height: chartSize }}>
-              <Svg width={chartSize} height={chartSize}>
-                {(() => {
-                  if (categories.length === 1) {
-                    const cat = categories[0];
-                    const isSelected = cat.key === selectedCategory;
-                    return (
-                      <G key={cat.key}>
-                        {isSelected && (
+                <Svg width={chartSize} height={chartSize}>
+                  {(() => {
+                    if (categories.length === 1) {
+                      const cat = categories[0];
+                      const isSelected = cat.key === selectedCategory;
+                      return (
+                        <G key={cat.key}>
+                          {isSelected && (
+                            <Circle
+                              cx={cx}
+                              cy={cy}
+                              r={DONUT_RADIUS + 12}
+                              stroke={cat.color}
+                              strokeWidth={DONUT_WIDTH + 16}
+                              fill="none"
+                              opacity={0.15}
+                            />
+                          )}
                           <Circle
-                            cx={cx} cy={cy}
-                            r={DONUT_RADIUS + 12}
-                            stroke={cat.color}
-                            strokeWidth={DONUT_WIDTH + 16}
+                            cx={cx}
+                            cy={cy}
+                            r={isSelected ? DONUT_RADIUS + 6 : DONUT_RADIUS}
+                            stroke={isSelected ? darkenColor(cat.color, 0.25) : cat.color}
+                            strokeWidth={DONUT_WIDTH}
                             fill="none"
-                            opacity={0.15}
                           />
-                        )}
-                        <Circle
-                          cx={cx} cy={cy}
-                          r={isSelected ? DONUT_RADIUS + 6 : DONUT_RADIUS}
-                          stroke={isSelected ? darkenColor(cat.color, 0.25) : cat.color}
-                          strokeWidth={DONUT_WIDTH}
-                          fill="none"
-                        />
-                        <Circle
-                          cx={cx} cy={cy}
-                          r={isSelected ? DONUT_RADIUS + 6 : DONUT_RADIUS}
-                          stroke="transparent"
-                          strokeWidth={DONUT_WIDTH + 20}
-                          fill="none"
-                          onPress={() => handleSliceTap(cat.key)}
-                        />
-                      </G>
-                    );
-                  }
-                  return categories.map((cat, i) => {
-                    const rawStart = ratios.slice(0, i).reduce((s, r) => s + r * 360, 0);
-                    const rawEnd = rawStart + ratios[i] * 360;
-                    const startAngle = rawStart;
-                    const endAngle = rawEnd;
-                    if (endAngle <= startAngle) return null;
-                    const isSelected = cat.key === selectedCategory;
-                    const arcRadius = isSelected ? DONUT_RADIUS + 6 : DONUT_RADIUS;
-                    return (
-                      <G key={cat.key}>
-                        {isSelected && (
+                          <Circle
+                            cx={cx}
+                            cy={cy}
+                            r={isSelected ? DONUT_RADIUS + 6 : DONUT_RADIUS}
+                            stroke="transparent"
+                            strokeWidth={DONUT_WIDTH + 20}
+                            fill="none"
+                            onPress={() => handleSliceTap(cat.key)}
+                          />
+                        </G>
+                      );
+                    }
+                    return categories.map((cat, i) => {
+                      const rawStart = ratios.slice(0, i).reduce((s, r) => s + r * 360, 0);
+                      const rawEnd = rawStart + ratios[i] * 360;
+                      const startAngle = rawStart;
+                      const endAngle = rawEnd;
+                      if (endAngle <= startAngle) return null;
+                      const isSelected = cat.key === selectedCategory;
+                      const arcRadius = isSelected ? DONUT_RADIUS + 6 : DONUT_RADIUS;
+                      return (
+                        <G key={cat.key}>
+                          {isSelected && (
+                            <Path
+                              d={describeArc(cx, cy, DONUT_RADIUS + 12, startAngle, endAngle)}
+                              stroke={cat.color}
+                              strokeWidth={DONUT_WIDTH + 16}
+                              fill="none"
+                              strokeLinecap="butt"
+                              opacity={0.15}
+                            />
+                          )}
                           <Path
-                            d={describeArc(cx, cy, DONUT_RADIUS + 12, startAngle, endAngle)}
-                            stroke={cat.color}
-                            strokeWidth={DONUT_WIDTH + 16}
+                            d={describeArc(cx, cy, arcRadius, startAngle, endAngle)}
+                            stroke={isSelected ? darkenColor(cat.color, 0.25) : cat.color}
+                            strokeWidth={DONUT_WIDTH}
                             fill="none"
                             strokeLinecap="butt"
-                            opacity={0.15}
                           />
-                        )}
-                        <Path
-                          d={describeArc(cx, cy, arcRadius, startAngle, endAngle)}
-                          stroke={isSelected ? darkenColor(cat.color, 0.25) : cat.color}
-                          strokeWidth={DONUT_WIDTH}
-                          fill="none"
-                          strokeLinecap="butt"
-                        />
-                        <Path
-                          d={describeArc(cx, cy, arcRadius, startAngle, endAngle)}
-                          stroke="transparent"
-                          strokeWidth={DONUT_WIDTH + 20}
-                          fill="none"
-                          onPress={() => handleSliceTap(cat.key)}
-                        />
-                      </G>
-                    );
-                  });
-                })()}
-                <Circle cx={cx} cy={cy} r={38} fill={C.white} opacity={0.95} />
-                <SvgText
-                  x={cx}
-                  y={cy - 12}
-                  textAnchor="middle"
-                  fontSize={24}
-                  fontWeight="bold"
-                  fill={centerEntry ? centerEntry.color : C.textDark}
-                >
-                  {formatCurrency(centerEntry ? centerEntry.amount : total)}
-                </SvgText>
-                <SvgText
-                  x={cx}
-                  y={cy + 14}
-                  textAnchor="middle"
-                  fontSize={12}
-                  fill={C.chartLabel}
-                  letterSpacing={0.5}
-                >
-                  {centerEntry ? centerEntry.label : 'Total'}
-                </SvgText>
-              </Svg>
-              <View style={[StyleSheet.absoluteFill, styles.iconOverlay]}>
-                {iconPositions.map((icon) => (
-                  <View
-                    key={icon.key}
-                    testID={`donut-icon-${icon.key}`}
-                    style={[styles.iconBadge, {
-                      left: icon.x - ICON_BADGE_WIDTH / 2,
-                      top: icon.y - ICON_BADGE_HEIGHT / 2,
-                      backgroundColor: icon.color,
-                    }]}
+                          <Path
+                            d={describeArc(cx, cy, arcRadius, startAngle, endAngle)}
+                            stroke="transparent"
+                            strokeWidth={DONUT_WIDTH + 20}
+                            fill="none"
+                            onPress={() => handleSliceTap(cat.key)}
+                          />
+                        </G>
+                      );
+                    });
+                  })()}
+                  <Circle cx={cx} cy={cy} r={38} fill={C.white} opacity={0.95} />
+                  <SvgText
+                    x={cx}
+                    y={cy - 12}
+                    textAnchor="middle"
+                    fontSize={24}
+                    fontWeight="bold"
+                    fill={centerEntry ? centerEntry.color : C.textDark}
                   >
-                    <Ionicons name={icon.icon as any} size={12} color={C.white} />
-                    <Text style={[styles.iconPct, { color: C.white }]} testID={`donut-pct-${icon.key}`}>
-                      {icon.pct.toFixed(0)}%
-                    </Text>
-                  </View>
-                ))}
-              </View>
+                    {formatCurrency(centerEntry ? centerEntry.amount : total)}
+                  </SvgText>
+                  <SvgText
+                    x={cx}
+                    y={cy + 14}
+                    textAnchor="middle"
+                    fontSize={12}
+                    fill={C.chartLabel}
+                    letterSpacing={0.5}
+                  >
+                    {centerEntry ? centerEntry.label : 'Total'}
+                  </SvgText>
+                </Svg>
+                <View style={[StyleSheet.absoluteFill, styles.iconOverlay]}>
+                  {iconPositions.map((icon) => (
+                    <View
+                      key={icon.key}
+                      testID={`donut-icon-${icon.key}`}
+                      style={[
+                        styles.iconBadge,
+                        {
+                          left: icon.x - ICON_BADGE_WIDTH / 2,
+                          top: icon.y - ICON_BADGE_HEIGHT / 2,
+                          backgroundColor: icon.color,
+                        },
+                      ]}
+                    >
+                      <Ionicons name={icon.icon as any} size={12} color={C.white} />
+                      <Text
+                        style={[styles.iconPct, { color: C.white }]}
+                        testID={`donut-pct-${icon.key}`}
+                      >
+                        {icon.pct.toFixed(0)}%
+                      </Text>
+                    </View>
+                  ))}
+                </View>
               </View>
             </TouchableOpacity>
           </View>
@@ -284,7 +306,9 @@ export default function CategoryChart(): React.ReactElement {
                 </View>
                 <View style={styles.headerInfo}>
                   <Text style={styles.headerLabel}>{centerEntry.label}</Text>
-                  <Text style={styles.headerTotal}>Total: {formatCurrency(centerEntry.amount)}</Text>
+                  <Text style={styles.headerTotal}>
+                    Total: {formatCurrency(centerEntry.amount)}
+                  </Text>
                 </View>
               </TouchableOpacity>
               <FilteredTransactionList

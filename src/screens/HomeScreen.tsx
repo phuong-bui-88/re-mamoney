@@ -65,7 +65,7 @@ export default function HomeScreen(): React.ReactElement {
   }, []);
 
   const handleAddTransaction = useCallback(() => {
-    navigation.getParent()?.navigate('AddTransaction' as never);
+    navigation.navigate('AddTransaction' as never);
   }, [navigation]);
 
   const handleInfo = useCallback(() => {

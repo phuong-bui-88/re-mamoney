@@ -10,7 +10,7 @@ export interface RawLinesWindow {
 export function getCardWindow(
   rawLines: string[],
   matchIdx: number,
-  prevMatchIdx: number,
+  prevMatchIdx: number
 ): RawLinesWindow {
   const total = rawLines.length;
   if (total === 0) {
@@ -38,7 +38,7 @@ export function findMatchingLineIndex(
   rawLines: string[],
   description: string,
   amount: number,
-  excluded: ReadonlySet<number> = new Set(),
+  excluded: ReadonlySet<number> = new Set()
 ): number {
   const descLower = (description || '').toLowerCase();
   const amountStr = String(amount);
@@ -67,10 +67,7 @@ export interface MatchableItem {
   amount?: number;
 }
 
-export function findMatchingLineIndices(
-  items: MatchableItem[],
-  rawLines: string[],
-): number[] {
+export function findMatchingLineIndices(items: MatchableItem[], rawLines: string[]): number[] {
   const excluded = new Set<number>();
   return items.map((item) => {
     const idx = findMatchingLineIndex(rawLines, item.description || '', item.amount || 0, excluded);

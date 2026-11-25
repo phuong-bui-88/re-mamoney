@@ -8,7 +8,12 @@ jest.mock('@services/deviceUsers', () => ({
   subscribeToDeviceUsers: jest.fn(() => jest.fn()),
 }));
 
-const testUser = { id: 'user-a', email: 'a@example.com', createdAt: new Date(), updatedAt: new Date() };
+const testUser = {
+  id: 'user-a',
+  email: 'a@example.com',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
 
 beforeEach(() => {
   useAuthStore.setState({

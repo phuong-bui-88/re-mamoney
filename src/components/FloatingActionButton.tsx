@@ -12,9 +12,16 @@ interface FloatingActionButtonProps {
   bottom?: number;
 }
 
-export default function FloatingActionButton({ onPress, bottom }: FloatingActionButtonProps): React.ReactElement {
+export default function FloatingActionButton({
+  onPress,
+  bottom,
+}: FloatingActionButtonProps): React.ReactElement {
   return (
-    <TouchableOpacity style={[styles.fab, bottom != null && { bottom }]} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={[styles.fab, bottom != null && { bottom }]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
       <Ionicons name="add" size={28} color={C.white} />
     </TouchableOpacity>
   );

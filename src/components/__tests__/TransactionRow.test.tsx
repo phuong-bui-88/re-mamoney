@@ -37,11 +37,7 @@ describe('TransactionRow', () => {
   });
 
   it('renders formatted amount with plus sign for income', () => {
-    render(
-      <TransactionRow
-        transaction={{ ...baseTransaction, type: 'income', amount: 200000 }}
-      />,
-    );
+    render(<TransactionRow transaction={{ ...baseTransaction, type: 'income', amount: 200000 }} />);
     expect(screen.getByText(/\+200.000/)).toBeTruthy();
   });
 

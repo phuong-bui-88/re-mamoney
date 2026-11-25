@@ -124,12 +124,11 @@ const styles = StyleSheet.create({
 });
 
 export default function SettingsScreen(): React.ReactElement {
-  const { user, selectedUser, savedAccounts, signOut, switchToAccount } =
-    useAuthStore();
+  const { user, selectedUser, savedAccounts, signOut, switchToAccount } = useAuthStore();
   const navigation = useNavigation();
 
   const handleAddTransaction = () => {
-    navigation.getParent()?.navigate('AddTransaction' as never);
+    navigation.navigate('AddTransaction' as never);
   };
 
   const handleSwitch = (account: (typeof savedAccounts)[0]) => {
@@ -137,8 +136,7 @@ export default function SettingsScreen(): React.ReactElement {
     switchToAccount(account);
   };
 
-  const isCurrentUser = (account: (typeof savedAccounts)[0]) =>
-    account.userId === selectedUser?.id;
+  const isCurrentUser = (account: (typeof savedAccounts)[0]) => account.userId === selectedUser?.id;
 
   return (
     <View style={styles.container}>
@@ -178,9 +176,7 @@ export default function SettingsScreen(): React.ReactElement {
                 key={account.userId}
                 style={[styles.accountItem, current && styles.accountItemCurrent]}
               >
-                <View
-                  style={[styles.accountAvatar, current && styles.accountAvatarCurrent]}
-                >
+                <View style={[styles.accountAvatar, current && styles.accountAvatarCurrent]}>
                   <Text
                     style={[styles.accountAvatarText, current && styles.accountAvatarTextCurrent]}
                   >

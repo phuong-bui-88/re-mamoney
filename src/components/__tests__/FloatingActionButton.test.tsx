@@ -11,24 +11,18 @@ describe('FloatingActionButton', () => {
   it('uses default bottom of 24 when no bottom prop is provided', () => {
     const { toJSON } = render(<FloatingActionButton onPress={() => {}} />);
     const tree = JSON.parse(JSON.stringify(toJSON()));
-    expect(tree.props.style).toEqual(
-      expect.objectContaining({ bottom: 24 })
-    );
+    expect(tree.props.style).toEqual(expect.objectContaining({ bottom: 24 }));
   });
 
   it('applies custom bottom value when provided', () => {
     const { toJSON } = render(<FloatingActionButton onPress={() => {}} bottom={66} />);
     const tree = JSON.parse(JSON.stringify(toJSON()));
-    expect(tree.props.style).toEqual(
-      expect.objectContaining({ bottom: 66 })
-    );
+    expect(tree.props.style).toEqual(expect.objectContaining({ bottom: 66 }));
   });
 
   it('does not override bottom when bottom prop is undefined', () => {
     const { toJSON } = render(<FloatingActionButton onPress={() => {}} bottom={undefined} />);
     const tree = JSON.parse(JSON.stringify(toJSON()));
-    expect(tree.props.style).toEqual(
-      expect.objectContaining({ bottom: 24 })
-    );
+    expect(tree.props.style).toEqual(expect.objectContaining({ bottom: 24 }));
   });
 });

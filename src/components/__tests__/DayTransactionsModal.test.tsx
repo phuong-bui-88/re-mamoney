@@ -48,9 +48,7 @@ describe('DayTransactionsModal', () => {
 
   it('anchors the card to the top of the screen', () => {
     render(<DayTransactionsModal date={new Date(2026, 6, 10)} onClose={jest.fn()} />);
-    const overlayStyle = StyleSheet.flatten(
-      screen.getByTestId('day-modal-overlay').props.style
-    );
+    const overlayStyle = StyleSheet.flatten(screen.getByTestId('day-modal-overlay').props.style);
     expect(overlayStyle.justifyContent).toBe('flex-start');
   });
 
@@ -143,9 +141,7 @@ describe('DayTransactionsModal', () => {
     it('drops the card to the bottom near the keyboard when add is pressed', () => {
       open();
       expect(screen.getByTestId('day-modal-input')).toBeTruthy();
-      const overlayStyle = StyleSheet.flatten(
-        screen.getByTestId('day-modal-overlay').props.style
-      );
+      const overlayStyle = StyleSheet.flatten(screen.getByTestId('day-modal-overlay').props.style);
       expect(overlayStyle.justifyContent).toBe('flex-end');
     });
 

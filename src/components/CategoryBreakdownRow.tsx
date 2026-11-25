@@ -38,7 +38,10 @@ export default function CategoryBreakdownRow({
         </Text>
         <View style={styles.barTrack}>
           <View
-            style={[styles.barFill, { width: `${Math.min(percentage, 100)}%`, backgroundColor: color }]}
+            style={[
+              styles.barFill,
+              { width: `${Math.min(percentage, 100)}%`, backgroundColor: color },
+            ]}
           />
         </View>
       </View>

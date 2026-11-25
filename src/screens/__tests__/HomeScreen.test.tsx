@@ -5,7 +5,7 @@ import { useAuthStore } from '@store/index';
 import firebaseService from '@services/firebase';
 
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({ getParent: () => ({ navigate: jest.fn() }) }),
+  useNavigation: () => ({ navigate: jest.fn(), getParent: () => ({ navigate: jest.fn() }) }),
 }));
 
 jest.mock('@components/index', () => ({

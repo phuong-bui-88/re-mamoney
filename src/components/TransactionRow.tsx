@@ -31,10 +31,13 @@ function DeleteAction({ progress }: { progress: SharedValue<number> }) {
   return <Animated.View style={[styles.deleteBackground, style]} />;
 }
 
-export default function TransactionRow({ transaction, onDelete, onPress, insideGroup }: TransactionRowProps): React.ReactElement {
-  const renderLeftActions = (progress: SharedValue<number>) => (
-    <DeleteAction progress={progress} />
-  );
+export default function TransactionRow({
+  transaction,
+  onDelete,
+  onPress,
+  insideGroup,
+}: TransactionRowProps): React.ReactElement {
+  const renderLeftActions = (progress: SharedValue<number>) => <DeleteAction progress={progress} />;
 
   const catIcon = CATEGORY_ICONS[transaction.category] || 'ellipsis-horizontal-outline';
   let catColor = CATEGORY_COLORS[transaction.category];
@@ -54,7 +57,9 @@ export default function TransactionRow({ transaction, onDelete, onPress, insideG
         <Text style={styles.description}>{transaction.description}</Text>
         <Text style={styles.date}>{formatDate(transaction.date)}</Text>
       </View>
-      <Text style={[styles.amount, transaction.type === 'expense' ? styles.expense : styles.income]}>
+      <Text
+        style={[styles.amount, transaction.type === 'expense' ? styles.expense : styles.income]}
+      >
         {transaction.type === 'expense' ? '-' : '+'}
         {formatCurrency(transaction.amount)}
       </Text>

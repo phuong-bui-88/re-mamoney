@@ -12,7 +12,13 @@ interface StatisticsCardProps {
   onExpensePress?: () => void;
 }
 
-export default function StatisticsCard({ netChange, expense, income, onInfoPress, onExpensePress }: StatisticsCardProps): React.ReactElement {
+export default function StatisticsCard({
+  netChange,
+  expense,
+  income,
+  onInfoPress,
+  onExpensePress,
+}: StatisticsCardProps): React.ReactElement {
   const isPositive = netChange >= 0;
   const total = income + expense || 1;
   const expenseRatio = expense / total;
@@ -24,7 +30,10 @@ export default function StatisticsCard({ netChange, expense, income, onInfoPress
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Net Change</Text>
           {onInfoPress && (
-            <TouchableOpacity onPress={onInfoPress} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={onInfoPress}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Ionicons name="information-circle-outline" size={18} color="rgba(255,255,255,0.7)" />
             </TouchableOpacity>
           )}
@@ -42,10 +51,17 @@ export default function StatisticsCard({ netChange, expense, income, onInfoPress
               <View style={[styles.dot, { backgroundColor: C.expense }]} />
               <Text style={styles.breakLabel}>Expense</Text>
             </View>
-            <Text style={[styles.breakAmount, { color: C.expense }]}>{formatCurrency(expense)}</Text>
+            <Text style={[styles.breakAmount, { color: C.expense }]}>
+              {formatCurrency(expense)}
+            </Text>
           </View>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${expenseRatio * 100}%`, backgroundColor: C.expense }]} />
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${expenseRatio * 100}%`, backgroundColor: C.expense },
+              ]}
+            />
           </View>
         </TouchableOpacity>
 
@@ -58,7 +74,12 @@ export default function StatisticsCard({ netChange, expense, income, onInfoPress
             <Text style={[styles.breakAmount, { color: C.income }]}>{formatCurrency(income)}</Text>
           </View>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${incomeRatio * 100}%`, backgroundColor: C.income }]} />
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${incomeRatio * 100}%`, backgroundColor: C.income },
+              ]}
+            />
           </View>
         </View>
       </View>
@@ -123,7 +144,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   headerTitle: {
-      color: C.white,
+    color: C.white,
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.5,

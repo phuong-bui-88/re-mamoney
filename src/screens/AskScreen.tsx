@@ -62,18 +62,10 @@ export default function AskScreen(): React.ReactElement {
             <Text style={styles.emptyIcon}>🤖</Text>
             <Text style={styles.emptyTitle}>Financial Q&A</Text>
             <Text style={styles.emptyHint}>Ask about your spending:</Text>
-            <Text style={styles.example}>
-              {`"How much did I spend on food last month?"`}
-            </Text>
-            <Text style={styles.example}>
-              {`"What is my largest expense category?"`}
-            </Text>
-            <Text style={styles.example}>
-              {`"How much did I spend on Grab?"`}
-            </Text>
-            <Text style={styles.example}>
-              {`"What's my average daily spending?"`}
-            </Text>
+            <Text style={styles.example}>{`"How much did I spend on food last month?"`}</Text>
+            <Text style={styles.example}>{`"What is my largest expense category?"`}</Text>
+            <Text style={styles.example}>{`"How much did I spend on Grab?"`}</Text>
+            <Text style={styles.example}>{`"What's my average daily spending?"`}</Text>
           </View>
         )}
 
@@ -85,11 +77,7 @@ export default function AskScreen(): React.ReactElement {
               msg.role === 'user' ? styles.userMessage : styles.assistantMessage,
             ]}
           >
-            <Text
-              style={
-                msg.role === 'user' ? styles.userText : styles.assistantText
-              }
-            >
+            <Text style={msg.role === 'user' ? styles.userText : styles.assistantText}>
               {msg.content}
             </Text>
           </View>

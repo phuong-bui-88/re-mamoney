@@ -83,7 +83,8 @@ Pay attention: return the raw output only, no explanation.`;
 function parseResponse(responseText: string): AIParseResult {
   const transactions: AITransaction[] = [];
 
-  const txRegex = /TRANSACTION:\s*([^|]+)\s*\|\s*(\d+(?:\.\d+)?)\s*\|\s*(\w+)\s*\|\s*(expense|income)\s*\|\s*(\d{2}-\d{2}-\d{4})/gi;
+  const txRegex =
+    /TRANSACTION:\s*([^|]+)\s*\|\s*(\d+(?:\.\d+)?)\s*\|\s*(\w+)\s*\|\s*(expense|income)\s*\|\s*(\d{2}-\d{2}-\d{4})/gi;
   let match: RegExpExecArray | null;
 
   while ((match = txRegex.exec(responseText)) !== null) {
@@ -101,7 +102,7 @@ function parseResponse(responseText: string): AIParseResult {
 
 export async function parseTransactionMessage(
   message: string,
-  history: Array<{ role: string; content: string }> = [],
+  history: Array<{ role: string; content: string }> = []
 ): Promise<AIParseResult> {
   const token = aiConfig.getToken();
   if (!token) {
@@ -134,7 +135,7 @@ export async function parseTransactionMessage(
           Authorization: `Bearer ${token}`,
         },
         timeout: 30000,
-      },
+      }
     );
 
     const rawText = response.data?.choices?.[0]?.message?.content?.trim() || '';
@@ -160,8 +161,7 @@ export async function parseTransactionMessage(
       if (status === 429) {
         return {
           transactions: [],
-          followUpQuestion:
-            'API Rate Limited: Please wait a moment and try again.',
+          followUpQuestion: 'API Rate Limited: Please wait a moment and try again.',
           rawResponse: '',
         };
       }

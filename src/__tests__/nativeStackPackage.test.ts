@@ -3,9 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 describe('@react-navigation/native-stack package integrity', () => {
-  const pkgDir = path.dirname(
-    require.resolve('@react-navigation/native-stack/package.json'),
-  );
+  const pkgDir = path.dirname(require.resolve('@react-navigation/native-stack/package.json'));
 
   it('does not reference InteractionManager (removed in RN 0.88)', () => {
     const libDir = path.join(pkgDir, 'lib');
@@ -13,15 +11,10 @@ describe('@react-navigation/native-stack package integrity', () => {
       recursive: true,
       encoding: 'utf-8',
     }) as string[];
-    const jsFiles = files.filter(
-      (f: string) => f.endsWith('.js') && !f.endsWith('.d.js'),
-    );
+    const jsFiles = files.filter((f: string) => f.endsWith('.js') && !f.endsWith('.d.js'));
     const offenders: string[] = [];
     for (const file of jsFiles) {
-      const content = fs.readFileSync(
-        path.join(libDir, 'commonjs', file),
-        'utf-8',
-      );
+      const content = fs.readFileSync(path.join(libDir, 'commonjs', file), 'utf-8');
       if (content.includes('InteractionManager')) {
         offenders.push(file);
       }
