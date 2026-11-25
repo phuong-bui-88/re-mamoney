@@ -140,13 +140,13 @@ describe('DayTransactionsModal', () => {
       expect(screen.queryByTestId('day-modal-input')).toBeNull();
     });
 
-    it('shows input while the card stays at the top', () => {
+    it('drops the card to the bottom near the keyboard when add is pressed', () => {
       open();
       expect(screen.getByTestId('day-modal-input')).toBeTruthy();
       const overlayStyle = StyleSheet.flatten(
         screen.getByTestId('day-modal-overlay').props.style
       );
-      expect(overlayStyle.justifyContent).toBe('flex-start');
+      expect(overlayStyle.justifyContent).toBe('flex-end');
     });
 
     it('paste fills the input from clipboard', async () => {
@@ -317,5 +317,20 @@ describe('DayTransactionsModal', () => {
     render(<DayTransactionsModal date={new Date(2026, 6, 12)} onClose={jest.fn()} />);
     const style = StyleSheet.flatten(screen.getByTestId('day-transactions-modal').props.style);
     expect(style.minHeight).toBeGreaterThan(0);
+  });
+
+  it('caps card height to 75% of window in pixels so the list can scroll', () => {
+    render(<DayTransactionsModal date={new Date(2026, 6, 10)} onClose={jest.fn()} />);
+    const style = StyleSheet.flatten(screen.getByTestId('day-transactions-modal').props.style);
+    expect(typeof style.maxHeight).toBe('number');
+    expect(style.maxHeight).toBeGreaterThan(style.minHeight as number);
+  });
+
+  it('list scroll view is shrinkable', () => {
+    render(<DayTransactionsModal date={new Date(2026, 6, 10)} onClose={jest.fn()} />);
+    const scroll = screen.UNSAFE_getByType(ScrollView);
+    const style = StyleSheet.flatten(scroll.props.style);
+    expect(style.flexShrink).toBe(1);
+    expect(style.minHeight).toBe(0);
   });
 });

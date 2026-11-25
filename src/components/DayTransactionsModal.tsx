@@ -45,6 +45,7 @@ export default function DayTransactionsModal({
   const { selectedUser } = useAuthStore();
   const { height: windowHeight } = useWindowDimensions();
   const minHeight = Math.round(windowHeight * 0.6);
+  const maxHeight = Math.round(windowHeight * 0.75);
   const [adding, setAdding] = useState(false);
   const [inputText, setInputText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -125,16 +126,18 @@ export default function DayTransactionsModal({
     <Modal visible={date !== null} transparent animationType="fade" onRequestClose={onClose}>
       <GestureHandlerRootView style={styles.root}>
         <Pressable
-          style={styles.overlay}
+          style={[styles.overlay, adding && styles.overlayBottom]}
           onPress={onClose}
           testID="day-modal-overlay"
         >
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={
+              Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined
+            }
             style={styles.kav}
           >
             <Pressable
-              style={[styles.card, { minHeight }]}
+              style={[styles.card, { minHeight, maxHeight }]}
               onPress={() => {}}
               testID="day-transactions-modal"
             >
@@ -242,7 +245,6 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: C.bg,
     borderRadius: 16,
-    maxHeight: '75%',
     overflow: 'hidden',
     width: '100%',
   },
@@ -300,6 +302,8 @@ const styles = StyleSheet.create({
   },
   list: {
     flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 0,
   },
   listContent: {
     paddingVertical: 8,
@@ -329,6 +333,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     padding: 16,
     paddingTop: 48,
+  },
+  overlayBottom: {
+    justifyContent: 'flex-end',
   },
   root: {
     flex: 1,

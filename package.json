@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "android": "react-native run-android",
-    "ios": "react-native run-ios",
+    "ios": "expo start --ios",
+    "iphone": "./scripts/iphone-web.sh",
     "web": "react-native-web",
     "web:start": "NODE_NO_WARNINGS=1 expo start --web",
     "start": "NODE_NO_WARNINGS=1 expo start",
@@ -22,7 +23,8 @@
     "reload": "./scripts/reload-app.sh",
     "deploy:web": "./scripts/deploy-vercel.sh",
     "deploy:web:preview": "./scripts/deploy-vercel.sh --preview",
-    "reload:tunnel": "npx expo start --tunnel && ./scripts/reload-app.sh"
+    "reload:tunnel": "npx expo start --tunnel && ./scripts/reload-app.sh",
+    "share:web": "./scripts/share-web.sh"
   },
   "dependencies": {
     "@babel/runtime": "^7.29.7",

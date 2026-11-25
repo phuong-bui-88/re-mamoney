@@ -10,6 +10,7 @@
 npm install
 npm start                 # Choose: w (web), i (iOS), a (Android)
 npm run web:start         # Web only
+npm run iphone            # Web app in Chrome as an iPhone + DevTools (DEVICE=se|15|15pm)
 npm run ios / android     # Mobile only
 
 npm run type-check        # TypeScript check (no emit)
@@ -166,6 +167,7 @@ import { transItemStyles } from '@styles/index';
 ## Debugging
 
 **Web:** `npm run web:start` → F12 in browser → DevTools
+**iPhone (on Windows/WSL):** `npm run iphone` opens Chrome with an iPhone user agent, its own profile, and DevTools open. The first time, press Ctrl+Shift+M and pick the iPhone model; the profile remembers it. This is react-native-web, not real iOS (the iOS Simulator needs macOS).
 **Mobile:** `npm start` → Scan QR in Expo Go app → logs in terminal + Expo Go
 **Firebase:** Check [Firebase Console](https://console.firebase.google.com) for auth, Firestore, real-time activity
 
