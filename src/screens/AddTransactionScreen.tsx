@@ -502,16 +502,11 @@ export const styles = StyleSheet.create({
     backgroundColor: C.bg,
     flex: 1,
   },
-  input: {
-    borderColor: C.border,
-    borderRadius: 10,
-    borderWidth: 1,
+  deleteBackground: {
+    backgroundColor: C.redDark,
+    borderRadius: 12,
     flex: 1,
-    fontSize: 16,
-    marginRight: 10,
-    maxHeight: INPUT_MAX_HEIGHT,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    marginBottom: 8,
   },
   groupContainer: {
     backgroundColor: C.primaryLight,
@@ -537,6 +532,17 @@ export const styles = StyleSheet.create({
     color: C.textMedium,
     fontSize: 11,
     fontWeight: '600',
+  },
+  input: {
+    borderColor: C.border,
+    borderRadius: 10,
+    borderWidth: 1,
+    flex: 1,
+    fontSize: 16,
+    marginRight: 10,
+    maxHeight: INPUT_MAX_HEIGHT,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   inputContainer: {
     backgroundColor: C.white,
@@ -590,12 +596,6 @@ export const styles = StyleSheet.create({
   },
   todayGreen: {
     color: C.green,
-  },
-  deleteBackground: {
-    backgroundColor: '#D32F2F',
-    borderRadius: 12,
-    flex: 1,
-    marginBottom: 8,
   },
   todayRed: {
     color: C.red,

@@ -3,28 +3,32 @@ import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert } from 'reac
 import { useAuthStore } from '@store/index';
 import { getDeviceId } from '@utils/device';
 import { saveDeviceUser, getDeviceUsers } from '@services/deviceUsers';
+import { C } from '@theme/colors';
 
 export const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    backgroundColor: '#2196F3',
+    backgroundColor: C.blue,
     borderRadius: 8,
     marginBottom: 10,
     padding: 15,
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   buttonText: {
-    color: '#fff',
+    color: C.white,
     fontSize: 16,
     fontWeight: 'bold',
   },
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: C.white,
     flex: 1,
     justifyContent: 'center',
     padding: 20,
   },
   input: {
-    borderColor: '#ddd',
+    borderColor: C.border,
     borderRadius: 8,
     borderWidth: 1,
     fontSize: 16,
@@ -38,7 +42,7 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   toggleText: {
-    color: '#2196F3',
+    color: C.blue,
     marginTop: 15,
     textAlign: 'center',
   },
@@ -99,7 +103,7 @@ export default function LoginScreen(): React.ReactElement {
       />
 
       <TouchableOpacity
-        style={[styles.button, isLoading && { opacity: 0.6 }]}
+        style={[styles.button, isLoading && styles.buttonDisabled]}
         onPress={handleAuth}
         disabled={isLoading}
       >

@@ -86,7 +86,7 @@ describe('TransactionListScreen', () => {
   });
 
   it('does not register a keyboardDidShow listener for auto-scrolling', () => {
-    const Keyboard = require('react-native').Keyboard;
+    const Keyboard = jest.requireActual<typeof import('react-native')>('react-native').Keyboard;
     const addListenerSpy = jest.spyOn(Keyboard, 'addListener');
 
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
@@ -422,7 +422,7 @@ describe('TransactionListScreen', () => {
   });
 
   it('closes the popup and navigates to EditTransaction when a popup row is pressed', () => {
-    const { __mockNavigate: mockNavigate } = require('@react-navigation/native');
+    const { __mockNavigate: mockNavigate } = jest.requireMock('@react-navigation/native');
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
@@ -460,10 +460,9 @@ describe('TransactionListScreen', () => {
   });
 
   it('clears selected day when screen gains focus', () => {
-    const {
-      __triggerFocus: triggerFocus,
-      __resetFocusCallback,
-    } = require('@react-navigation/native');
+    const { __triggerFocus: triggerFocus, __resetFocusCallback } = jest.requireMock(
+      '@react-navigation/native'
+    );
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);
@@ -486,10 +485,9 @@ describe('TransactionListScreen', () => {
   });
 
   it('clears day selection on re-focus after navigating away', () => {
-    const {
-      __triggerFocus: triggerFocus,
-      __resetFocusCallback,
-    } = require('@react-navigation/native');
+    const { __triggerFocus: triggerFocus, __resetFocusCallback } = jest.requireMock(
+      '@react-navigation/native'
+    );
     (firebaseService.subscribeToTransactions as jest.Mock).mockReturnValue(jest.fn());
 
     render(<TransactionListScreen />);

@@ -10,6 +10,7 @@ export const C = {
   green: '#4CAF50',
   greenLight: '#E8F5E9',
   red: '#F44336',
+  redDark: '#D32F2F',
   redLight: '#FFEBEE',
   cardBg: '#fff',
   grayLight: '#f0f0f0',

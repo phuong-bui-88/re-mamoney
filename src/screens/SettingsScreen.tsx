@@ -60,29 +60,29 @@ const styles = StyleSheet.create({
   },
   button: {
     alignItems: 'center',
-    backgroundColor: '#f44336',
+    backgroundColor: C.red,
     borderRadius: 8,
     marginTop: 20,
     padding: 15,
   },
   buttonText: {
-    color: '#fff',
+    color: C.white,
     fontSize: 16,
     fontWeight: 'bold',
   },
   container: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: C.bg,
     flex: 1,
   },
   item: {
-    borderBottomColor: '#eee',
+    borderBottomColor: C.divider,
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 10,
   },
   label: {
-    color: '#333',
+    color: C.textDark,
     fontSize: 14,
   },
   quickAction: {
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: C.white,
     borderRadius: 8,
     marginHorizontal: 15,
     marginVertical: 10,
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   value: {
-    color: '#999',
+    color: C.textLight,
     fontSize: 14,
   },
 });

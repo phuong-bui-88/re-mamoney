@@ -38,6 +38,7 @@ describe('getDeviceId', () => {
     (AsyncStorage.getItem as jest.Mock).mockResolvedValue(storedId);
 
     const id2 = await getDeviceId();
+    expect(id1).toBe(storedId);
     expect(id2).toBe(storedId);
   });
 });
