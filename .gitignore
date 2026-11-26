@@ -10,6 +10,7 @@
 node_modules/
 .expo/
 .playwright-mcp
+.verify/
 
 # IDE specific files
 .idea/

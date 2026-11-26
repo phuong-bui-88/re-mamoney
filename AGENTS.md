@@ -188,3 +188,41 @@ import { transItemStyles } from '@styles/index';
 - [React Native Docs](https://reactnative.dev)
 - [Expo Docs](https://docs.expo.dev)
 - [Zustand Docs](https://github.com/pmndrs/zustand)
+
+## Definition of Done (all AI agents)
+
+Before declaring any UI or behavioral change "done":
+
+- **Run the app and exercise the changed feature in the browser.** Start it with
+  `./scripts/verify/start-app.sh` (app at `http://localhost:8081`), log in with
+  the test account (`d2@gmail.com` / `123456`), and click through the real
+  feature — use the browser MCP (Playwright) when available.
+- **Check the console and network tab for errors** (including Firebase errors).
+- **Show proof:** screenshots, test output, and the steps you took. Save
+  screenshots under `.verify/`.
+- **Bug fix:** reproduce it first, write a failing test, fix it, then show the
+  test passing and the fixed behavior in the app.
+- **If you could not verify something, say so** — never silently skip an
+  unverifiable area.
+- **Update `features.md` status for every feature you verified** (pass or
+  fail) — the map is the record of what has been proven in the running app.
+
+The `verify` skill (`.claude/skills/verify/`, mirrored for opencode in
+`.opencode/skills/verify/`) has the full workflow and `features.md`, the feature
+map of how to reach each screen. Update `features.md` when you change UI,
+routes, labels, or testIDs.
+
+## Verification Gate (Stop hook)
+
+`.claude/hooks/verify.sh` is registered as a **Stop hook** in
+`.claude/settings.json` (auto-imported by Devin; Claude Code reads it natively).
+When the git tree has changes, the agent cannot stop until
+`npm run type-check && npm test -- --no-coverage && npm run lint` pass — it gets
+one retry (`stop_hook_active` guard), then CI remains the final gate. opencode
+has no Stop-hook equivalent; follow this process manually there.
+
+## Corrections Become Checks
+
+When you correct an agent (or a bug comes back), prefer a permanent executable
+check over another prose rule: a regression test, a lint rule, stricter types,
+or a schema. Keep AGENTS.md for conventions, not for things a test can enforce.
