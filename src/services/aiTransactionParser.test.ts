@@ -4,7 +4,6 @@ import axios from 'axios';
 jest.mock('axios');
 
 import { parseTransactionMessage } from '@services/aiTransactionParser';
-import { aiConfig } from './aiConfig';
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 

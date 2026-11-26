@@ -2,6 +2,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import { render, screen } from '@testing-library/react-native';
 import FilteredTransactionList from '@components/FilteredTransactionList';
+import TransactionRow from '@components/TransactionRow';
 import { useTransactionStore } from '@store/index';
 
 const mockTransaction = (overrides: Record<string, unknown> = {}) => ({
@@ -131,7 +132,7 @@ describe('FilteredTransactionList', () => {
       <FilteredTransactionList filterMode="month" onTransactionPress={onTransactionPress} />
     );
 
-    const row = UNSAFE_getByType(require('@components/TransactionRow').default);
+    const row = UNSAFE_getByType(TransactionRow);
     expect(row.props.onPress).toBe(onTransactionPress);
   });
 
@@ -348,7 +349,6 @@ describe('FilteredTransactionList', () => {
         <FilteredTransactionList filterMode="month" onTransactionPress={onTransactionPress} />
       );
 
-      const TransactionRow = require('@components/TransactionRow').default;
       const rows = UNSAFE_getAllByType(TransactionRow);
       expect(rows).toHaveLength(3);
       const byId = (id: string) => rows.find((r: any) => r.props.transaction.id === id);

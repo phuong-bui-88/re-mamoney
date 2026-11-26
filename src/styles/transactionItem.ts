@@ -86,6 +86,25 @@ export const transItemStyles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
+  rawLine: {
+    color: C.textDark,
+    fontSize: 11,
+    paddingVertical: 1,
+  },
+  rawLineMatch: {
+    backgroundColor: C.primaryLight,
+    borderLeftColor: C.blue,
+    borderLeftWidth: 3,
+    color: C.blue,
+    fontWeight: '700',
+    paddingLeft: 6,
+  },
+  rawLinesPanel: {
+    flex: 1,
+    justifyContent: 'center',
+    maxWidth: 180,
+    paddingLeft: 4,
+  },
   userLabel: {
     color: C.textMuted,
     fontSize: 10,
@@ -97,24 +116,5 @@ export const transItemStyles = StyleSheet.create({
     color: C.textDark,
     fontSize: 13,
     fontStyle: 'italic',
-  },
-  rawLinesPanel: {
-    flex: 1,
-    justifyContent: 'center',
-    maxWidth: 180,
-    paddingLeft: 4,
-  },
-  rawLine: {
-    color: C.textDark,
-    fontSize: 11,
-    paddingVertical: 1,
-  },
-  rawLineMatch: {
-    borderLeftColor: C.blue,
-    borderLeftWidth: 3,
-    backgroundColor: C.primaryLight,
-    color: C.blue,
-    fontWeight: '700',
-    paddingLeft: 6,
   },
 });

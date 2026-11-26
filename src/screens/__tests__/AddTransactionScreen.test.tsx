@@ -13,7 +13,7 @@ import type { ReactTestInstance } from 'react-test-renderer';
 
 const mockSwipeCalls: Array<((id: string) => void) | null> = [];
 jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
-  const React = require('react');
+  const React = jest.requireActual<typeof import('react')>('react');
   return ({ children, onSwipeableOpen }: any) => {
     React.useEffect(() => {
       mockSwipeCalls.push(onSwipeableOpen || null);
@@ -377,7 +377,7 @@ describe('AddTransactionScreen - paste button', () => {
 
 describe('AddTransactionScreen - tap to edit', () => {
   it('navigates to EditTransaction when stored transaction bubble is tapped', () => {
-    const { __mockNavigate: mockNavigate } = require('@react-navigation/native');
+    const { __mockNavigate: mockNavigate } = jest.requireMock('@react-navigation/native');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -419,7 +419,7 @@ describe('AddTransactionScreen - tap to edit', () => {
   });
 
   it('error bubbles are not tappable for edit', async () => {
-    const { __mockNavigate: mockNavigate } = require('@react-navigation/native');
+    const { __mockNavigate: mockNavigate } = jest.requireMock('@react-navigation/native');
 
     (parseTransactionMessage as jest.Mock).mockResolvedValue({
       transactions: [],
@@ -1302,7 +1302,7 @@ describe('AddTransactionScreen - grouped multi-input feed', () => {
   });
 
   it('tapping a bubble inside a group still navigates to EditTransaction', () => {
-    const { __mockNavigate: mockNavigate } = require('@react-navigation/native');
+    const { __mockNavigate: mockNavigate } = jest.requireMock('@react-navigation/native');
     const userText = 'Hủ tiếu 25k\nCơm 60k';
     setTransactions([
       mkTx('tx-ge1', 'Hủ tiếu', 25000, userText, new Date(2026, 6, 27, 10, 0)),

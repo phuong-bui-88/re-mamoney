@@ -136,8 +136,17 @@ describe('installNoPageScroll', () => {
   type Handler = (e: unknown) => void;
   let docHandlers: Record<string, Handler | undefined>;
   let winHandlers: Record<string, Handler | undefined>;
-  let win: { scrollY: number; scrollTo: jest.Mock };
-  let doc: { activeElement: unknown };
+  let win: {
+    scrollY: number;
+    scrollTo: jest.Mock;
+    addEventListener: (t: string, fn: Handler) => void;
+    removeEventListener: (t: string) => void;
+  };
+  let doc: {
+    activeElement: unknown;
+    addEventListener: (t: string, fn: Handler) => void;
+    removeEventListener: (t: string) => void;
+  };
 
   beforeEach(() => {
     Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
