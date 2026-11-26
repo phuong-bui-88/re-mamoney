@@ -13,6 +13,7 @@ import TransactionListScreen from '@screens/TransactionListScreen';
 import firebaseService from '@services/firebase';
 import * as deviceUsersService from '@services/deviceUsers';
 import { getDeviceId } from '@utils/device';
+import { installNoPageScroll, useWebKeyboard } from '@utils/useWebKeyboard';
 import { useAuthStore } from '@store/index';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
@@ -34,6 +35,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
+  // Web, keyboard open: pin the app to the layout viewport, then useWebKeyboard's offset
+  // moves it onto the visible area above the keyboard.
+  pinnedToKeyboard: {
+    flex: 0,
+    left: 0,
+    position: 'fixed' as 'absolute',
+    right: 0,
+    top: 0,
+  },
 });
 
 function AddTransactionHeaderLeft(): React.ReactElement {
@@ -46,11 +56,14 @@ function AddTransactionHeaderLeft(): React.ReactElement {
 }
 
 function HomeTabNavigator() {
+  const { keyboardOpen } = useWebKeyboard();
   return (
     <Tab.Navigator
       screenOptions={{
         tabBarActiveTintColor: '#00BFA5',
         tabBarInactiveTintColor: '#999',
+        // Web: hide the tab bar so the input bar sits directly on the keyboard.
+        ...(keyboardOpen && { tabBarStyle: { display: 'none' } }),
       }}
     >
       <Tab.Screen
@@ -110,12 +123,15 @@ function HomeTabNavigator() {
 export default function App(): React.ReactElement {
   const { user, setUser, setSelectedUser, setSavedAccounts } = useAuthStore();
   const [isInitializing, setIsInitializing] = useState(true);
+  const { visibleHeight, visibleTop } = useWebKeyboard();
   // Load the icon font explicitly: on web, Expo's dynamic font loading is unavailable,
   // so without this every Ionicons glyph renders as an empty box.
   const [fontsLoaded] = useFonts({
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     Ionicons: require('@react-native-vector-icons/ionicons/fonts/Ionicons.ttf'),
   });
+
+  useEffect(() => installNoPageScroll(), []);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -158,7 +174,15 @@ export default function App(): React.ReactElement {
   }
 
   return (
-    <GestureHandlerRootView style={styles.gestureRoot}>
+    <GestureHandlerRootView
+      style={[
+        styles.gestureRoot,
+        visibleHeight != null && [
+          styles.pinnedToKeyboard,
+          { height: visibleHeight, transform: [{ translateY: visibleTop }] },
+        ],
+      ]}
+    >
       <NavigationContainer>
         <Stack.Navigator>
           {user ? (

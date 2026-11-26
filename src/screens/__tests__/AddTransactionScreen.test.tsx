@@ -1,10 +1,15 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
-import AddTransactionScreen from '@screens/AddTransactionScreen';
+import AddTransactionScreen, {
+  INPUT_MIN_HEIGHT,
+  INPUT_MAX_HEIGHT,
+} from '@screens/AddTransactionScreen';
 import { useAuthStore, useTransactionStore } from '@store/index';
 import { parseTransactionMessage } from '@services/aiTransactionParser';
 import firebaseService from '@services/firebase';
 import * as Clipboard from 'expo-clipboard';
+import { StyleSheet } from 'react-native';
+import type { ReactTestInstance } from 'react-test-renderer';
 
 const mockSwipeCalls: Array<((id: string) => void) | null> = [];
 jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
@@ -1430,5 +1435,78 @@ describe('AddTransactionScreen - dashboard month reset', () => {
     render(<AddTransactionScreen />);
 
     expect(screen.getByText('Fresh Coffee')).toBeTruthy();
+  });
+});
+
+describe('AddTransactionScreen - input size', () => {
+  const heightOf = (input: ReactTestInstance): number =>
+    (StyleSheet.flatten(input.props.style) as { height: number }).height;
+  const grow = (input: ReactTestInstance, height: number): void =>
+    fireEvent(input, 'contentSizeChange', {
+      nativeEvent: { contentSize: { width: 200, height } },
+    });
+
+  it('starts as a single row matching the Send button height', () => {
+    render(<AddTransactionScreen />);
+    const input = screen.getByPlaceholderText('What did you spend?');
+    expect(heightOf(input)).toBe(INPUT_MIN_HEIGHT);
+  });
+
+  it('grows with content up to the max height', () => {
+    render(<AddTransactionScreen />);
+    const input = screen.getByPlaceholderText('What did you spend?');
+    fireEvent.changeText(input, 'Coffee 30k\nLunch 50k');
+    grow(input, 70);
+    expect(heightOf(screen.getByPlaceholderText('What did you spend?'))).toBe(70);
+    grow(input, 400);
+    expect(heightOf(screen.getByPlaceholderText('What did you spend?'))).toBe(INPUT_MAX_HEIGHT);
+  });
+
+  it('shrinks back to one row after sending', async () => {
+    (parseTransactionMessage as jest.Mock).mockResolvedValue({
+      transactions: [
+        {
+          type: 'expense',
+          amount: 30000,
+          category: 'food',
+          description: 'Coffee',
+          date: '2026-01-01',
+        },
+      ],
+      followUpQuestion: null,
+    });
+    render(<AddTransactionScreen />);
+    const input = screen.getByPlaceholderText('What did you spend?');
+    fireEvent.changeText(input, 'Coffee 30k\nLunch 50k\nGrab 20k');
+    grow(input, 90);
+    expect(heightOf(screen.getByPlaceholderText('What did you spend?'))).toBe(90);
+    await act(async () => {
+      fireEvent.press(screen.getByText('Send'));
+    });
+    expect(heightOf(screen.getByPlaceholderText('What did you spend?'))).toBe(INPUT_MIN_HEIGHT);
+  });
+
+  it('stays one row while empty even if the browser reports a tall placeholder', () => {
+    render(<AddTransactionScreen />);
+    const input = screen.getByPlaceholderText('What did you spend?');
+    grow(input, 100);
+    expect(heightOf(screen.getByPlaceholderText('What did you spend?'))).toBe(INPUT_MIN_HEIGHT);
+  });
+
+  it('shrinks back to one row when the text is deleted', () => {
+    render(<AddTransactionScreen />);
+    const input = screen.getByPlaceholderText('What did you spend?');
+    fireEvent.changeText(input, 'Coffee 30k\nLunch 50k');
+    grow(input, 70);
+    fireEvent.changeText(screen.getByPlaceholderText('What did you spend?'), '');
+    expect(heightOf(screen.getByPlaceholderText('What did you spend?'))).toBe(INPUT_MIN_HEIGHT);
+  });
+
+  it('never shrinks below the min height', () => {
+    render(<AddTransactionScreen />);
+    const input = screen.getByPlaceholderText('What did you spend?');
+    fireEvent.changeText(input, 'Coffee 30k');
+    grow(input, 10);
+    expect(heightOf(screen.getByPlaceholderText('What did you spend?'))).toBe(INPUT_MIN_HEIGHT);
   });
 });

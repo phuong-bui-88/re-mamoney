@@ -30,6 +30,7 @@ import {
 } from '@utils/categories';
 import { C } from '@theme/colors';
 import { transItemStyles } from '@styles/index';
+import { useWebKeyboard } from '@utils/useWebKeyboard';
 import { getCardWindow, findMatchingLineIndices, RawLinesWindow } from '@utils/rawLinesWindow';
 
 interface FeedItem {
@@ -55,11 +56,13 @@ export default function AddTransactionScreen(): React.ReactElement {
   const [inputText, setInputText] = useState('');
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [inputHeight, setInputHeight] = useState(INPUT_MIN_HEIGHT);
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
   const prevLoading = useRef(isLoading);
   const feedIdCounter = useRef(0);
   const navigation = useNavigation();
+  const { keyboardOpen } = useWebKeyboard();
 
   const { selectedUser } = useAuthStore();
   const { allTransactions } = useTransactionStore();
@@ -194,6 +197,7 @@ export default function AddTransactionScreen(): React.ReactElement {
     if (!text || !selectedUser?.id || isLoading) return;
 
     setInputText('');
+    setInputHeight(INPUT_MIN_HEIGHT);
     setIsLoading(true);
 
     try {
@@ -427,7 +431,7 @@ export default function AddTransactionScreen(): React.ReactElement {
           )}
         </ScrollView>
 
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, keyboardOpen && styles.inputContainerKeyboard]}>
           <View style={styles.todayRow}>
             <Text style={[styles.todayText, todaySpent > 0 ? styles.todayRed : styles.todayGreen]}>
               Spent today: {formatCurrency(todaySpent)}
@@ -445,13 +449,24 @@ export default function AddTransactionScreen(): React.ReactElement {
           <View style={styles.inputRow}>
             <TextInput
               ref={inputRef}
-              style={styles.input}
+              style={[styles.input, { height: inputHeight }]}
               placeholder="What did you spend?"
               placeholderTextColor={C.textLight}
               value={inputText}
-              onChangeText={setInputText}
+              onChangeText={(t) => {
+                setInputText(t);
+                if (!t) setInputHeight(INPUT_MIN_HEIGHT);
+              }}
               editable={!isLoading}
               multiline
+              {...WEB_SINGLE_ROW}
+              onContentSizeChange={(e) => {
+                // Empty input stays one row: Safari can report a tall scrollHeight for the
+                // placeholder alone while the layout is changing.
+                if (!inputText) return;
+                const h = Math.ceil(e.nativeEvent.contentSize.height);
+                setInputHeight(Math.min(INPUT_MAX_HEIGHT, Math.max(INPUT_MIN_HEIGHT, h)));
+              }}
               autoFocus
             />
             <TouchableOpacity
@@ -471,6 +486,12 @@ export default function AddTransactionScreen(): React.ReactElement {
   );
 }
 
+// One line of 16px text + vertical padding + border; matches the Send button height.
+export const INPUT_MIN_HEIGHT = 42;
+export const INPUT_MAX_HEIGHT = 100;
+// react-native-web renders multiline inputs as <textarea>, which defaults to 2 rows.
+const WEB_SINGLE_ROW = Platform.OS === 'web' ? ({ rows: 1 } as object) : {};
+
 export const styles = StyleSheet.create({
   body: {
     alignSelf: 'center',
@@ -488,7 +509,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     marginRight: 10,
-    maxHeight: 100,
+    maxHeight: INPUT_MAX_HEIGHT,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
@@ -524,6 +545,9 @@ export const styles = StyleSheet.create({
     paddingBottom: 20,
     paddingHorizontal: 14,
     paddingTop: 10,
+  },
+  inputContainerKeyboard: {
+    paddingBottom: 10,
   },
   inputRow: {
     alignItems: 'flex-end',
