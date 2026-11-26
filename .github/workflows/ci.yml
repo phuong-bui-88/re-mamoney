@@ -26,6 +26,14 @@ jobs:
       - name: Tests (with coverage)
         run: npm test -- --coverage
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage/lcov.info
+          flags: unittests
+          name: backend-tests
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Lint
         run: npm run lint
 
